@@ -31,11 +31,11 @@ Designed for families, pilgrims, NGOs, and corporate clients across Pakistan, UA
 
 | | |
 |---|---|
-| **Live Website** | Coming Soon — deploy on [Vercel](https://vercel.com) |
+| **Live Website** | Deploy on [Vercel](https://vercel.com) or another Node-compatible Next.js host |
 | **Admin Dashboard** | `/admin` |
 | **Demo Credentials** | Configure via Supabase Auth (do not commit real credentials) |
 
-> **Note:** GitHub Pages static hosting is **not suitable** for this platform (admin auth, API routes, database writes, cron sync). Use **Vercel** or another Node-compatible host.
+> **Note:** GitHub Pages static hosting is not supported for this platform because admin auth, API routes, database writes, and cron sync all require the Next.js runtime. Use Vercel or another Node-compatible host.
 
 ## Screenshots
 

@@ -108,7 +108,7 @@ export default function AdminBookingsPage() {
               <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
                 <div>
                   <CardTitle className="text-base font-semibold text-navy">
-                    {b.customer_name} — {b.product_type}
+                    {b.customer_name} - {b.product_title || b.product_type}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
                     {new Date(b.created_at).toLocaleString()} · Ref {b.id.slice(0, 8).toUpperCase()}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { SITE } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
 import { whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { BookingProductType } from "@/types";
@@ -45,6 +47,9 @@ export function BookRequestSheet({
   sourcePage,
 }: BookRequestSheetProps) {
   const [loading, setLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
   const [form, setForm] = useState({
@@ -56,9 +61,49 @@ export function BookRequestSheet({
     notes: "",
   });
 
+  const nextPath = sourcePage || "/account/";
+
+  useEffect(() => {
+    if (!open) return;
+
+    let active = true;
+    setAuthChecked(false);
+    setError("");
+
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!active) return;
+      const user = data.user;
+      setSignedIn(Boolean(user));
+      setAuthChecked(true);
+
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("customer_profiles")
+        .select("full_name, phone, email")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!active) return;
+
+      setForm((current) => ({
+        ...current,
+        name: current.name || String(profile?.full_name || user.user_metadata?.full_name || ""),
+        phone: current.phone || String(profile?.phone || user.user_metadata?.phone || ""),
+        email: current.email || String(profile?.email || user.email || ""),
+      }));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [open]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setError("");
     try {
       const res = await fetch("/api/bookings/", {
         method: "POST",
@@ -84,11 +129,15 @@ export function BookRequestSheet({
         }),
       });
       const json = await res.json();
+      if (res.status === 401) {
+        window.location.href = `/account/login/?next=${encodeURIComponent(nextPath)}`;
+        return;
+      }
       if (!res.ok) throw new Error(json.error || "Request failed");
       setBookingRef(json.bookingRef || "");
       setDone(true);
-    } catch {
-      alert("Could not submit booking request. Please contact us on WhatsApp.");
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Could not submit booking request.");
     } finally {
       setLoading(false);
     }
@@ -102,27 +151,58 @@ export function BookRequestSheet({
         <SheetHeader>
           <SheetTitle className="font-heading text-navy">Book Request</SheetTitle>
           <SheetDescription>
-            Submit your details — we will confirm availability and payment on WhatsApp.
+            Sign in, save your details, and track this request from your customer profile.
           </SheetDescription>
         </SheetHeader>
 
-        {done ? (
+        {!authChecked ? (
+          <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
+            Checking account session...
+          </div>
+        ) : !signedIn ? (
+          <div className="mt-6 space-y-4">
+            <div className="rounded-lg bg-secondary/50 p-3 text-sm">
+              <p className="font-medium text-navy">{productTitle}</p>
+              <p className="font-bold text-gold">
+                {quotedPrice.toLocaleString()} {currency}
+              </p>
+            </div>
+            <div className="rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-muted-foreground">
+              Create an account or sign in before booking. Your passenger details, requests, and status updates will be saved in My Trips.
+            </div>
+            <Link
+              href={`/account/signup/?next=${encodeURIComponent(nextPath)}`}
+              className={cn(buttonVariants({ variant: "primaryGold" }), "w-full")}
+            >
+              Create Account
+            </Link>
+            <Link
+              href={`/account/login/?next=${encodeURIComponent(nextPath)}`}
+              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+            >
+              Sign In
+            </Link>
+          </div>
+        ) : done ? (
           <div className="mt-6 space-y-4 text-center">
             <p className="font-medium text-navy">Request received!</p>
             <p className="text-sm text-muted-foreground">
               Reference: <strong>{bookingRef.slice(0, 8).toUpperCase()}</strong>
             </p>
             <p className="text-sm text-muted-foreground">
-              Our team will contact you shortly to confirm payment and complete your booking.
+              This request is saved in My Trips. Our team will contact you shortly to confirm payment and complete your booking.
             </p>
             <a
               href={whatsappLink(whatsappMsg)}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(buttonVariants({ size: "default" }), "w-full bg-gold text-navy hover:bg-gold-light inline-flex")}
+              className={cn(buttonVariants({ size: "default" }), "inline-flex w-full bg-gold text-navy hover:bg-gold-light")}
             >
               Continue on WhatsApp
             </a>
+            <Link href="/account/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
+              View My Trips
+            </Link>
             <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
               Close
             </Button>
@@ -131,7 +211,7 @@ export function BookRequestSheet({
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="rounded-lg bg-secondary/50 p-3 text-sm">
               <p className="font-medium text-navy">{productTitle}</p>
-              <p className="text-gold font-bold">
+              <p className="font-bold text-gold">
                 {quotedPrice.toLocaleString()} {currency}
               </p>
             </div>
@@ -144,8 +224,8 @@ export function BookRequestSheet({
               <Input id="br-phone" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="br-email">Email (optional)</Label>
-              <Input id="br-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <Label htmlFor="br-email">Email</Label>
+              <Input id="br-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="br-passengers">Passengers</Label>
@@ -159,10 +239,15 @@ export function BookRequestSheet({
               <Label htmlFor="br-notes">Notes (optional)</Label>
               <Textarea id="br-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
+            {error && (
+              <p className="rounded-md border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
+                {error}
+              </p>
+            )}
             <Button type="submit" disabled={loading} className="w-full bg-navy text-white hover:bg-navy-light">
-              {loading ? "Submitting…" : "Submit Book Request"}
+              {loading ? "Submitting..." : "Submit Book Request"}
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-center text-xs text-muted-foreground">
               Subject to availability. Payment confirmed offline before ticket is issued.
             </p>
           </form>
@@ -171,3 +256,4 @@ export function BookRequestSheet({
     </Sheet>
   );
 }
+

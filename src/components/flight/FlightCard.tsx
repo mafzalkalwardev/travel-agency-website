@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Clock, Leaf, Luggage, Plane, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { assetPath } from "@/lib/base-path";
 import { calculateLayoverTime, formatCurrency, formatDateTime, formatDuration } from "@/lib/flight-booking";
 import { cn } from "@/lib/utils";
 import type { FlightOption } from "@/types/flight-booking";
@@ -38,7 +39,7 @@ export function FlightCard({ flight, index }: FlightCardProps) {
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50">
             <Image
-              src={flight.airlineLogo}
+              src={assetPath(flight.airlineLogo)}
               alt={flight.airline}
               width={40}
               height={40}

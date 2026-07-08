@@ -130,6 +130,22 @@ export interface Inquiry {
   createdAt: string;
 }
 
+export interface CustomerProfile {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  phone?: string | null;
+  nationality?: string | null;
+  passport_number?: string | null;
+  date_of_birth?: string | null;
+  preferred_airport?: string | null;
+  address?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Airline {
   code: string;
   name: string;
@@ -196,6 +212,8 @@ export interface Booking {
   umrah_package_id?: string;
   tour_package_id?: string;
   external_product_id?: string;
+  customer_user_id?: string;
+  product_title?: string;
   customer_name: string;
   customer_phone: string;
   customer_email?: string;

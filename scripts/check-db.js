@@ -22,6 +22,7 @@ loadEnv();
 
 const tables = [
   "profiles",
+  "customer_profiles",
   "tickets",
   "bookings",
   "integration_sessions",

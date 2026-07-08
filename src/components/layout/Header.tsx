@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, Phone, Ticket } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AccountNav } from "@/components/account/AccountNav";
 import { LOGO_PATH, SERVICE_DROPDOWN, SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { assetPath } from "@/lib/base-path";
@@ -24,6 +25,7 @@ const MAIN_NAV = [
 ] as const;
 
 const MOBILE_EXTRA = [
+  { href: "/account/", label: "My Trips" },
   { href: "/inquiry/", label: "Book / Inquiry" },
 ] as const;
 
@@ -142,6 +144,7 @@ export function Header() {
             <Ticket className="mr-2 h-4 w-4" />
             Check Tickets
           </Link>
+          <AccountNav />
           <a
             href={SITE.whatsapp}
             target="_blank"

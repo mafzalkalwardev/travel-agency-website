@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CreditCard, Loader2, Mail } from "lucide-react";
+import { AlertCircle, Check, Loader2, Mail, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SeatMap } from "@/components/flight/SeatMap";
@@ -14,12 +14,14 @@ import {
   formatCurrency,
   formatDateTime,
   formatDuration,
-  generateBookingReference,
   validatePassengerDetails,
 } from "@/lib/flight-booking";
+import { SITE } from "@/lib/constants";
+import { whatsappLink } from "@/lib/whatsapp";
+import { cn } from "@/lib/utils";
 import type { BookingAddOn, PassengerDetails, Seat } from "@/types/flight-booking";
 
-const steps = ["Review", "Passenger", "Seat", "Add-ons", "Payment", "Confirm"];
+const steps = ["Review", "Passenger", "Seat", "Add-ons", "Submit", "Confirm"];
 
 interface BookingFlowClientProps {
   flightId?: string;
@@ -32,6 +34,7 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
   const [selectedAddOns, setSelectedAddOns] = useState<BookingAddOn[]>([]);
   const [processing, setProcessing] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState<Partial<Record<keyof PassengerDetails, string>>>({});
   const [passenger, setPassenger] = useState<PassengerDetails>({
     firstName: "",
@@ -48,22 +51,68 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
     [flight.price, selectedAddOns, selectedSeat]
   );
 
-  function next() {
+  async function next() {
     if (step === 1) {
       const result = validatePassengerDetails(passenger);
       setErrors(result);
       if (Object.keys(result).length) return;
     }
     if (step === 4) {
-      setProcessing(true);
-      setTimeout(() => {
-        setBookingRef(generateBookingReference());
-        setProcessing(false);
-        setStep(5);
-      }, 1100);
+      await submitBookingRequest();
       return;
     }
+    setSubmitError("");
     setStep((value) => Math.min(5, value + 1));
+  }
+
+  async function submitBookingRequest() {
+    setSubmitError("");
+    const result = validatePassengerDetails(passenger);
+    setErrors(result);
+    if (Object.keys(result).length) {
+      setStep(1);
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      const addOnSummary = selectedAddOns.length
+        ? selectedAddOns.map((addOn) => `${addOn.title} (${formatCurrency(addOn.price, flight.currency)})`).join(", ")
+        : "None";
+      const res = await fetch("/api/bookings/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_type: "ticket",
+          customer_name: `${passenger.firstName} ${passenger.lastName}`.trim(),
+          customer_phone: passenger.phone,
+          customer_email: passenger.email || undefined,
+          passengers: 1,
+          quoted_price: total,
+          currency: flight.currency,
+          product_title: `${flight.airline} ${flight.flightNumber} - ${flight.from} to ${flight.to}`,
+          source_page: "/flight-booking/book/",
+          passenger_details: {
+            names: `${passenger.firstName} ${passenger.lastName}`.trim(),
+            passport: passenger.documentNumber,
+            notes: [
+              `Gender: ${passenger.gender}`,
+              `Date of birth: ${passenger.dateOfBirth}`,
+              `Seat: ${selectedSeat ? `${selectedSeat.id} (${formatCurrency(selectedSeat.price, flight.currency)})` : "Not selected"}`,
+              `Add-ons: ${addOnSummary}`,
+            ].join("\n"),
+          },
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Could not submit booking request");
+      setBookingRef(json.bookingRef || "");
+      setStep(5);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Could not submit booking request");
+    } finally {
+      setProcessing(false);
+    }
   }
 
   function toggleAddOn(addOn: BookingAddOn) {
@@ -201,16 +250,25 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
 
                 {step === 4 && (
                   <div>
-                    <h2 className="font-heading text-2xl font-bold text-navy">Payment</h2>
+                    <h2 className="font-heading text-2xl font-bold text-navy">Submit request</h2>
                     <div className="mt-5 rounded-2xl border border-slate-200 p-5">
-                      <div className="mb-4 flex items-center gap-2 text-navy"><CreditCard className="h-5 w-5" /> Card payment placeholder</div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <Input placeholder="Cardholder name" />
-                        <Input placeholder="Card number" />
-                        <Input placeholder="MM / YY" />
-                        <Input placeholder="CVC" />
+                      <div className="mb-4 flex items-center gap-2 text-navy">
+                        <Mail className="h-5 w-5" /> Review before sending to Al Qibla
                       </div>
-                      <p className="mt-4 text-sm text-slate-500">Stripe-ready structure. No real payment is charged in this demo flow.</p>
+                      <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-2">
+                        <p><strong className="text-slate-900">Passenger:</strong> {passenger.firstName} {passenger.lastName}</p>
+                        <p><strong className="text-slate-900">Phone:</strong> {passenger.phone}</p>
+                        <p><strong className="text-slate-900">Seat:</strong> {selectedSeat ? selectedSeat.id : "Not selected"}</p>
+                        <p><strong className="text-slate-900">Add-ons:</strong> {selectedAddOns.length || "None"}</p>
+                      </div>
+                      <p className="mt-4 text-sm text-slate-500">
+                        No card is charged online. The request is saved for the team to confirm availability and payment on WhatsApp.
+                      </p>
+                      {submitError && (
+                        <p className="mt-4 flex items-center gap-2 rounded-lg border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
+                          <AlertCircle className="h-4 w-4" /> {submitError}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -224,18 +282,27 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
                     >
                       <Check className="h-10 w-10" />
                     </motion.div>
-                    <h2 className="mt-5 font-heading text-3xl font-bold text-navy">Booking confirmed</h2>
-                    <p className="mt-2 text-slate-500">Reference {bookingRef}</p>
+                    <h2 className="mt-5 font-heading text-3xl font-bold text-navy">Request received</h2>
+                    <p className="mt-2 text-slate-500">Reference {bookingRef.slice(0, 8).toUpperCase()}</p>
                     <div className="mx-auto mt-6 max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left">
                       <p className="font-semibold text-navy">{passenger.firstName} {passenger.lastName}</p>
                       <p className="text-sm text-slate-500">{flight.from} to {flight.to} / {flight.flightNumber}</p>
-                      <p className="mt-2 flex items-center gap-2 text-sm text-emerald-700"><Mail className="h-4 w-4" /> Email confirmation queued</p>
+                      <p className="mt-2 flex items-center gap-2 text-sm text-emerald-700">
+                        <Mail className="h-4 w-4" /> Our team will confirm availability and payment.
+                      </p>
                     </div>
                     <div className="mt-6 flex flex-wrap justify-center gap-3">
-                      <Button variant="navy">Download Ticket</Button>
-                      <Button variant="outline">
-                        Manage Booking
-                      </Button>
+                      <a
+                        href={whatsappLink(`Hello ${SITE.name}, I submitted flight booking request #${bookingRef.slice(0, 8)} for ${flight.airline} ${flight.flightNumber}.`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cn(buttonVariants({ variant: "navy" }))}
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" /> Continue on WhatsApp
+                      </a>
+                      <Link href="/flight-booking/results/" className={cn(buttonVariants({ variant: "outline" }))}>
+                        Search another flight
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -249,7 +316,7 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
                 </Button>
                 <Button variant="navy" onClick={next} disabled={processing}>
                   {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {step === 4 ? "Pay and Confirm" : "Continue"}
+                  {step === 4 ? "Submit Request" : "Continue"}
                 </Button>
               </div>
             )}

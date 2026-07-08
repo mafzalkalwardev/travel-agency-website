@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { getTravelLineClient } from "@/lib/travelline/client";
 import { isTravelLineConfigured } from "@/lib/travelline/env";
@@ -28,7 +29,31 @@ export async function POST(request: Request) {
       });
     }
 
+    const userClient = await createClient();
+    const {
+      data: { user },
+    } = await userClient.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "Create an account or sign in before booking.",
+          loginUrl: "/account/login/",
+        },
+        { status: 401 }
+      );
+    }
+
     const supabase = createAdminClient();
+    const profilePayload = {
+      id: user.id,
+      email: user.email || data.customer_email || "",
+      full_name: data.customer_name,
+      phone: data.customer_phone,
+      updated_at: new Date().toISOString(),
+    };
+
+    await supabase.from("customer_profiles").upsert(profilePayload, { onConflict: "id" });
 
     let externalProductId = data.external_product_id;
     if (!externalProductId && data.ticket_id) {
@@ -65,6 +90,8 @@ export async function POST(request: Request) {
         umrah_package_id: data.umrah_package_id || null,
         tour_package_id: data.tour_package_id || null,
         external_product_id: externalProductId || null,
+        customer_user_id: user.id,
+        product_title: data.product_title || null,
         customer_name: data.customer_name,
         customer_phone: data.customer_phone,
         customer_email: data.customer_email || null,

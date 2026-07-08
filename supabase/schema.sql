@@ -216,6 +216,23 @@ create table if not exists public.inquiries (
   updated_at timestamptz not null default now()
 );
 
+-- Customer portal profiles
+create table if not exists public.customer_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  full_name text,
+  phone text,
+  nationality text,
+  passport_number text,
+  date_of_birth date,
+  preferred_airport text,
+  address text,
+  emergency_contact_name text,
+  emergency_contact_phone text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- Gallery
 create table if not exists public.gallery_items (
   id uuid primary key default uuid_generate_v4(),
@@ -278,6 +295,8 @@ create table if not exists public.bookings (
   umrah_package_id uuid references public.umrah_packages(id) on delete set null,
   tour_package_id uuid references public.tour_packages(id) on delete set null,
   external_product_id text,
+  customer_user_id uuid references auth.users(id) on delete set null,
+  product_title text,
   customer_name text not null,
   customer_phone text not null,
   customer_email text,
@@ -297,6 +316,8 @@ create table if not exists public.bookings (
 create index if not exists idx_bookings_status on public.bookings(status, created_at desc);
 create index if not exists idx_bookings_phone_pending on public.bookings(customer_phone, status)
   where status = 'pending_payment';
+create index if not exists idx_bookings_customer_user on public.bookings(customer_user_id, created_at desc);
+create index if not exists idx_customer_profiles_email on public.customer_profiles(email);
 
 -- Sync logs
 create table if not exists public.sync_logs (
@@ -357,6 +378,7 @@ alter table public.tour_packages enable row level security;
 alter table public.blog_posts enable row level security;
 alter table public.reviews enable row level security;
 alter table public.inquiries enable row level security;
+alter table public.customer_profiles enable row level security;
 alter table public.gallery_items enable row level security;
 alter table public.sync_logs enable row level security;
 alter table public.sync_changes enable row level security;
@@ -388,7 +410,13 @@ create policy "Public read site settings" on public.site_settings for select usi
 -- Public insert
 create policy "Public insert reviews pending" on public.reviews for insert with check (status = 'pending' and consent = true);
 create policy "Public insert inquiries" on public.inquiries for insert with check (true);
-create policy "Public insert bookings" on public.bookings for insert with check (status = 'pending_payment');
+create policy "Customer insert own bookings" on public.bookings for insert with check (customer_user_id = auth.uid());
+create policy "Customer read own bookings" on public.bookings for select using (customer_user_id = auth.uid() or public.is_admin());
+
+-- Customer account access
+create policy "Customer own profile select" on public.customer_profiles for select using (id = auth.uid() or public.is_admin());
+create policy "Customer own profile insert" on public.customer_profiles for insert with check (id = auth.uid());
+create policy "Customer own profile update" on public.customer_profiles for update using (id = auth.uid()) with check (id = auth.uid());
 
 -- Admin full access
 create policy "Admin all announcements" on public.announcements for all using (public.is_admin());
@@ -401,6 +429,7 @@ create policy "Admin all tours" on public.tour_packages for all using (public.is
 create policy "Admin all blog" on public.blog_posts for all using (public.is_admin());
 create policy "Admin all reviews" on public.reviews for all using (public.is_admin());
 create policy "Admin all inquiries" on public.inquiries for all using (public.is_admin());
+create policy "Admin all customer_profiles" on public.customer_profiles for all using (public.is_admin());
 create policy "Admin all gallery" on public.gallery_items for all using (public.is_admin());
 create policy "Admin all sync_logs" on public.sync_logs for all using (public.is_admin());
 create policy "Admin all sync_changes" on public.sync_changes for all using (public.is_admin());

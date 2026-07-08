@@ -26,8 +26,9 @@ const services = [
 ];
 
 export function ContactForm() {
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -54,24 +55,27 @@ export function ContactForm() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setSubmitted(true);
-    } catch {
-      setSubmitted(true);
+      if (!res.ok) throw new Error(data.error || "Could not submit inquiry");
+      setStatus("success");
+      setMessage(data.message || "Your inquiry has been received. We will contact you shortly via phone or WhatsApp.");
+      setForm({ name: "", email: "", phone: "", service: "", message: "" });
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Could not submit inquiry. Please contact us on WhatsApp.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (submitted) {
+  if (status === "success") {
     return (
       <Card className="border-gold/30">
         <CardContent className="p-8 text-center">
           <h3 className="font-heading text-xl font-semibold text-navy">Thank You!</h3>
           <p className="mt-2 text-muted-foreground">
-            Your inquiry has been received. We will contact you shortly via phone or WhatsApp.
+            {message}
           </p>
-          <Button variant="primaryGold" className="mt-4" onClick={() => setSubmitted(false)}>
+          <Button variant="primaryGold" className="mt-4" onClick={() => setStatus("idle")}>
             Send Another Inquiry
           </Button>
         </CardContent>
@@ -122,6 +126,11 @@ export function ContactForm() {
               placeholder="Tell us about your travel requirements..."
             />
           </div>
+          {status === "error" && (
+            <p className="rounded-md border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
+              {message}
+            </p>
+          )}
           <Button type="submit" variant="primaryGold" className="w-full" disabled={loading}>
             {loading ? "Submitting..." : "Submit Inquiry"}
           </Button>

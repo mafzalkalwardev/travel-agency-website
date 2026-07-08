@@ -31,12 +31,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (request.nextUrl.pathname.startsWith("/admin/login") && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin/dashboard/";
-    return NextResponse.redirect(url);
-  }
-
   return response;
 }
 
