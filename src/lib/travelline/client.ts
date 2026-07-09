@@ -20,7 +20,7 @@ import type {
   TravelLinePackageFetchResult,
   TravelLineSession,
 } from "./types";
-import { resolveTravelLinePackageId } from "./resolve-package-id";
+import { resolveTravelLinePackageId, isTravelLineGroupId } from "./resolve-package-id";
 import { loginTravelLineViaPlaywright } from "./playwright-auth";
 
 const UMRANH_PACKAGES_PATH = "/api/umrah-packages";
@@ -257,7 +257,9 @@ export class TravelLineClient {
     }
 
     const packageId = resolveTravelLinePackageId(input.externalProductId);
-    let groupId = await this.resolveGroupId(input.externalProductId);
+    let groupId = isTravelLineGroupId(input.externalProductId)
+      ? input.externalProductId
+      : await this.resolveGroupId(input.externalProductId);
 
     if (!groupId) {
       const items = await this.fetchUmrahApiItems();

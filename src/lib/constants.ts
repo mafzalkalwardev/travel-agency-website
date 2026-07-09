@@ -14,6 +14,15 @@ export const SITE = {
   regions: ["Pakistan", "UAE", "Afghanistan", "Saudi Arabia", "Worldwide"],
 } as const;
 
+export const PAYMENT = {
+  bankName: "Bank Alfalah",
+  accountTitle: "Al Qibla Air Services",
+  accountNumber: "Contact office for account details",
+  iban: "",
+  instructions:
+    "Send payment via bank transfer or Easypaisa/JazzCash, then share your payment screenshot on WhatsApp to confirm your booking.",
+} as const;
+
 export const OFFICES = {
   headOffice: {
     label: "Head Office — Peshawar",
@@ -31,6 +40,14 @@ export const OFFICES = {
     phoneTel: "+923315576169",
     mapEmbed:
       "https://www.google.com/maps?q=Office%20No.11%2C%20Askan%20Center%2C%20E-11%2F3%20Markaz%2C%20Islamabad&output=embed",
+  },
+  bannu: {
+    label: "Bannu Branch",
+    address: "Office Number 31, Regal Cinema Market, Bannu",
+    phone: "0335 9945722",
+    phoneTel: "+923359945722",
+    phoneAlt: "0334 9174009",
+    phoneAltTel: "+923349174009",
   },
 } as const;
 

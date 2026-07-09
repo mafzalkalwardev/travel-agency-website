@@ -56,6 +56,7 @@ export function TicketCard({ ticket, compact = false }: TicketCardProps) {
                 <div className="flex items-center gap-3">
                   <div className="text-center">
                     <p className="text-lg font-bold text-navy">{ticket.from}</p>
+                    <p className="text-[11px] text-muted-foreground">{ticket.fromCity}</p>
                     <p className="text-xs text-muted-foreground">{ticket.departureTime}</p>
                   </div>
                   <div className="flex flex-1 flex-col items-center px-2">
@@ -65,11 +66,12 @@ export function TicketCard({ ticket, compact = false }: TicketCardProps) {
                       <div className="h-px flex-1 bg-border" />
                     </div>
                     <span className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Clock className="h-3 w-3" /> {ticket.duration}
+                      <Clock className="h-3 w-3" /> {ticket.duration || "Direct"}
                     </span>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold text-navy">{ticket.to}</p>
+                    <p className="text-[11px] text-muted-foreground">{ticket.toCity}</p>
                     <p className="text-xs text-muted-foreground">{ticket.arrivalTime}</p>
                   </div>
                 </div>

@@ -13,10 +13,7 @@ export const metadata = createPageMetadata({
 });
 
 export default async function AvailableTicketsPage() {
-  const [tickets, syncMetadata] = await Promise.all([
-    dataProvider.getTickets(),
-    dataProvider.getTicketsSyncMetadata(),
-  ]);
+  const tickets = await dataProvider.getTickets();
 
   return (
     <>
@@ -25,7 +22,7 @@ export default async function AvailableTicketsPage() {
       <section className="section-padding">
         <div className="container-wide">
           <Suspense fallback={<div className="text-center text-muted-foreground">Loading tickets...</div>}>
-            <TicketsPageClient tickets={tickets} syncMetadata={syncMetadata} />
+            <TicketsPageClient tickets={tickets} />
           </Suspense>
         </div>
       </section>

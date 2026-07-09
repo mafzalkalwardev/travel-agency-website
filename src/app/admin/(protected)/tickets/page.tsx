@@ -84,9 +84,9 @@ export default function AdminTicketsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold text-navy">Tickets</h1>
+          <h1 className="font-heading text-2xl font-bold text-navy">Ticket Inventory</h1>
           <p className="text-sm text-muted-foreground">
-            Inventory synced from the supplier feed. {ticketCount} active tickets.
+            Agent-only Travel Line sync. {ticketCount} active tickets in database.
           </p>
         </div>
         <Button onClick={runSync} disabled={syncing} variant="navy">

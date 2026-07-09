@@ -2,8 +2,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { writeLocalTickets } from "@/lib/sync/local-inventory";
 import type { NormalizedTicket, SyncChange } from "@/lib/tickets/providers/types";
+import { randomUUID } from "crypto";
 
 const PROVIDER = "travelline";
+const BATCH_SIZE = 200;
 
 export interface UpsertTicketsResult {
   created: number;
@@ -26,21 +28,33 @@ export async function upsertTickets(
   }
 
   const supabase = createAdminClient();
-
-  // Verify tickets table exists
   const { error: probeError } = await supabase.from("tickets").select("id").limit(1);
   if (probeError?.message?.includes("Could not find the table")) {
     writeLocalTickets(validTickets, provider);
     return { created: validTickets.length, updated: 0, deactivated: 0, skipped, changes: [] };
   }
 
+  const { data: existingRowsData } = await supabase
+    .from("tickets")
+    .select("*")
+    .eq("source_provider", provider);
+  const existingRows = existingRowsData ?? [];
+
+  const existingByExternalId = new Map(
+    existingRows
+      .filter((row) => row.external_id)
+      .map((row) => [String(row.external_id), row] as const)
+  );
+
   let created = 0;
   let updated = 0;
   const changes: SyncChange[] = [];
-  const seenIds: string[] = [];
+  const seenIds = new Set<string>();
+  const rowsToInsert: Record<string, unknown>[] = [];
+  const rowsToUpdate: Record<string, unknown>[] = [];
 
   for (const t of validTickets) {
-    seenIds.push(t.externalId);
+    seenIds.add(t.externalId);
     const row = {
       external_id: t.externalId,
       source_provider: provider,
@@ -70,41 +84,12 @@ export async function upsertTickets(
       raw_payload: t,
     };
 
-    const { data: existing } = await supabase
-      .from("tickets")
-      .select("*")
-      .eq("source_provider", provider)
-      .eq("external_id", t.externalId)
-      .maybeSingle();
-
+    const existing = existingByExternalId.get(t.externalId);
     if (existing) {
-      const fieldChanges = diffFields(existing, row, [
-        "airline",
-        "airline_code",
-        "flight_number",
-        "from_code",
-        "from_city",
-        "to_code",
-        "to_city",
-        "sector",
-        "destination",
-        "departure_date",
-        "departure_time",
-        "arrival_time",
-        "duration",
-        "price",
-        "currency",
-        "seats_left",
-        "status",
-        "baggage",
-        "meal",
-        "trip_type",
-        "is_direct",
-        "active",
-      ]);
+      const fieldChanges = diffFields(existing, row, ticketDiffFields);
       if (Object.keys(fieldChanges).length) {
-        await supabase.from("tickets").update(row).eq("id", existing.id);
         updated++;
+        rowsToUpdate.push({ ...row, id: existing.id });
         changes.push({
           provider,
           entityType: "ticket",
@@ -115,12 +100,11 @@ export async function upsertTickets(
         });
       }
     } else {
-      const { data: inserted } = await supabase.from("tickets").insert(row).select("id").single();
       created++;
+      rowsToInsert.push({ ...row, id: randomUUID() });
       changes.push({
         provider,
         entityType: "ticket",
-        entityId: inserted?.id,
         externalId: t.externalId,
         changeType: "created",
         newValue: row,
@@ -128,39 +112,34 @@ export async function upsertTickets(
     }
   }
 
+  await batchInsert(supabase, "tickets", rowsToInsert);
+  await batchUpdate(supabase, "tickets", rowsToUpdate);
+
   let deactivated = 0;
-  if (seenIds.length && skipped === 0) {
-    const { data: activeRows } = await supabase
-      .from("tickets")
-      .select("id, external_id, status, active, seats_left, price")
-      .eq("source_provider", provider)
-      .eq("active", true);
-
-    const staleIds = (activeRows || [])
-      .filter((r) => r.external_id && !seenIds.includes(r.external_id))
-      .map((r) => r.id);
-
+  if (seenIds.size && skipped === 0) {
+    const staleRows = existingRows.filter(
+      (row) => row.active === true && row.external_id && !seenIds.has(String(row.external_id))
+    );
+    const staleIds = staleRows.map((row) => row.id);
     if (staleIds.length) {
       await supabase
         .from("tickets")
         .update({ active: false, status: "sold_out", last_updated: new Date().toISOString() })
         .in("id", staleIds);
       deactivated = staleIds.length;
-      for (const row of activeRows || []) {
-        if (staleIds.includes(row.id)) {
-          changes.push({
-            provider,
-            entityType: "ticket",
-            entityId: row.id,
-            externalId: row.external_id,
-            changeType: "deactivated",
-            fieldChanges: {
-              active: { old: row.active, new: false },
-              status: { old: row.status, new: "sold_out" },
-            },
-            oldValue: row,
-          });
-        }
+      for (const row of staleRows) {
+        changes.push({
+          provider,
+          entityType: "ticket",
+          entityId: row.id,
+          externalId: row.external_id,
+          changeType: "deactivated",
+          fieldChanges: {
+            active: { old: row.active, new: false },
+            status: { old: row.status, new: "sold_out" },
+          },
+          oldValue: row,
+        });
       }
     }
   }
@@ -172,110 +151,14 @@ export async function upsertUmrahPackages(
   rows: Record<string, unknown>[],
   provider = PROVIDER
 ): Promise<UpsertTicketsResult> {
-  const validRows = rows.filter((row) => isCompletePackageRow(row));
-  const skipped = rows.length - validRows.length;
-  const supabase = createAdminClient();
-  let created = 0;
-  let updated = 0;
-  const changes: SyncChange[] = [];
-  const seenIds: string[] = [];
-
-  for (const row of validRows) {
-    const externalId = String(row.external_id);
-    seenIds.push(externalId);
-    const { data: existing } = await supabase
-      .from("umrah_packages")
-      .select("*")
-      .eq("source_provider", provider)
-      .eq("external_id", externalId)
-      .maybeSingle();
-
-    if (existing) {
-      const fieldChanges = diffFields(existing, row, packageDiffFields);
-      if (Object.keys(fieldChanges).length) {
-        await supabase.from("umrah_packages").update(row).eq("id", existing.id);
-        updated++;
-        changes.push({
-          provider,
-          entityType: "umrah_package",
-          entityId: existing.id,
-          externalId,
-          changeType: "updated",
-          fieldChanges,
-        });
-      }
-    } else {
-      const { data: inserted } = await supabase.from("umrah_packages").insert(row).select("id").single();
-      created++;
-      changes.push({
-        provider,
-        entityType: "umrah_package",
-        entityId: inserted?.id,
-        externalId,
-        changeType: "created",
-        newValue: row,
-      });
-    }
-  }
-
-  const stale = skipped === 0 ? await deactivateStale(supabase, "umrah_packages", provider, seenIds) : { deactivated: 0, changes: [] };
-  changes.push(...stale.changes);
-  return { created, updated, deactivated: stale.deactivated, skipped, changes };
+  return upsertPackageRows("umrah_packages", "umrah_package", rows, provider);
 }
 
 export async function upsertTourPackages(
   rows: Record<string, unknown>[],
   provider = PROVIDER
 ): Promise<UpsertTicketsResult> {
-  const validRows = rows.filter((row) => isCompletePackageRow(row));
-  const skipped = rows.length - validRows.length;
-  const supabase = createAdminClient();
-  let created = 0;
-  let updated = 0;
-  const changes: SyncChange[] = [];
-  const seenIds: string[] = [];
-
-  for (const row of validRows) {
-    const externalId = String(row.external_id);
-    seenIds.push(externalId);
-    const { data: existing } = await supabase
-      .from("tour_packages")
-      .select("*")
-      .eq("source_provider", provider)
-      .eq("external_id", externalId)
-      .maybeSingle();
-
-    if (existing) {
-      const fieldChanges = diffFields(existing, row, packageDiffFields);
-      if (Object.keys(fieldChanges).length) {
-        await supabase.from("tour_packages").update(row).eq("id", existing.id);
-        updated++;
-        changes.push({
-          provider,
-          entityType: "tour_package",
-          entityId: existing.id,
-          externalId,
-          changeType: "updated",
-          fieldChanges,
-        });
-      }
-    } else {
-      const { data: inserted } = await supabase.from("tour_packages").insert(row).select("id").single();
-      created++;
-      changes.push({
-        provider,
-        entityType: "tour_package",
-        entityId: inserted?.id,
-        externalId,
-        changeType: "created",
-        newValue: row,
-      });
-    }
-  }
-
-  const stale = skipped === 0 ? await deactivateStale(supabase, "tour_packages", provider, seenIds) : { deactivated: 0, changes: [] };
-  changes.push(...stale.changes);
-  return { created, updated, deactivated: stale.deactivated, skipped, changes };
+  return upsertPackageRows("tour_packages", "tour_package", rows, provider);
 }
 
 function isCompleteTicket(ticket: NormalizedTicket): boolean {
@@ -340,6 +223,137 @@ async function deactivateStale(
       })),
   };
 }
+
+async function upsertPackageRows(
+  table: "umrah_packages" | "tour_packages",
+  entityType: "umrah_package" | "tour_package",
+  rows: Record<string, unknown>[],
+  provider: string
+): Promise<UpsertTicketsResult> {
+  const validRows = rows.filter((row) => isCompletePackageRow(row));
+  const skipped = rows.length - validRows.length;
+  const supabase = createAdminClient();
+  const { data: existingRowsData } = await supabase
+    .from(table)
+    .select("*")
+    .eq("source_provider", provider);
+  const existingRows = existingRowsData ?? [];
+
+  const existingByExternalId = new Map(
+    existingRows
+      .filter((row) => row.external_id)
+      .map((row) => [String(row.external_id), row] as const)
+  );
+
+  let created = 0;
+  let updated = 0;
+  const changes: SyncChange[] = [];
+  const seenIds = new Set<string>();
+  const rowsToUpsert: Record<string, unknown>[] = [];
+
+  for (const row of validRows) {
+    const externalId = String(row.external_id);
+    seenIds.add(externalId);
+    const existing = existingByExternalId.get(externalId);
+
+    if (existing) {
+      const fieldChanges = diffFields(existing, row, packageDiffFields);
+      if (Object.keys(fieldChanges).length) {
+        updated++;
+        rowsToUpsert.push({ ...row, id: existing.id });
+        changes.push({
+          provider,
+          entityType,
+          entityId: existing.id,
+          externalId,
+          changeType: "updated",
+          fieldChanges,
+        });
+      }
+    } else {
+      created++;
+      rowsToUpsert.push(row);
+      changes.push({
+        provider,
+        entityType,
+        externalId,
+        changeType: "created",
+        newValue: row,
+      });
+    }
+  }
+
+  await batchUpsert(supabase, table, rowsToUpsert);
+
+  const stale =
+    skipped === 0 ? await deactivateStale(supabase, table, provider, Array.from(seenIds)) : { deactivated: 0, changes: [] };
+  changes.push(...stale.changes);
+  return { created, updated, deactivated: stale.deactivated, skipped, changes };
+}
+
+async function batchInsert(
+  supabase: ReturnType<typeof createAdminClient>,
+  table: "tickets" | "umrah_packages" | "tour_packages",
+  rows: Record<string, unknown>[]
+) {
+  if (!rows.length) return;
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const { error } = await supabase.from(table).insert(batch);
+    if (error) throw error;
+  }
+}
+
+async function batchUpdate(
+  supabase: ReturnType<typeof createAdminClient>,
+  table: "tickets" | "umrah_packages" | "tour_packages",
+  rows: Record<string, unknown>[]
+) {
+  for (const row of rows) {
+    const { id, ...payload } = row;
+    if (!id) continue;
+    const { error } = await supabase.from(table).update(payload).eq("id", id);
+    if (error) throw error;
+  }
+}
+
+async function batchUpsert(
+  supabase: ReturnType<typeof createAdminClient>,
+  table: "tickets" | "umrah_packages" | "tour_packages",
+  rows: Record<string, unknown>[]
+) {
+  if (!rows.length) return;
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const { error } = await supabase.from(table).upsert(batch);
+    if (error) throw error;
+  }
+}
+
+const ticketDiffFields = [
+  "airline",
+  "airline_code",
+  "flight_number",
+  "from_code",
+  "from_city",
+  "to_code",
+  "to_city",
+  "sector",
+  "destination",
+  "departure_date",
+  "departure_time",
+  "arrival_time",
+  "duration",
+  "price",
+  "currency",
+  "seats_left",
+  "status",
+  "baggage",
+  "meal",
+  "trip_type",
+  "is_direct",
+  "active",
+];
 
 const packageDiffFields = [
   "title",

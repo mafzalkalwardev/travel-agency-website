@@ -19,7 +19,7 @@ export function TicketsPreview({ tickets }: TicketsPreviewProps) {
         <MotionSection>
           <SectionHeading
             title="Available Group Tickets"
-            subtitle="Live group fare inventory — book early for best seats"
+            subtitle="Browse live group fares and request a booking"
           />
         </MotionSection>
         <MotionStagger className="grid gap-4 md:grid-cols-2">

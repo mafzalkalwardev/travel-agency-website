@@ -63,6 +63,19 @@ export function Footer() {
                   {OFFICES.islamabad.address}
                 </p>
               </div>
+              <div>
+                <p className="font-medium text-white">{OFFICES.bannu.label}</p>
+                <p className="mt-1 flex items-start gap-2">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                  {OFFICES.bannu.address}
+                </p>
+                <a href={`tel:${OFFICES.bannu.phoneTel}`} className="mt-1 flex items-center gap-2 hover:text-gold">
+                  <Phone className="h-4 w-4 text-gold" /> {OFFICES.bannu.phone}
+                </a>
+                <a href={`tel:${OFFICES.bannu.phoneAltTel}`} className="mt-1 flex items-center gap-2 hover:text-gold">
+                  <Phone className="h-4 w-4 text-gold" /> {OFFICES.bannu.phoneAlt}
+                </a>
+              </div>
               <a href={SITE.whatsapp} className="flex items-center gap-2 hover:text-gold">
                 <MessageCircle className="h-4 w-4 text-gold" /> WhatsApp: {SITE.whatsappNumber}
               </a>

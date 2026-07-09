@@ -1,6 +1,7 @@
 import type { NormalizedTicket } from "@/lib/tickets/providers/types";
 import type { TravelLineRawFlight, TravelLineRawPackage, TravelLineRawPromo } from "./types";
 import type { TicketStatus } from "@/types";
+import { resolveAirport } from "@/lib/airport-codes";
 import { FALLBACK_IMAGES, normalizeImageUrl } from "@/lib/image-utils";
 
 /** Live response shape from GET /api/umrah-packages */
@@ -91,10 +92,12 @@ export function mapFlightToTicket(
   markupPercent = 0
 ): NormalizedTicket {
   const id = String(raw.id ?? raw.flightId ?? "");
-  const fromCode = String(raw.from ?? raw.origin ?? "").toUpperCase();
-  const toCode = String(raw.to ?? raw.destination ?? "").toUpperCase();
-  const fromCity = String(raw.fromCity ?? raw.originCity ?? fromCode);
-  const toCity = String(raw.toCity ?? raw.destinationCity ?? toCode);
+  const fromResolved = resolveAirport(String(raw.from ?? raw.origin ?? raw.fromCity ?? ""));
+  const toResolved = resolveAirport(String(raw.to ?? raw.destination ?? raw.toCity ?? ""));
+  const fromCode = fromResolved.code;
+  const toCode = toResolved.code;
+  const fromCity = String(raw.fromCity ?? raw.originCity ?? fromResolved.city);
+  const toCity = String(raw.toCity ?? raw.destinationCity ?? toResolved.city);
   const seats = Number(raw.seatsLeft ?? raw.availableSeats ?? raw.seats ?? 0);
   const price = applyMarkup(Number(raw.price ?? raw.fare ?? 0), markupPercent);
 
@@ -133,7 +136,7 @@ export function mapFlights(
     .filter((t) => t.externalId && t.date);
 }
 
-/** Extract outbound + return group flight tickets from supplier package API items */
+/** Outbound group flight tickets from supplier package API (PK → KSA/UAE, not return legs). */
 export function ticketsFromUmrahApiItems(
   items: TravelLineUmrahApiItem[],
   markupPercent = 0
@@ -141,65 +144,132 @@ export function ticketsFromUmrahApiItems(
   const tickets: NormalizedTicket[] = [];
 
   for (const item of items) {
+    if (!item.departureFlightNo || !item.departureDate) continue;
+
     const seats = Number(item.seatsAvailable ?? 0);
     const halfPrice = applyMarkup(Math.round(item.price / 2), markupPercent);
     const airline = item.airline || "Unknown";
     const code = airlineToCode(airline, item.departureFlightNo);
+    const fromResolved = resolveAirport(item.departureSectorFrom || item.fromCity);
+    const toResolved = resolveAirport(item.departureSectorTo || item.toCity);
 
-    if (item.departureFlightNo && item.departureDate) {
-      tickets.push(
-        mapFlightToTicket(
-          {
-            id: `${item.id}-out`,
-            airlineName: airline,
-            airlineCode: code,
-            flightNumber: item.departureFlightNo,
-            from: item.departureSectorFrom || item.fromCity,
-            fromCity: item.fromCity,
-            to: item.departureSectorTo || item.toCity,
-            toCity: item.toCity,
-            departureDate: item.departureDate,
-            departureTime: item.departureTime,
-            arrivalTime: item.departureArrivalTime,
-            price: halfPrice,
-            seatsLeft: seats,
-            status: item.status,
-            tripType: "umrah",
-            sector: `${item.departureSectorFrom}-${item.departureSectorTo}`,
-          },
-          0
-        )
-      );
-    }
-
-    if (item.returnFlightNo && item.returnDate) {
-      tickets.push(
-        mapFlightToTicket(
-          {
-            id: `${item.id}-ret`,
-            airlineName: airline,
-            airlineCode: code,
-            flightNumber: item.returnFlightNo,
-            from: item.returnSectorFrom || item.toCity,
-            fromCity: item.toCity,
-            to: item.returnSectorTo || item.fromCity,
-            toCity: item.fromCity,
-            departureDate: item.returnDate,
-            departureTime: item.returnDepartureTime,
-            arrivalTime: item.returnArrivalTime,
-            price: halfPrice,
-            seatsLeft: seats,
-            status: item.status,
-            tripType: "return",
-            sector: `${item.returnSectorFrom}-${item.returnSectorTo}`,
-          },
-          0
-        )
-      );
-    }
+    tickets.push(
+      mapFlightToTicket(
+        {
+          id: `${item.id}-out`,
+          airlineName: airline,
+          airlineCode: code,
+          flightNumber: item.departureFlightNo,
+          from: fromResolved.code,
+          fromCity: fromResolved.city,
+          to: toResolved.code,
+          toCity: toResolved.city,
+          departureDate: item.departureDate,
+          departureTime: item.departureTime,
+          arrivalTime: item.departureArrivalTime,
+          price: halfPrice,
+          seatsLeft: seats,
+          status: item.status,
+          tripType: "umrah",
+          sector: `${fromResolved.code}-${toResolved.code}`,
+        },
+        0
+      )
+    );
   }
 
-  return tickets.filter((t) => t.externalId && t.date);
+  return tickets
+    .filter((t) => t.externalId && t.date)
+    .sort((a, b) => b.date.localeCompare(a.date) || a.departureTime.localeCompare(b.departureTime));
+}
+
+export interface TravelLineGroupFlight {
+  _id: string;
+  availableSeats?: number;
+  groupCategory?: string;
+  fares?: { salePrice?: number; currency?: string };
+  itineraries?: Array<{
+    duration?: string;
+    segments?: Array<{
+      flightNumber?: string;
+      departure?: {
+        iataCode?: string;
+        at?: string;
+        datetime?: string;
+        airport?: { iataCode?: string; city?: string };
+      };
+      arrival?: {
+        iataCode?: string;
+        at?: string;
+        datetime?: string;
+        airport?: { iataCode?: string; city?: string };
+      };
+      duration?: string;
+      airline?: { carrierCode?: string; carrierName?: string };
+    }>;
+  }>;
+}
+
+function segmentAirport(point?: {
+  iataCode?: string;
+  at?: string;
+  datetime?: string;
+  airport?: { iataCode?: string; city?: string };
+}): { code: string; city: string; datetime: string } {
+  const airport = point?.airport;
+  const code = String(airport?.iataCode || point?.iataCode || "").toUpperCase();
+  const city = String(airport?.city || resolveAirport(code).city || code);
+  const datetime = String(point?.datetime || point?.at || "");
+  return { code, city, datetime };
+}
+
+export function ticketsFromGroupFlights(
+  flights: TravelLineGroupFlight[],
+  markupPercent = 0
+): NormalizedTicket[] {
+  const tickets: NormalizedTicket[] = [];
+
+  for (const group of flights) {
+    const segment = group.itineraries?.[0]?.segments?.[0];
+    if (!segment) continue;
+
+    const dep = segmentAirport(segment.departure);
+    const arr = segmentAirport(segment.arrival);
+    if (!dep.code || !arr.code) continue;
+
+    const seats = Number(group.availableSeats ?? 0);
+    const airline = segment.airline?.carrierName || "Unknown";
+    const flightNumber = (segment.flightNumber || "").replace(/\s+/g, " ").trim();
+    const price = applyMarkup(Number(group.fares?.salePrice ?? 0), markupPercent);
+
+    tickets.push(
+      mapFlightToTicket(
+        {
+          id: group._id,
+          airlineName: airline,
+          airlineCode: segment.airline?.carrierCode || airlineToCode(airline, flightNumber),
+          flightNumber,
+          from: dep.code,
+          fromCity: dep.city,
+          to: arr.code,
+          toCity: arr.city,
+          departureDate: dep.datetime.slice(0, 10),
+          departureTime: dep.datetime.slice(11, 16),
+          arrivalTime: arr.datetime.slice(11, 16),
+          duration: group.itineraries?.[0]?.duration || segment.duration || "",
+          price,
+          seatsLeft: seats,
+          tripType: "group",
+          sector: `${dep.code}-${arr.code}`,
+        },
+        0
+      )
+    );
+  }
+
+  return tickets
+    .filter((t) => t.externalId && t.date)
+    .sort((a, b) => b.date.localeCompare(a.date) || a.departureTime.localeCompare(b.departureTime));
 }
 
 export function mapTravelLineUmrahApiItem(item: TravelLineUmrahApiItem, markupPercent = 0) {

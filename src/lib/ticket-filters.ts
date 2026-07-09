@@ -1,11 +1,12 @@
 import type { Ticket, TicketFilters } from "@/types";
+import { cityMatchesFilter } from "@/lib/airport-codes";
 
 export function filterTickets(tickets: Ticket[], filters: TicketFilters): Ticket[] {
   let result = tickets.filter((ticket) => {
     if (filters.airline && filters.airline !== "all" && ticket.airlineCode !== filters.airline) return false;
     if (filters.sector && filters.sector !== "all" && ticket.sector !== filters.sector) return false;
-    if (filters.fromCity && filters.fromCity !== "all" && ticket.fromCity !== filters.fromCity) return false;
-    if (filters.toCity && filters.toCity !== "all" && ticket.toCity !== filters.toCity) return false;
+    if (filters.fromCity && filters.fromCity !== "all" && !cityMatchesFilter(ticket.from, ticket.fromCity, filters.fromCity)) return false;
+    if (filters.toCity && filters.toCity !== "all" && !cityMatchesFilter(ticket.to, ticket.toCity, filters.toCity)) return false;
     if (filters.destination && filters.destination !== "all" && ticket.destination !== filters.destination) return false;
     if (filters.date && ticket.date !== filters.date) return false;
     if (filters.maxPrice !== undefined && ticket.price > filters.maxPrice) return false;
@@ -17,8 +18,8 @@ export function filterTickets(tickets: Ticket[], filters: TicketFilters): Ticket
   });
 
   if (filters.sortBy === "price") result = [...result].sort((a, b) => a.price - b.price);
-  else if (filters.sortBy === "date") result = [...result].sort((a, b) => a.date.localeCompare(b.date));
   else if (filters.sortBy === "seats") result = [...result].sort((a, b) => b.seatsLeft - a.seatsLeft);
+  else result = [...result].sort((a, b) => b.date.localeCompare(a.date) || a.departureTime.localeCompare(b.departureTime));
 
   return result;
 }

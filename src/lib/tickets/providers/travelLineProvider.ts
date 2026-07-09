@@ -1,6 +1,5 @@
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
-import { ticketsFromUmrahApiItems } from "@/lib/travelline/mappers";
-import { scrapeTravelLineUmrahItems } from "@/lib/travelline/scraper";
+import { scrapeTravelLineTickets } from "@/lib/travelline/scraper";
 import { upsertTickets } from "@/lib/sync/upsert-inventory";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { NormalizedTicket, TicketProvider, TicketSyncResult } from "./types";
@@ -10,8 +9,7 @@ export class TravelLineTicketProvider implements TicketProvider {
 
   async fetchTickets(): Promise<NormalizedTicket[]> {
     if (!isTravelLineSyncEnabled()) return [];
-    const items = await scrapeTravelLineUmrahItems();
-    return ticketsFromUmrahApiItems(items);
+    return scrapeTravelLineTickets();
   }
 
   async sync(): Promise<TicketSyncResult> {

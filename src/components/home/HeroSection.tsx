@@ -22,16 +22,6 @@ export function HeroSection() {
           style={{ backgroundImage: `url(${assetPath(ASSETS.heroPoster)})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-navy/95 via-navy/80 to-royal/40" />
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster={assetPath(ASSETS.heroPoster)}
-          className="absolute inset-0 hidden h-full w-full object-cover opacity-30 md:block"
-        >
-          <source src={assetPath(ASSETS.heroVideo)} type="video/mp4" />
-        </video>
         <FloatingAircraftLayer density="medium" />
         <AnimatedFlightPath variant="hero" className="bottom-[20%] h-32 md:h-40" />
       </div>

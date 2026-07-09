@@ -255,6 +255,10 @@ class SupabaseDataProvider implements IDataProvider {
       return filterTickets(mapped, filters);
     }
 
+    if (isTravelLineSyncEnabled()) {
+      return [];
+    }
+
     return this.mock.getTickets(filters);
   }
 

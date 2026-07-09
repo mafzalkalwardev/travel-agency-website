@@ -17,6 +17,7 @@
     "discover-travelline": "node scripts/discover-travelline.js",
     "sync-scraper": "npx tsx scripts/run-travelline-scraper-sync.ts",
     "verify-live-bookings": "npx tsx scripts/verify-live-bookings.ts",
+    "demo-booking": "npx tsx scripts/demo-live-booking.ts",
     "sync-local": "node scripts/run-sync-local.js",
     "sync-now": "npx tsx scripts/run-sync-now.ts"
   },
