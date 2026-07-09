@@ -18,6 +18,7 @@ import {
   Menu,
   ClipboardList,
   BarChart3,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const links = [
   { href: "/admin/dashboard/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/flight-analytics/", label: "Flight Analytics", icon: BarChart3 },
   { href: "/admin/bookings/", label: "Bookings", icon: ClipboardList },
+  { href: "/admin/customers/", label: "Customers", icon: Users },
   { href: "/admin/inquiries/", label: "Inquiries", icon: MessageSquare },
   { href: "/admin/reviews/", label: "Reviews", icon: Star },
   { href: "/admin/tickets/", label: "Tickets", icon: Ticket },

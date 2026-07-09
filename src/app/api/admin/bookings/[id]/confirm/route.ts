@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
+import { attemptSupplierHold } from "@/lib/booking/supplier-hold";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { requireAdmin } from "@/lib/supabase/require-admin";
-import { getTravelLineClient } from "@/lib/travelline/client";
 import { isTravelLineConfigured } from "@/lib/travelline/env";
-import { TravelLineTicketProvider } from "@/lib/tickets/providers/travelLineProvider";
 
 export const maxDuration = 120;
 
+/**
+ * Retry supplier seat hold for a booking where the initial hold failed or was skipped.
+ */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -27,80 +29,56 @@ export async function POST(
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }
 
-  if (booking.status === "confirmed") {
-    return NextResponse.json({ error: "Booking already confirmed" }, { status: 400 });
+  if (booking.status === "cancelled") {
+    return NextResponse.json({ error: "Cannot hold a cancelled booking" }, { status: 400 });
   }
 
-  if (booking.status === "pending_payment") {
-    return NextResponse.json(
-      { error: "Mark payment as confirmed before booking with the supplier" },
-      { status: 400 }
-    );
+  if (booking.travelline_booking_ref && booking.supplier_hold_status === "held") {
+    return NextResponse.json({
+      success: true,
+      bookingRef: booking.travelline_booking_ref,
+      message: "Supplier hold already active",
+    });
   }
-
-  await supabase
-    .from("bookings")
-    .update({ status: "booking_in_progress", updated_at: new Date().toISOString() })
-    .eq("id", id);
 
   if (!isTravelLineConfigured()) {
-    await supabase
-      .from("bookings")
-      .update({
-        status: "failed",
-        error_message: "Supplier credentials not configured",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
     return NextResponse.json({ error: "Supplier credentials not configured" }, { status: 400 });
   }
 
-  try {
-    const client = getTravelLineClient();
-    const result = await client.createBooking({
-      externalProductId: booking.external_product_id || booking.ticket_id || booking.umrah_package_id || "",
-      productType: booking.product_type,
-      passengers: booking.passengers,
-      passengerDetails: booking.passenger_details as Record<string, unknown>,
-      quotedPrice: Number(booking.quoted_price),
-      currency: booking.currency,
-    });
-
-    if (result.success) {
-      await supabase
-        .from("bookings")
-        .update({
-          status: "confirmed",
-          travelline_booking_ref: result.bookingRef,
-          travelline_response: result.raw ?? null,
-          error_message: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-
-      const ticketProvider = new TravelLineTicketProvider();
-      await ticketProvider.sync();
-
-      return NextResponse.json({ success: true, bookingRef: result.bookingRef });
-    }
-
-    await supabase
-      .from("bookings")
-      .update({
-        status: "failed",
-        error_message: result.error,
-        travelline_response: result.raw ?? null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
-
-    return NextResponse.json({ error: result.error }, { status: 502 });
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Booking failed";
-    await supabase
-      .from("bookings")
-      .update({ status: "failed", error_message: message, updated_at: new Date().toISOString() })
-      .eq("id", id);
-    return NextResponse.json({ error: message }, { status: 500 });
+  let externalProductId = booking.external_product_id;
+  if (!externalProductId && booking.ticket_id) {
+    const { data: ticket } = await supabase
+      .from("tickets")
+      .select("external_id")
+      .eq("id", booking.ticket_id)
+      .maybeSingle();
+    externalProductId = ticket?.external_id ?? null;
   }
+  if (!externalProductId && booking.umrah_package_id) {
+    const { data: pkg } = await supabase
+      .from("umrah_packages")
+      .select("external_id")
+      .eq("id", booking.umrah_package_id)
+      .maybeSingle();
+    externalProductId = pkg?.external_id ?? null;
+  }
+
+  if (!externalProductId) {
+    return NextResponse.json({ error: "No supplier product ID on this booking" }, { status: 400 });
+  }
+
+  const hold = await attemptSupplierHold(booking.id, {
+    externalProductId,
+    productType: booking.product_type,
+    passengers: booking.passengers,
+    passengerDetails: booking.passenger_details as Record<string, unknown>,
+    quotedPrice: Number(booking.quoted_price),
+    currency: booking.currency,
+  });
+
+  if (hold.held) {
+    return NextResponse.json({ success: true, bookingRef: hold.bookingRef });
+  }
+
+  return NextResponse.json({ error: hold.error || "Supplier hold failed" }, { status: 502 });
 }

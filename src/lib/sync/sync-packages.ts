@@ -1,6 +1,12 @@
-import { getTravelLineClient } from "@/lib/travelline/client";
+import { getTravelLineConfig } from "@/lib/travelline/env";
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
-import { mapPromoToAnnouncement, mapPromoToFlyer } from "@/lib/travelline/mappers";
+import {
+  announcementsFromUmrahItems,
+  mapTravelLineUmrahApiItem,
+  mapPromoToAnnouncement,
+  mapPromoToFlyer,
+} from "@/lib/travelline/mappers";
+import { scrapeTravelLineUmrahItems } from "@/lib/travelline/scraper";
 import {
   upsertPromos,
   upsertTourPackages,
@@ -41,8 +47,16 @@ export async function syncTravelLinePackages(): Promise<PackageSyncResult> {
   }
 
   try {
-    const client = getTravelLineClient();
-    const { umrah, tours, promos } = await client.fetchPackages();
+    const { markupPercent } = getTravelLineConfig();
+    const items = await scrapeTravelLineUmrahItems();
+    const umrah = items.map((item) => mapTravelLineUmrahApiItem(item, markupPercent));
+    const tours: Record<string, unknown>[] = [];
+    const promos = announcementsFromUmrahItems(items).map((a) => ({
+      id: a.source_external_id,
+      title: a.message,
+      message: a.message,
+      active: a.active,
+    }));
     const umrahRows = await verifyPackageImages(umrah as Record<string, unknown>[], "umrah");
     const tourRows = await verifyPackageImages(tours as Record<string, unknown>[], "tour");
 

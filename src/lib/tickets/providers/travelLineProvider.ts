@@ -1,5 +1,6 @@
-import { getTravelLineClient } from "@/lib/travelline/client";
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
+import { ticketsFromUmrahApiItems } from "@/lib/travelline/mappers";
+import { scrapeTravelLineUmrahItems } from "@/lib/travelline/scraper";
 import { upsertTickets } from "@/lib/sync/upsert-inventory";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { NormalizedTicket, TicketProvider, TicketSyncResult } from "./types";
@@ -9,9 +10,8 @@ export class TravelLineTicketProvider implements TicketProvider {
 
   async fetchTickets(): Promise<NormalizedTicket[]> {
     if (!isTravelLineSyncEnabled()) return [];
-    const client = getTravelLineClient();
-    const { tickets } = await client.fetchTickets();
-    return tickets;
+    const items = await scrapeTravelLineUmrahItems();
+    return ticketsFromUmrahApiItems(items);
   }
 
   async sync(): Promise<TicketSyncResult> {
@@ -52,8 +52,8 @@ export class TravelLineTicketProvider implements TicketProvider {
         ticketsDeactivated: deactivated,
         changes,
         message: tickets.length
-          ? `Synced ${tickets.length} tickets from supplier (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped)`
-          : "No tickets returned — check API paths or enable TRAVELLINE_USE_PLAYWRIGHT",
+          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped)`
+          : "No tickets returned from Travel Line scraper",
       };
     } catch (e) {
       return {

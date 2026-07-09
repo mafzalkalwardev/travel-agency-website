@@ -13,9 +13,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { getApprovalMessage } from "@/lib/customer-approval";
 import { SITE } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
-import { whatsappLink } from "@/lib/whatsapp";
+import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { BookingProductType } from "@/types";
 
@@ -49,9 +50,8 @@ export function BookRequestSheet({
   const [loading, setLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<"pending" | "approved" | "rejected" | null>(null);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-  const [bookingRef, setBookingRef] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -81,11 +81,13 @@ export function BookRequestSheet({
 
       const { data: profile } = await supabase
         .from("customer_profiles")
-        .select("full_name, phone, email")
+        .select("full_name, phone, email, approval_status")
         .eq("id", user.id)
         .maybeSingle();
 
       if (!active) return;
+
+      setApprovalStatus((profile?.approval_status as "pending" | "approved" | "rejected" | undefined) || "pending");
 
       setForm((current) => ({
         ...current,
@@ -133,17 +135,30 @@ export function BookRequestSheet({
         window.location.href = `/account/login/?next=${encodeURIComponent(nextPath)}`;
         return;
       }
+      if (res.status === 403) {
+        throw new Error(json.error || "Your account is awaiting approval.");
+      }
       if (!res.ok) throw new Error(json.error || "Request failed");
-      setBookingRef(json.bookingRef || "");
-      setDone(true);
+      const ref = json.bookingRef || "";
+
+      const waMsg = buildBookingWhatsAppMessage({
+        bookingRef: ref,
+        productTitle,
+        customerName: form.name,
+        customerPhone: form.phone,
+        passengers: Number(form.passengers) || 1,
+        quotedPrice,
+        currency,
+        supplierRef: json.supplierRef || undefined,
+      });
+      window.location.href = whatsappLink(waMsg);
+      return;
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Could not submit booking request.");
     } finally {
       setLoading(false);
     }
   }
-
-  const whatsappMsg = `Hello ${SITE.name}, I submitted booking request${bookingRef ? ` #${bookingRef.slice(0, 8)}` : ""} for:\n${productTitle}\nPrice: ${quotedPrice} ${currency}\nName: ${form.name}\nPhone: ${form.phone}`;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -183,29 +198,28 @@ export function BookRequestSheet({
               Sign In
             </Link>
           </div>
-        ) : done ? (
-          <div className="mt-6 space-y-4 text-center">
-            <p className="font-medium text-navy">Request received!</p>
-            <p className="text-sm text-muted-foreground">
-              Reference: <strong>{bookingRef.slice(0, 8).toUpperCase()}</strong>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              This request is saved in My Trips. Our team will contact you shortly to confirm payment and complete your booking.
-            </p>
+        ) : approvalStatus !== "approved" ? (
+          <div className="mt-6 space-y-4">
+            <div className="rounded-lg bg-secondary/50 p-3 text-sm">
+              <p className="font-medium text-navy">{productTitle}</p>
+              <p className="font-bold text-gold">
+                {quotedPrice.toLocaleString()} {currency}
+              </p>
+            </div>
+            <div className="rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-muted-foreground">
+              {getApprovalMessage(approvalStatus || "pending")}
+            </div>
+            <Link href="/account/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
+              Open My Trips
+            </Link>
             <a
-              href={whatsappLink(whatsappMsg)}
+              href={SITE.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(buttonVariants({ size: "default" }), "inline-flex w-full bg-gold text-navy hover:bg-gold-light")}
+              className={cn(buttonVariants({ variant: "primaryGold" }), "w-full")}
             >
-              Continue on WhatsApp
+              Contact on WhatsApp
             </a>
-            <Link href="/account/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
-              View My Trips
-            </Link>
-            <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
-              Close
-            </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">

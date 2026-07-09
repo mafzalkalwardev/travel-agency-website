@@ -135,6 +135,10 @@ export interface CustomerProfile {
   email: string;
   full_name?: string | null;
   phone?: string | null;
+  approval_status: "pending" | "approved" | "rejected";
+  approved_at?: string | null;
+  approved_by?: string | null;
+  approval_notes?: string | null;
   nationality?: string | null;
   passport_number?: string | null;
   date_of_birth?: string | null;
@@ -204,6 +208,8 @@ export type BookingStatus =
 
 export type BookingProductType = "ticket" | "umrah" | "tour";
 
+export type SupplierHoldStatus = "held" | "failed" | "pending";
+
 export interface Booking {
   id: string;
   status: BookingStatus;
@@ -222,6 +228,10 @@ export interface Booking {
   quoted_price: number;
   currency: string;
   travelline_booking_ref?: string;
+  supplier_hold_status?: SupplierHoldStatus | null;
+  supplier_hold_error?: string;
+  supplier_hold_attempts?: number;
+  notifications_sent_at?: string;
   admin_notes?: string;
   error_message?: string;
   source_page?: string;

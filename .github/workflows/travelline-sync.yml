@@ -1,22 +1,37 @@
-name: TravelLine Sync
+name: TravelLine Scraper Sync
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Sync tickets
-        run: |
-          curl --fail --show-error --silent \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://al-qibla-air-services.vercel.app/api/cron/sync-tickets/"
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Sync packages
-        run: |
-          curl --fail --show-error --silent \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://al-qibla-air-services.vercel.app/api/cron/sync-packages/"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Scrape and sync inventory
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TRAVELLINE_BASE_URL: ${{ secrets.TRAVELLINE_BASE_URL }}
+          TRAVELLINE_ADMIN_URL: ${{ secrets.TRAVELLINE_ADMIN_URL }}
+          TRAVELLINE_AGENT_USERNAME: ${{ secrets.TRAVELLINE_AGENT_USERNAME }}
+          TRAVELLINE_AGENT_PASSWORD: ${{ secrets.TRAVELLINE_AGENT_PASSWORD }}
+          TRAVELLINE_SYNC_ENABLED: "true"
+          TRAVELLINE_PRICE_MARKUP_PERCENT: ${{ vars.TRAVELLINE_PRICE_MARKUP_PERCENT || '0' }}
+        run: npm run sync-scraper

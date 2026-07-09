@@ -15,6 +15,8 @@
     "check-db": "node scripts/check-db.js",
     "apply-migration": "node scripts/apply-migration.js",
     "discover-travelline": "node scripts/discover-travelline.js",
+    "sync-scraper": "npx tsx scripts/run-travelline-scraper-sync.ts",
+    "verify-live-bookings": "npx tsx scripts/verify-live-bookings.ts",
     "sync-local": "node scripts/run-sync-local.js",
     "sync-now": "npx tsx scripts/run-sync-now.ts"
   },
@@ -31,6 +33,7 @@
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "resend": "^6.17.2",
     "shadcn": "^4.11.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",

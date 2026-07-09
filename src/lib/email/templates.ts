@@ -1,0 +1,118 @@
+import { SITE } from "@/lib/constants";
+
+export interface BookingEmailData {
+  id: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone: string;
+  productTitle: string;
+  passengers: number;
+  quotedPrice: number;
+  currency: string;
+  supplierRef?: string;
+  supplierHoldFailed?: boolean;
+}
+
+function formatPrice(price: number, currency: string) {
+  return `${price.toLocaleString()} ${currency}`;
+}
+
+function layout(title: string, body: string) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>${title}</title></head>
+<body style="font-family:Arial,sans-serif;line-height:1.6;color:#1a2744;max-width:600px;margin:0 auto;padding:24px">
+  <div style="border-bottom:3px solid #c9a227;padding-bottom:12px;margin-bottom:24px">
+    <strong style="font-size:18px">${SITE.name}</strong>
+    <div style="color:#666;font-size:13px">${SITE.tagline}</div>
+  </div>
+  ${body}
+  <p style="margin-top:32px;font-size:12px;color:#888">${SITE.name} · ${SITE.whatsappNumber}</p>
+</body>
+</html>`;
+}
+
+export function bookingReceivedCustomerHtml(data: BookingEmailData) {
+  const ref = data.id.slice(0, 8).toUpperCase();
+  const holdNote = data.supplierHoldFailed
+    ? "<p>Our team is securing your seats and will confirm shortly on WhatsApp.</p>"
+    : data.supplierRef
+      ? `<p><strong>Supplier reference:</strong> ${data.supplierRef}</p><p>Your seats are held. Complete payment on WhatsApp to confirm.</p>`
+      : "<p>Our team will contact you on WhatsApp to complete payment.</p>";
+
+  return layout(
+    "Booking Request Received",
+    `<h2 style="color:#1a2744">Booking request received</h2>
+    <p>Hello ${data.customerName},</p>
+    <p>Thank you for booking with ${SITE.name}. Your reference is <strong>${ref}</strong>.</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Product</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${data.productTitle}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Passengers</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${data.passengers}</td></tr>
+      <tr><td style="padding:8px 0"><strong>Total</strong></td><td style="padding:8px 0">${formatPrice(data.quotedPrice, data.currency)}</td></tr>
+    </table>
+    ${holdNote}
+    <p><strong>Next step:</strong> Send your payment screenshot on WhatsApp at ${SITE.whatsappNumber}.</p>
+    <p>Track your booking anytime from your account at <a href="${SITE.url}/account/">My Trips</a>.</p>`
+  );
+}
+
+export function bookingReceivedAdminHtml(data: BookingEmailData) {
+  const ref = data.id.slice(0, 8).toUpperCase();
+  const adminUrl = `${SITE.url}/admin/bookings/`;
+
+  return layout(
+    "New Booking Alert",
+    `<h2 style="color:#c0392b">New booking requires action</h2>
+    <p><strong>Reference:</strong> ${ref}</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Customer</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${data.customerName}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Phone</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${data.customerPhone}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Email</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${data.customerEmail || "—"}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Product</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${data.productTitle}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Passengers</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${data.passengers}</td></tr>
+      <tr><td style="padding:8px 0"><strong>Total</strong></td><td style="padding:8px 0">${formatPrice(data.quotedPrice, data.currency)}</td></tr>
+    </table>
+    ${data.supplierRef ? `<p><strong>Supplier hold ref:</strong> ${data.supplierRef}</p>` : ""}
+    ${data.supplierHoldFailed ? `<p style="color:#c0392b"><strong>Supplier hold failed</strong> — retry from admin panel.</p>` : ""}
+    <p><a href="${adminUrl}" style="display:inline-block;background:#1a2744;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px">Open Admin Bookings</a></p>`
+  );
+}
+
+export function paymentConfirmedCustomerHtml(data: BookingEmailData) {
+  const ref = data.id.slice(0, 8).toUpperCase();
+  return layout(
+    "Payment Confirmed",
+    `<h2 style="color:#1a2744">Payment confirmed</h2>
+    <p>Hello ${data.customerName},</p>
+    <p>We have received your payment for booking <strong>${ref}</strong>.</p>
+    <p><strong>${data.productTitle}</strong> — ${formatPrice(data.quotedPrice, data.currency)}</p>
+    ${data.supplierRef ? `<p>Supplier reference: <strong>${data.supplierRef}</strong></p>` : ""}
+    <p>Your booking is confirmed. We will share ticket details on WhatsApp shortly.</p>`
+  );
+}
+
+export function paymentConfirmedAdminHtml(data: BookingEmailData) {
+  const ref = data.id.slice(0, 8).toUpperCase();
+  return layout(
+    "Payment Confirmed",
+    `<h2>Payment confirmed — booking ${ref}</h2>
+    <p><strong>${data.customerName}</strong> (${data.customerPhone}) paid for ${data.productTitle}.</p>
+    <p>Amount: ${formatPrice(data.quotedPrice, data.currency)}</p>
+    ${data.supplierRef ? `<p>Supplier ref: ${data.supplierRef}</p>` : ""}`
+  );
+}
+
+export function stuckBookingReminderAdminHtml(bookings: BookingEmailData[]) {
+  const rows = bookings
+    .map(
+      (b) =>
+        `<li>${b.id.slice(0, 8).toUpperCase()} — ${b.customerName} — ${b.productTitle} — ${formatPrice(b.quotedPrice, b.currency)}</li>`
+    )
+    .join("");
+  return layout(
+    "Pending Payment Reminder",
+    `<h2>Bookings awaiting WhatsApp payment (24h+)</h2>
+    <ul>${rows}</ul>
+    <p><a href="${SITE.url}/admin/bookings/">Review in admin panel</a></p>`
+  );
+}

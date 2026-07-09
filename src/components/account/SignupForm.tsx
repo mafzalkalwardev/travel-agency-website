@@ -55,6 +55,7 @@ export function SignupForm({ nextPath }: SignupFormProps) {
         email: form.email,
         full_name: form.fullName,
         phone: form.phone,
+        approval_status: "pending",
       });
       router.push(nextPath || "/account/");
       router.refresh();
@@ -62,7 +63,7 @@ export function SignupForm({ nextPath }: SignupFormProps) {
     }
 
     setStatus("success");
-    setMessage("Account created. Check your email to confirm your account, then sign in to continue booking.");
+    setMessage("Account created. Check your email to confirm your account, then sign in. An admin must approve your account before you can place bookings.");
     setLoading(false);
   }
 

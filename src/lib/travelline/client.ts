@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { getTravelLineConfig } from "./env";
 import {
   loadSession,
@@ -19,16 +20,68 @@ import type {
   TravelLinePackageFetchResult,
   TravelLineSession,
 } from "./types";
+import { resolveTravelLinePackageId } from "./resolve-package-id";
+import { loginTravelLineViaPlaywright } from "./playwright-auth";
+
+const UMRANH_PACKAGES_PATH = "/api/umrah-packages";
+const BOOKING_PATH = "/api/booking";
+
+function collectSetCookies(headers: Headers): string[] {
+  if (typeof headers.getSetCookie === "function") {
+    return headers.getSetCookie();
+  }
+  const raw = headers.get("set-cookie");
+  return raw ? [raw] : [];
+}
+
+function cookiesFromSetCookieHeaders(headers: string[]): TravelLineSession["cookies"] {
+  const parsed: TravelLineSession["cookies"] = [];
+  for (const header of headers) {
+    parsed.push(...parseSetCookieHeaders(header));
+  }
+  return parsed;
+}
+
+function hasSessionToken(session: TravelLineSession): boolean {
+  return session.cookies.some((cookie) => cookie.name.includes("session-token"));
+}
+
+interface SessionUser {
+  companyId?: string;
+  agentName?: string;
+  phoneNumber?: string;
+}
+
+function buildPassenger(details: Record<string, unknown>) {
+  const names = String(details.names || "Al Qibla Test");
+  const parts = names.trim().split(/\s+/);
+  const givenName = parts.slice(0, -1).join(" ") || parts[0] || "Al Qibla";
+  const surname = parts.length > 1 ? parts[parts.length - 1] : "Test";
+
+  return {
+    id: randomUUID(),
+    givenName: givenName.toUpperCase(),
+    surname: surname.toUpperCase(),
+    dob: String(details.dob || "1990-01-01"),
+    passportNo: String(details.passportNo || "AB1234567"),
+    nationality: String(details.nationality || "PK"),
+    passportDOE: String(details.passportDOE || "2030-01-01"),
+    type: "adult",
+    title: "MR",
+    passengerId: randomUUID(),
+    remarks: String(details.remarks || "00"),
+  };
+}
 
 export class TravelLineClient {
   private config = getTravelLineConfig();
   private session: TravelLineSession | null = null;
+  private sessionUser: SessionUser | null = null;
   private umrahCache: TravelLineUmrahApiItem[] | null = null;
 
-  /** Public API — no auth required */
   async fetchUmrahApiItems(): Promise<TravelLineUmrahApiItem[]> {
     if (this.umrahCache) return this.umrahCache;
-    const res = await fetch(`${this.config.baseUrl}/api/umrah-packages`, {
+    const res = await fetch(`${this.config.baseUrl}${UMRANH_PACKAGES_PATH}`, {
       headers: { Accept: "application/json" },
       next: { revalidate: 0 },
     });
@@ -56,13 +109,53 @@ export class TravelLineClient {
     return { umrah, tours: [], promos };
   }
 
+  private async validateSession(session: TravelLineSession, base: string): Promise<SessionUser | null> {
+    if (!hasSessionToken(session)) return null;
+    try {
+      const res = await fetch(`${base}/api/auth/session`, {
+        headers: {
+          Accept: "application/json",
+          Cookie: sessionToCookieHeader(session),
+        },
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { user?: SessionUser };
+      return data.user || null;
+    } catch {
+      return null;
+    }
+  }
+
   async ensureSession(): Promise<TravelLineSession | null> {
     try {
-      if (this.session) return this.session;
-      this.session = await loadSession();
-      if (this.session) return this.session;
+      if (this.session && hasSessionToken(this.session)) {
+        const user = await this.validateSession(this.session, this.config.baseUrl);
+        if (user) {
+          this.sessionUser = user;
+          return this.session;
+        }
+        this.session = null;
+        this.sessionUser = null;
+      }
+
+      const cached = await loadSession();
+      if (cached && hasSessionToken(cached)) {
+        const user = await this.validateSession(cached, this.config.baseUrl);
+        if (user) {
+          this.session = cached;
+          this.sessionUser = user;
+          return this.session;
+        }
+      }
+
       this.session = await this.loginNextAuth();
-      if (this.session) await saveSession(this.session);
+      if (!this.session) {
+        this.session = await loginTravelLineViaPlaywright();
+      }
+      if (this.session) {
+        this.sessionUser = await this.validateSession(this.session, this.config.baseUrl);
+        await saveSession(this.session);
+      }
       return this.session;
     } catch {
       return null;
@@ -70,21 +163,24 @@ export class TravelLineClient {
   }
 
   private async loginNextAuth(): Promise<TravelLineSession | null> {
-    const { adminUrl, username, password } = this.config;
+    const { username, password } = this.config;
 
-    for (const base of [adminUrl, this.config.baseUrl]) {
+    for (const base of [this.config.baseUrl, this.config.adminUrl]) {
       try {
         const csrfRes = await fetch(`${base}/api/auth/csrf`);
         if (!csrfRes.ok) continue;
         const { csrfToken } = (await csrfRes.json()) as { csrfToken: string };
-        const csrfCookies = csrfRes.headers.getSetCookie?.() || [];
+        const csrfCookies = collectSetCookies(csrfRes.headers);
 
         const fields: Record<string, string> = {
           csrfToken,
           callbackUrl: `${base}/`,
           json: "true",
+          phoneNumber: username,
           phone: username,
           password,
+          username,
+          email: username,
         };
 
         const loginRes = await fetch(`${base}/api/auth/callback/credentials`, {
@@ -98,11 +194,15 @@ export class TravelLineClient {
         });
 
         const cookies = mergeCookies(
-          parseSetCookieHeaders(csrfCookies.join(", ")),
-          parseSetCookieHeaders(loginRes.headers.get("set-cookie"))
+          cookiesFromSetCookieHeaders(csrfCookies),
+          cookiesFromSetCookieHeaders(collectSetCookies(loginRes.headers))
         );
 
-        if (cookies.length && loginRes.status < 400) {
+        if (hasSessionToken({ cookies }) && loginRes.status < 400) {
+          const body = await loginRes.text().catch(() => "");
+          if (body.includes("Authentication failed") || body.includes("error=Authentication")) {
+            continue;
+          }
           return {
             cookies,
             expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
@@ -115,52 +215,130 @@ export class TravelLineClient {
     return null;
   }
 
+  private async resolveGroupId(externalProductId: string): Promise<string | null> {
+    const packageId = resolveTravelLinePackageId(externalProductId);
+    const items = await this.fetchUmrahApiItems();
+    const pkg = items.find((item) => item.id === packageId);
+    if (!pkg) return null;
+
+    const session = await this.ensureSession();
+    if (!session) return null;
+
+    const groupsRes = await fetch(
+      `${this.config.baseUrl}/api/groups?category=${encodeURIComponent("Umrah Groups")}`,
+      {
+        headers: {
+          Accept: "application/json",
+          Cookie: sessionToCookieHeader(session),
+        },
+      }
+    );
+    if (!groupsRes.ok) return null;
+    const groups = (await groupsRes.json()) as {
+      flights?: Array<{ _id: string; groupPnr?: string; itineraries?: Array<{ segments?: Array<{ flightNumber?: string }> }> }>;
+    };
+
+    const match = groups.flights?.find((flight) => {
+      const flightNo = flight.itineraries?.[0]?.segments?.[0]?.flightNumber?.replace(/\s+/g, "");
+      const pkgFlight = pkg.departureFlightNo?.replace(/\s+/g, "");
+      return flightNo && pkgFlight && flightNo === pkgFlight;
+    });
+
+    return match?._id || null;
+  }
+
   async createBooking(input: TravelLineBookingInput): Promise<TravelLineBookingResult> {
     const session = await this.ensureSession();
-    if (!session) {
+    if (!session || !this.sessionUser?.companyId) {
       return {
         success: false,
-        error:
-          "Supplier login unavailable - booking saved locally; retry from admin",
+        error: "Supplier login unavailable - booking saved locally; retry from admin",
       };
     }
 
-    const paths = ["/api/bookings", "/api/bookings/create"];
-    for (const path of paths) {
-      try {
-        const res = await fetch(`${this.config.adminUrl}${path}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Cookie: sessionToCookieHeader(session),
-          },
-          body: JSON.stringify({
-            packageId: input.externalProductId,
-            productType: input.productType,
-            passengers: input.passengers,
-            passengerDetails: input.passengerDetails,
-            price: input.quotedPrice,
-            currency: input.currency,
-          }),
-        });
-        const json = await res.json().catch(() => ({}));
-        if (res.ok) {
+    const packageId = resolveTravelLinePackageId(input.externalProductId);
+    let groupId = await this.resolveGroupId(input.externalProductId);
+
+    if (!groupId) {
+      const items = await this.fetchUmrahApiItems();
+      const pkg = items.find((item) => item.id === packageId);
+      if (pkg?.slug) {
+        const umrahPayload = {
+          adult: input.passengers,
+          child: 0,
+          infant: 0,
+          pricingOption: "sharing",
+          agentContactNumber: this.config.username,
+          reservedBy: this.sessionUser.agentName || "Al Qibla Agent",
+          passengers: Array.from({ length: input.passengers }, () =>
+            buildPassenger(input.passengerDetails)
+          ),
+        };
+
+        const umrahRes = await fetch(
+          `${this.config.baseUrl}/api/umrah-packages/${pkg.slug}/book`,
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Cookie: sessionToCookieHeader(session),
+            },
+            body: JSON.stringify(umrahPayload),
+          }
+        );
+        const umrahJson = await umrahRes.json().catch(() => ({}));
+        if (umrahRes.ok) {
           const ref =
-            (json as Record<string, unknown>).bookingRef ||
-            (json as Record<string, unknown>).id ||
-            `TL-${input.externalProductId}`;
-          return { success: true, bookingRef: String(ref), raw: json };
+            (umrahJson as Record<string, unknown>).orderId ||
+            (umrahJson as Record<string, unknown>).bookingRef ||
+            (umrahJson as Record<string, unknown>)._id ||
+            `TL-${packageId}`;
+          return { success: true, bookingRef: String(ref), raw: umrahJson };
         }
-      } catch {
-        /* next */
       }
+
+      return {
+        success: false,
+        error: "Could not resolve Travel Line group flight for booking",
+      };
     }
 
-    return {
-      success: false,
-      error: "Supplier booking API not available - retry from admin",
+    const payload = {
+      companyId: this.sessionUser.companyId,
+      agentContactNumber: this.config.username,
+      reservedBy: this.sessionUser.agentName || "Al Qibla Agent",
+      groupId,
+      passengers: Array.from({ length: input.passengers }, () =>
+        buildPassenger(input.passengerDetails)
+      ),
     };
+
+    const res = await fetch(`${this.config.baseUrl}${BOOKING_PATH}`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Cookie: sessionToCookieHeader(session),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await res.json().catch(() => ({}));
+    if (res.ok) {
+      const ref =
+        (json as Record<string, unknown>).orderId ||
+        (json as Record<string, unknown>).bookingRef ||
+        (json as Record<string, unknown>)._id ||
+        `TL-${groupId}`;
+      return { success: true, bookingRef: String(ref), raw: json };
+    }
+
+    const errMsg =
+      (json as Record<string, unknown>).message ||
+      (json as Record<string, unknown>).error ||
+      `Supplier returned ${res.status}`;
+    return { success: false, error: String(errMsg), raw: json };
   }
 }
 

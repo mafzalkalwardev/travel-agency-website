@@ -61,10 +61,24 @@ When HTTP APIs return empty/404, the client falls back to Playwright DOM extract
 
 ## Booking flow
 
-1. Customer submits booking request → `bookings.status = pending_payment`
-2. Admin confirms payment offline
-3. `POST /api/admin/bookings/[id]/confirm` → `TravelLineClient.createBooking()`
-4. On success: `confirmed` + `travelline_booking_ref`
+1. Customer submits booking (authenticated) → `bookings.status = pending_payment`
+2. System immediately attempts supplier seat hold via `TravelLineClient.createBooking()` (NextAuth session on public agent portal)
+3. On hold success: `supplier_hold_status = held`, `travelline_booking_ref` stored; status stays `pending_payment`
+4. Customer + admin receive transactional emails (Resend); customer auto-redirected to WhatsApp for payment
+5. Admin confirms payment after WhatsApp → `PATCH /api/admin/bookings/[id]` sets `confirmed` when hold is active
+6. Failed holds: `supplier_hold_status = failed` — admin retries via `POST /api/admin/bookings/[id]/confirm` or cron `/api/cron/retry-booking-holds`
+
+### Verified endpoints (discovery)
+
+| Endpoint | Auth | Status |
+|----------|------|--------|
+| `GET /api/umrah-packages` | None | 200 — primary inventory feed |
+| `GET /api/groups?category=...` | Session | 200 — group flight inventory |
+| `POST /api/auth/callback/credentials` | CSRF + `phoneNumber` | NextAuth login for booking |
+| `POST /api/booking` | Session cookie | Group flight hold placement (verified) |
+| `POST /api/umrah-packages/{slug}/book` | Session cookie | Umrah package hold (requires full passenger payload) |
+
+Ticket external IDs use `-out`/`-ret` suffixes; booking API receives base package id via `resolveTravelLinePackageId()`.
 
 ## Local discovery
 

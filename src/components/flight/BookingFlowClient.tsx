@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Check, Loader2, Mail, MessageCircle } from "lucide-react";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SeatMap } from "@/components/flight/SeatMap";
 import { bookingAddOns, mockFlights } from "@/data/flight-booking";
+import { canCustomerBook, getApprovalMessage } from "@/lib/customer-approval";
 import {
   formatCurrency,
   formatDateTime,
@@ -17,7 +18,8 @@ import {
   validatePassengerDetails,
 } from "@/lib/flight-booking";
 import { SITE } from "@/lib/constants";
-import { whatsappLink } from "@/lib/whatsapp";
+import { createClient } from "@/lib/supabase/client";
+import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { BookingAddOn, PassengerDetails, Seat } from "@/types/flight-booking";
 
@@ -30,6 +32,7 @@ interface BookingFlowClientProps {
 export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
   const flight = mockFlights.find((item) => item.id === flightId) || mockFlights[0];
   const [step, setStep] = useState(0);
+  const [accountState, setAccountState] = useState<"checking" | "signed_out" | "pending" | "approved" | "rejected">("checking");
   const [selectedSeat, setSelectedSeat] = useState<Seat | undefined>();
   const [selectedAddOns, setSelectedAddOns] = useState<BookingAddOn[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -50,6 +53,32 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
     () => flight.price + (selectedSeat?.price || 0) + selectedAddOns.reduce((sum, addOn) => sum + addOn.price, 0),
     [flight.price, selectedAddOns, selectedSeat]
   );
+
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!active) return;
+      if (!data.user) {
+        setAccountState("signed_out");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("customer_profiles")
+        .select("approval_status")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (!active) return;
+      setAccountState((profile?.approval_status as typeof accountState) || "pending");
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function next() {
     if (step === 1) {
@@ -76,6 +105,14 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
 
     try {
       setProcessing(true);
+      if (accountState === "signed_out") {
+        window.location.href = "/account/login/?next=/flight-booking/book/";
+        return;
+      }
+      const approvalStatus = accountState === "checking" ? "pending" : accountState;
+      if (!canCustomerBook(approvalStatus)) {
+        throw new Error(getApprovalMessage(approvalStatus));
+      }
       const addOnSummary = selectedAddOns.length
         ? selectedAddOns.map((addOn) => `${addOn.title} (${formatCurrency(addOn.price, flight.currency)})`).join(", ")
         : "None";
@@ -105,9 +142,25 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
         }),
       });
       const json = await res.json();
+      if (res.status === 401) {
+        window.location.href = "/account/login/?next=/flight-booking/book/";
+        return;
+      }
       if (!res.ok) throw new Error(json.error || "Could not submit booking request");
-      setBookingRef(json.bookingRef || "");
-      setStep(5);
+      const ref = json.bookingRef || "";
+      setBookingRef(ref);
+      const waMsg = buildBookingWhatsAppMessage({
+        bookingRef: ref,
+        productTitle: `${flight.airline} ${flight.flightNumber} - ${flight.from} to ${flight.to}`,
+        customerName: `${passenger.firstName} ${passenger.lastName}`.trim(),
+        customerPhone: passenger.phone,
+        passengers: 1,
+        quotedPrice: total,
+        currency: flight.currency,
+        supplierRef: json.supplierRef || undefined,
+      });
+      window.location.href = whatsappLink(waMsg);
+      return;
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Could not submit booking request");
     } finally {
@@ -129,6 +182,13 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
         <div className="container-wide">
           <p className="text-sm uppercase tracking-wider text-sky-200">Secure booking</p>
           <h1 className="mt-2 font-heading text-4xl font-bold">Complete your flight booking</h1>
+          <p className="mt-3 max-w-3xl text-sm text-white/75">
+            {accountState === "checking"
+              ? "Checking customer account access..."
+              : accountState === "signed_out"
+                ? "Sign in to submit this booking request."
+                : getApprovalMessage(accountState)}
+          </p>
           <div className="mt-6 grid gap-2 sm:grid-cols-6">
             {steps.map((label, index) => (
               <div key={label} className="flex items-center gap-2">

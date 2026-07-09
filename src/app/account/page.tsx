@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { SignOutButton } from "@/components/account/SignOutButton";
+import { getApprovalMessage } from "@/lib/customer-approval";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createPageMetadata } from "@/lib/metadata";
@@ -64,6 +65,7 @@ export default async function AccountPage() {
         email: user.email || "",
         full_name: String(user.user_metadata?.full_name || ""),
         phone: String(user.user_metadata?.phone || ""),
+        approval_status: "pending",
       })
       .select("*")
       .single();
@@ -80,6 +82,13 @@ export default async function AccountPage() {
 
   const safeProfile = profile as CustomerProfile;
   const customerBookings = (bookings || []) as Booking[];
+  const approvalStatus = safeProfile.approval_status || "pending";
+  const approvalTone =
+    approvalStatus === "approved"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : approvalStatus === "rejected"
+        ? "border-red-accent/30 bg-red-accent/10 text-red-accent"
+        : "border-gold/30 bg-gold/10 text-navy";
 
   return (
     <section className="bg-slate-50 py-10">
@@ -98,6 +107,20 @@ export default async function AccountPage() {
           <Metric icon={<CalendarDays className="h-5 w-5" />} label="Pending" value={customerBookings.filter((b) => b.status === "pending_payment").length} />
           <Metric icon={<CircleDollarSign className="h-5 w-5" />} label="Confirmed" value={customerBookings.filter((b) => b.status === "confirmed").length} />
         </div>
+
+        <Card className={`${approvalTone}`}>
+          <CardContent className="p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide">Approval Status</p>
+                <p className="mt-1 font-medium">{getApprovalMessage(approvalStatus)}</p>
+              </div>
+              <Badge className={statusColors[approvalStatus === "approved" ? "confirmed" : approvalStatus === "rejected" ? "failed" : "pending_payment"]}>
+                {approvalStatus}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

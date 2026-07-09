@@ -74,6 +74,9 @@ export function LoginForm({ nextPath }: LoginFormProps) {
       <Button type="submit" variant="primaryGold" className="w-full" disabled={loading}>
         {loading ? "Signing in..." : "Sign In"}
       </Button>
+      <p className="text-center text-xs text-muted-foreground">
+        New accounts can sign in immediately, but booking stays locked until an admin approves the customer profile.
+      </p>
       <p className="text-center text-sm text-muted-foreground">
         New customer?{" "}
         <Link href={`/account/signup/?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-navy hover:text-gold">

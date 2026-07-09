@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/sync-packages",
       "schedule": "15 0 * * *"
+    },
+    {
+      "path": "/api/cron/retry-booking-holds",
+      "schedule": "30 0 * * *"
     }
   ]
 }

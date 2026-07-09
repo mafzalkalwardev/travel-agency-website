@@ -18,6 +18,12 @@ const statusColors: Record<BookingStatus, string> = {
   cancelled: "bg-gray-100 text-gray-600",
 };
 
+const holdBadge: Record<string, string> = {
+  held: "bg-emerald-100 text-emerald-800",
+  failed: "bg-red-100 text-red-800",
+  pending: "bg-purple-100 text-purple-800",
+};
+
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<BookingStatus | "all">("all");
@@ -50,17 +56,18 @@ export default function AdminBookingsPage() {
       toast.error("Failed to update booking");
       return;
     }
-    toast.success("Booking updated");
+    const json = await res.json();
+    toast.success(json.status === "confirmed" ? "Payment confirmed — booking complete" : "Booking updated");
     load();
   }
 
-  async function confirmOnTravelLine(id: string) {
+  async function retrySupplierHold(id: string) {
     const res = await fetch(`/api/admin/bookings/${id}/confirm/`, { method: "POST" });
     const json = await res.json();
     if (!res.ok) {
-      toast.error(json.error || "Supplier booking failed");
+      toast.error(json.error || "Supplier hold retry failed");
     } else {
-      toast.success(`Confirmed: ${json.bookingRef}`);
+      toast.success(`Hold active: ${json.bookingRef || "OK"}`);
     }
     load();
   }
@@ -80,7 +87,7 @@ export default function AdminBookingsPage() {
       <div>
         <h1 className="font-heading text-2xl font-bold text-navy">Bookings</h1>
         <p className="text-sm text-muted-foreground">
-          Hold-then-pay flow - confirm payment, then complete supplier booking from this portal.
+          Seats are held at Travel Line on submit. Confirm payment after WhatsApp, then mark complete here.
         </p>
       </div>
 
@@ -114,15 +121,26 @@ export default function AdminBookingsPage() {
                     {new Date(b.created_at).toLocaleString()} · Ref {b.id.slice(0, 8).toUpperCase()}
                   </p>
                 </div>
-                <Badge className={statusColors[b.status]}>{b.status.replace(/_/g, " ")}</Badge>
+                <div className="flex flex-wrap gap-2">
+                  <Badge className={statusColors[b.status]}>{b.status.replace(/_/g, " ")}</Badge>
+                  {b.supplier_hold_status && (
+                    <Badge className={holdBadge[b.supplier_hold_status] || "bg-gray-100"}>
+                      hold: {b.supplier_hold_status}
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   <p><strong>Phone:</strong> {b.customer_phone}</p>
+                  <p><strong>Email:</strong> {b.customer_email || "—"}</p>
                   <p><strong>Passengers:</strong> {b.passengers}</p>
                   <p><strong>Price:</strong> {Number(b.quoted_price).toLocaleString()} {b.currency}</p>
                   {b.travelline_booking_ref && (
                     <p><strong>Supplier Ref:</strong> {b.travelline_booking_ref}</p>
+                  )}
+                  {b.supplier_hold_attempts != null && b.supplier_hold_attempts > 0 && (
+                    <p><strong>Hold attempts:</strong> {b.supplier_hold_attempts}</p>
                   )}
                 </div>
                 {b.passenger_details && (
@@ -131,8 +149,8 @@ export default function AdminBookingsPage() {
                     {JSON.stringify(b.passenger_details)}
                   </p>
                 )}
-                {b.error_message && (
-                  <p className="text-brand-red">{b.error_message}</p>
+                {(b.error_message || b.supplier_hold_error) && (
+                  <p className="text-brand-red">{b.supplier_hold_error || b.error_message}</p>
                 )}
                 <div className="flex flex-wrap gap-2 pt-2">
                   {b.status === "pending_payment" && (
@@ -140,9 +158,13 @@ export default function AdminBookingsPage() {
                       Mark Payment Confirmed
                     </Button>
                   )}
-                  {b.status === "payment_confirmed" && (
-                    <Button size="sm" className="bg-gold text-navy hover:bg-gold-light" onClick={() => confirmOnTravelLine(b.id)}>
-                      Book with Supplier
+                  {b.supplier_hold_status === "failed" && b.status !== "cancelled" && (
+                    <Button
+                      size="sm"
+                      className="bg-gold text-navy hover:bg-gold-light"
+                      onClick={() => retrySupplierHold(b.id)}
+                    >
+                      Retry Supplier Hold
                     </Button>
                   )}
                   {(b.status === "pending_payment" || b.status === "payment_confirmed") && (

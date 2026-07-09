@@ -32,7 +32,7 @@ export default async function AccountSignupPage({
         <div className="mx-auto max-w-md rounded-xl border border-border bg-white p-6 shadow-sm">
           <h1 className="font-heading text-2xl font-bold text-navy">Create your travel account</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Your profile saves contact, passenger, and booking information for faster follow-up.
+            Your profile saves contact, passenger, and booking information for faster follow-up. After signup, an admin will review and approve your account before booking is enabled.
           </p>
           <div className="mt-6">
             <SignupForm nextPath={nextPath} />
