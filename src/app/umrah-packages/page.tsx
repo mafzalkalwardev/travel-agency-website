@@ -1,6 +1,8 @@
 import { createPageMetadata } from "@/lib/metadata";
 import { UmrahPackageCard } from "@/components/cards/UmrahPackageCard";
 import { InquiryForm } from "@/components/forms/InquiryForm";
+import { MotionStagger, MotionStaggerItem } from "@/components/motion/MotionStagger";
+import { MotionSection } from "@/components/motion/MotionSection";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
@@ -25,25 +27,57 @@ const sections: { title: string; category: UmrahCategory }[] = [
 
 export default async function UmrahPackagesPage() {
   const packages = await dataProvider.getUmrahPackages();
+  const featured = packages.filter((p) => p.featured).slice(0, 6);
+  const categorized = sections
+    .map(({ title, category }) => ({
+      title,
+      category,
+      items: packages.filter((p) => p.category === category),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <>
-      <PageHero {...PAGE_HEROES.umrah} badge="Economy · Standard · Premium · Group" />
+      <PageHero
+        {...PAGE_HEROES.umrah}
+        badge={`${packages.length} Live Packages`}
+      />
 
-      {sections.map(({ title, category }) => {
-        const items = packages.filter((p) => p.category === category);
-        if (!items.length) return null;
-        return (
-          <section key={category} className="section-padding even:bg-light-bg">
-            <div className="container-wide">
-              <SectionHeading title={title} align="left" />
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {items.map((pkg) => <UmrahPackageCard key={pkg.id} pkg={pkg} />)}
-              </div>
-            </div>
-          </section>
-        );
-      })}
+      {packages.length > 0 && (
+        <section className="section-padding">
+          <div className="container-wide">
+            <MotionSection>
+              <SectionHeading
+                title="Live Umrah Packages"
+                subtitle="Real inventory synced from our supplier — flights, hotels, and seat availability"
+                align="left"
+              />
+            </MotionSection>
+            <MotionStagger className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {(featured.length ? featured : packages.slice(0, 9)).map((pkg) => (
+                <MotionStaggerItem key={pkg.id}>
+                  <UmrahPackageCard pkg={pkg} />
+                </MotionStaggerItem>
+              ))}
+            </MotionStagger>
+          </div>
+        </section>
+      )}
+
+      {categorized.map(({ title, category, items }) => (
+        <section key={category} className="section-padding even:bg-light-bg">
+          <div className="container-wide">
+            <SectionHeading title={title} align="left" />
+            <MotionStagger className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {items.map((pkg) => (
+                <MotionStaggerItem key={pkg.id}>
+                  <UmrahPackageCard pkg={pkg} />
+                </MotionStaggerItem>
+              ))}
+            </MotionStagger>
+          </div>
+        </section>
+      ))}
 
       <section className="section-padding bg-navy/5">
         <div className="container-wide max-w-2xl">

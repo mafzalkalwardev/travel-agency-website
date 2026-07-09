@@ -24,6 +24,24 @@ const CITY_TO_CODE: Record<string, string> = Object.fromEntries(
   Object.entries(AIRPORT_CITIES).map(([code, city]) => [city.toLowerCase(), code])
 );
 
+/** Pakistan departure airports for group/Umrah outbound inventory */
+export const PK_AIRPORT_CODES = new Set(["ISB", "LHE", "KHI", "PEW", "SKT", "MUX"]);
+
+const GULF_AIRPORT_CODES = new Set(["JED", "MED", "RUH", "DXB", "AUH", "SHJ", "DOH", "BAH", "MCT"]);
+
+/** Group inventory should be PK → destination, not return legs */
+export function isOutboundGroupTicket(fromCode: string, toCode: string): boolean {
+  const from = fromCode.toUpperCase();
+  const to = toCode.toUpperCase();
+  if (!PK_AIRPORT_CODES.has(from)) return false;
+  if (GULF_AIRPORT_CODES.has(to)) return true;
+  return ["IST", "LHR", "ADD", "KBL"].includes(to);
+}
+
+export function isReturnLegExternalId(externalId?: string | null): boolean {
+  return Boolean(externalId && /-(ret)$/i.test(externalId));
+}
+
 export function isIataCode(value: string): boolean {
   return /^[A-Z]{3}$/i.test(value.trim());
 }

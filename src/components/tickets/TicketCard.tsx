@@ -116,7 +116,7 @@ export function TicketCard({ ticket, compact = false }: TicketCardProps) {
                       onClick={() => setBookOpen(true)}
                       className="bg-gold text-navy hover:bg-gold-light whitespace-nowrap"
                     >
-                      Book Request
+                      Hold & Book
                     </Button>
                   ) : (
                     <Button size="sm" disabled className="whitespace-nowrap">

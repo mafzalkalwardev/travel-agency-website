@@ -164,9 +164,9 @@ export function BookRequestSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="font-heading text-navy">Book Request</SheetTitle>
+          <SheetTitle className="font-heading text-navy">Hold & Book</SheetTitle>
           <SheetDescription>
-            Sign in, save your details, and track this request from your customer profile.
+            Approved agents can place a supplier hold instantly, then complete payment on WhatsApp.
           </SheetDescription>
         </SheetHeader>
 
@@ -259,10 +259,10 @@ export function BookRequestSheet({
               </p>
             )}
             <Button type="submit" disabled={loading} className="w-full bg-navy text-white hover:bg-navy-light">
-              {loading ? "Submitting..." : "Submit Book Request"}
+              {loading ? "Placing hold..." : "Hold Seats & Pay via WhatsApp"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Subject to availability. Payment confirmed offline before ticket is issued.
+              Seats are held at the supplier when available. Complete bank transfer and share your screenshot on WhatsApp.
             </p>
           </form>
         )}

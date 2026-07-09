@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { motion } from "framer-motion";
 import { Clock, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { BookRequestSheet } from "@/components/booking/BookRequestSheet";
 import { SafeImage } from "@/components/shared/SafeImage";
 import { FALLBACK_IMAGES } from "@/lib/image-utils";
 import { formatPrice } from "@/lib/ticket-filters";
+import { SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { TravelPackage } from "@/types";
 
@@ -22,7 +23,8 @@ export function UmrahPackageCard({ pkg }: UmrahPackageCardProps) {
 
   return (
     <>
-      <Card className="card-premium group overflow-hidden">
+      <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25 }}>
+      <Card className="card-premium group h-full overflow-hidden">
         <div className="relative aspect-[16/10] overflow-hidden bg-navy-light">
           <SafeImage
             src={pkg.image}
@@ -65,12 +67,20 @@ export function UmrahPackageCard({ pkg }: UmrahPackageCardProps) {
           </div>
         </CardContent>
         <CardFooter className="gap-2">
-          <Link href="/umrah-packages/" className={cn(buttonVariants({ variant: "outlineDark", size: "default" }), "flex-1")}>Details</Link>
+          <a
+            href={SITE.whatsapp}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants({ variant: "outlineDark", size: "default" }), "flex-1")}
+          >
+            WhatsApp
+          </a>
           <Button variant="primaryGold" size="default" className="flex-1" onClick={() => setBookOpen(true)}>
             Book Request
           </Button>
         </CardFooter>
       </Card>
+      </motion.div>
 
       <BookRequestSheet
         open={bookOpen}

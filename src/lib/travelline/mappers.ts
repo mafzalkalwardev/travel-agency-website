@@ -1,7 +1,7 @@
 import type { NormalizedTicket } from "@/lib/tickets/providers/types";
 import type { TravelLineRawFlight, TravelLineRawPackage, TravelLineRawPromo } from "./types";
 import type { TicketStatus } from "@/types";
-import { resolveAirport } from "@/lib/airport-codes";
+import { resolveAirport, isOutboundGroupTicket } from "@/lib/airport-codes";
 import { FALLBACK_IMAGES, normalizeImageUrl } from "@/lib/image-utils";
 
 /** Live response shape from GET /api/umrah-packages */
@@ -179,7 +179,7 @@ export function ticketsFromUmrahApiItems(
   }
 
   return tickets
-    .filter((t) => t.externalId && t.date)
+    .filter((t) => t.externalId && t.date && isOutboundGroupTicket(t.from, t.to))
     .sort((a, b) => b.date.localeCompare(a.date) || a.departureTime.localeCompare(b.departureTime));
 }
 

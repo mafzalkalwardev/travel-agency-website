@@ -87,7 +87,6 @@ export async function POST(request: Request) {
       email: user.email || data.customer_email || "",
       full_name: data.customer_name,
       phone: data.customer_phone,
-      approval_status: "approved",
       updated_at: new Date().toISOString(),
     };
 

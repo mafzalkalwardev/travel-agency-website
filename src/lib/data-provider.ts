@@ -8,6 +8,7 @@ import { galleryImages, services } from "@/data/services";
 import { testimonials } from "@/data/testimonials";
 import { tickets, ticketsSyncMetadata } from "@/data/tickets";
 import { filterTickets } from "@/lib/ticket-filters";
+import { isOutboundGroupTicket, isReturnLegExternalId } from "@/lib/airport-codes";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
 import { readLocalSyncMeta, readLocalTickets } from "@/lib/sync/local-inventory";
@@ -216,7 +217,7 @@ class SupabaseDataProvider implements IDataProvider {
       const supabase = createAdminClient();
       const { data, error } = await supabase.from("tickets").select("*").eq("active", true);
       if (!error && data?.length) {
-        const mapped = data.map(mapTicket);
+        const mapped = filterDisplayableTickets(data.filter(isDisplayableTicket).map(mapTicket));
         if (!filters) return mapped;
         return filterTickets(mapped, filters);
       }
@@ -387,6 +388,18 @@ function mapTourPackage(row: Record<string, unknown>): TravelPackage {
     packageCode: row.package_code as string,
     destination: row.destination as string,
   };
+}
+
+function isDisplayableTicket(row: { from_code?: string; to_code?: string; external_id?: string | null }): boolean {
+  if (isReturnLegExternalId(row.external_id)) return false;
+  const from = String(row.from_code || "");
+  const to = String(row.to_code || "");
+  if (!from || !to) return false;
+  return isOutboundGroupTicket(from, to);
+}
+
+function filterDisplayableTickets<T extends Ticket>(tickets: T[]): T[] {
+  return tickets.filter((t) => isOutboundGroupTicket(t.from, t.to));
 }
 
 function mapTicket(row: Record<string, unknown>): Ticket {

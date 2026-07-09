@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { writeLocalTickets } from "@/lib/sync/local-inventory";
 import type { NormalizedTicket, SyncChange } from "@/lib/tickets/providers/types";
 import { randomUUID } from "crypto";
+import { isOutboundGroupTicket, isReturnLegExternalId } from "@/lib/airport-codes";
 
 const PROVIDER = "travelline";
 const BATCH_SIZE = 200;
@@ -19,7 +20,9 @@ export async function upsertTickets(
   tickets: NormalizedTicket[],
   provider = PROVIDER
 ): Promise<UpsertTicketsResult> {
-  const validTickets = tickets.filter(isCompleteTicket);
+  const validTickets = tickets.filter(
+    (t) => isCompleteTicket(t) && isOutboundGroupTicket(t.from, t.to) && !isReturnLegExternalId(t.externalId)
+  );
   const skipped = tickets.length - validTickets.length;
 
   if (!isSupabaseConfigured()) {
