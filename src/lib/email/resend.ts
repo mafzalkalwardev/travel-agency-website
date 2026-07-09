@@ -11,7 +11,11 @@ export function getBookingFromEmail(): string {
 }
 
 export function getBookingAdminEmail(): string {
-  return process.env.BOOKING_ADMIN_EMAIL || "info@alqiblaairservices.com";
+  return (
+    process.env.BOOKING_ADMIN_EMAIL ||
+    process.env.ADMIN_EMAIL ||
+    "info@alqiblaairservices.com"
+  );
 }
 
 export function getResendClient(): Resend | null {

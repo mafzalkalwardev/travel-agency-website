@@ -31,14 +31,16 @@ interface SyncChange {
 
 export default function AdminTicketsPage() {
   const [syncing, setSyncing] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const [lastSync, setLastSync] = useState<SyncLog | null>(null);
   const [changes, setChanges] = useState<SyncChange[]>([]);
   const [ticketCount, setTicketCount] = useState(0);
+  const [outboundCount, setOutboundCount] = useState(0);
 
   async function loadSyncState() {
     if (!isSupabaseConfigured()) return;
     const supabase = createClient();
-    const [{ data: sync }, { count }, { data: recentChanges }] = await Promise.all([
+    const [{ data: sync }, { count }, { count: outbound }, { data: recentChanges }] = await Promise.all([
       supabase
         .from("sync_logs")
         .select("provider, status, tickets_processed, tickets_created, tickets_updated, tickets_deactivated, message, completed_at")
@@ -50,6 +52,11 @@ export default function AdminTicketsPage() {
         .select("id", { count: "exact", head: true })
         .eq("active", true),
       supabase
+        .from("tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("active", true)
+        .in("from_code", ["ISB", "LHE", "KHI", "PEW", "SKT", "MUX"]),
+      supabase
         .from("sync_changes")
         .select("id, provider, entity_type, external_id, change_type, field_changes, created_at")
         .order("created_at", { ascending: false })
@@ -58,6 +65,7 @@ export default function AdminTicketsPage() {
 
     setLastSync(sync);
     setTicketCount(count ?? 0);
+    setOutboundCount(outbound ?? 0);
     setChanges((recentChanges as SyncChange[]) || []);
   }
 
@@ -80,18 +88,38 @@ export default function AdminTicketsPage() {
     }
   }
 
+  async function runCleanup() {
+    setCleaning(true);
+    try {
+      const res = await fetch("/api/admin/tickets/cleanup/", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Cleanup failed");
+      toast.success(json.message || "Cleanup complete");
+      await loadSyncState();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Cleanup failed");
+    } finally {
+      setCleaning(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold text-navy">Ticket Inventory</h1>
           <p className="text-sm text-muted-foreground">
-            Agent-only Travel Line sync. {ticketCount} active tickets in database.
+            Agent-only Travel Line sync · {outboundCount} outbound · {ticketCount} total active in database
           </p>
         </div>
-        <Button onClick={runSync} disabled={syncing} variant="navy">
-          {syncing ? "Syncing..." : "Sync Now"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={runCleanup} disabled={cleaning} variant="outline">
+            {cleaning ? "Cleaning…" : "Clean return legs"}
+          </Button>
+          <Button onClick={runSync} disabled={syncing} variant="navy">
+            {syncing ? "Syncing..." : "Sync Now"}
+          </Button>
+        </div>
       </div>
 
       <Card>

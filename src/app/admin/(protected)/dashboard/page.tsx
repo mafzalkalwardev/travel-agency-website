@@ -3,7 +3,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { dataProvider } from "@/lib/data-provider";
 
 export default async function AdminDashboardPage() {
-  const [inquiries, allTickets, umrah, blog, flyers, pendingBookings, failedHolds] = await Promise.all([
+  const [inquiries, allTickets, umrah, blog, flyers, pendingBookings, failedHolds, pendingCustomers] =
+    await Promise.all([
     getInquiryCount(),
     dataProvider.getTickets(),
     dataProvider.getUmrahPackages(),
@@ -11,11 +12,13 @@ export default async function AdminDashboardPage() {
     dataProvider.getFlyers(),
     getPendingBookingsCount(),
     getFailedHoldsCount(),
+    getPendingCustomersCount(),
   ]);
 
   const stats = [
     { label: "Pending Payment", value: pendingBookings, href: "/admin/bookings/" },
     { label: "Failed Supplier Holds", value: failedHolds, href: "/admin/bookings/" },
+    { label: "Customers to Approve", value: pendingCustomers, href: "/admin/customers/" },
     { label: "New Inquiries", value: inquiries.new, href: "/admin/inquiries/" },
     { label: "Pending Reviews", value: inquiries.pendingReviews, href: "/admin/reviews/" },
     { label: "Active Tickets", value: allTickets.filter((t) => t.status !== "sold_out").length, href: "/admin/tickets/" },
@@ -96,6 +99,20 @@ async function getFailedHoldsCount() {
       .select("*", { count: "exact", head: true })
       .eq("status", "pending_payment")
       .eq("supplier_hold_status", "failed");
+    return count || 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function getPendingCustomersCount() {
+  if (!isSupabaseConfigured()) return 0;
+  try {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("customer_profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("approval_status", "pending");
     return count || 0;
   } catch {
     return 0;

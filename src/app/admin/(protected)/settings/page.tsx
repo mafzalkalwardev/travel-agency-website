@@ -1,11 +1,190 @@
-import { AdminCrudPlaceholder } from "@/components/admin/AdminCrudPlaceholder";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, Mail, Plane, Database, XCircle } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+interface AdminStatus {
+  supabase: boolean;
+  travelline: boolean;
+  travellineSync: boolean;
+  email: boolean;
+  emailFrom: string | null;
+  emailAdmin: string;
+  lastSync: { completed_at: string | null; status: string | null; message: string | null } | null;
+  outboundTickets: number;
+  pendingCustomers: number;
+  siteUrl: string | null;
+}
+
+function StatusRow({
+  ok,
+  label,
+  detail,
+}: {
+  ok: boolean;
+  label: string;
+  detail?: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border/60 p-4">
+      {ok ? (
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+      ) : (
+        <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+      )}
+      <div>
+        <p className="font-medium text-navy">{label}</p>
+        {detail && <p className="mt-1 text-sm text-muted-foreground">{detail}</p>}
+      </div>
+      <Badge className="ml-auto" variant={ok ? "default" : "outline"}>
+        {ok ? "Active" : "Not configured"}
+      </Badge>
+    </div>
+  );
+}
 
 export default function AdminSettingsPage() {
+  const [status, setStatus] = useState<AdminStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/status/")
+      .then((r) => r.json())
+      .then(setStatus)
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
-    <AdminCrudPlaceholder
-      title="Site Settings"
-      description="Business info, WhatsApp number, social links, and office details."
-      table="site_settings"
-    />
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-heading text-2xl font-bold text-navy">Integrations</h1>
+        <p className="text-sm text-muted-foreground">
+          Agent portal services — sync, booking holds, and notifications
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-muted-foreground">Loading status…</p>
+      ) : status ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <StatusRow
+              ok={status.supabase}
+              label="Supabase database"
+              detail="Tickets, bookings, customers, and sync logs"
+            />
+            <StatusRow
+              ok={status.travelline}
+              label="Travel Line booking"
+              detail={
+                status.travellineSync
+                  ? "Agent credentials configured · scraper sync enabled"
+                  : "Set TRAVELLINE_AGENT_USERNAME and TRAVELLINE_AGENT_PASSWORD"
+              }
+            />
+            <StatusRow
+              ok={status.email}
+              label="Booking emails (Resend)"
+              detail={
+                status.email
+                  ? `From ${status.emailFrom} → ${status.emailAdmin}`
+                  : "Set RESEND_API_KEY and BOOKING_FROM_EMAIL in Vercel env"
+              }
+            />
+            <Card>
+              <CardContent className="flex items-center gap-3 p-4">
+                <Plane className="h-8 w-8 text-gold" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Outbound tickets live</p>
+                  <p className="text-2xl font-bold text-navy">{status.outboundTickets}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-navy">
+                <Database className="h-4 w-4" />
+                Last inventory sync
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {status.lastSync?.completed_at ? (
+                <>
+                  <p>{status.lastSync.message}</p>
+                  <p className="text-muted-foreground">
+                    {new Date(status.lastSync.completed_at).toLocaleString()} ·{" "}
+                    {status.lastSync.status}
+                  </p>
+                </>
+              ) : (
+                <p className="text-muted-foreground">No sync recorded yet.</p>
+              )}
+              <Link href="/admin/tickets/">
+                <Button size="sm" variant="outline" className="mt-2">
+                  Open ticket sync
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {status.pendingCustomers > 0 && (
+            <Card className="border-gold/30 bg-gold/5">
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div>
+                  <p className="font-medium text-navy">
+                    {status.pendingCustomers} customer{status.pendingCustomers === 1 ? "" : "s"} awaiting approval
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Agents must be approved before they can place holds
+                  </p>
+                </div>
+                <Link href="/admin/customers/">
+                  <Button size="sm" className="bg-navy text-white hover:bg-navy-light">
+                    Review customers
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-navy">
+                <Mail className="h-4 w-4" />
+                Email setup (optional)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>Add these to Vercel production environment:</p>
+              <ul className="list-inside list-disc space-y-1 font-mono text-xs text-navy">
+                <li>RESEND_API_KEY</li>
+                <li>BOOKING_FROM_EMAIL (verified sender in Resend)</li>
+                <li>BOOKING_ADMIN_EMAIL (defaults to ADMIN_EMAIL)</li>
+              </ul>
+              <p className="pt-2">
+                Without Resend, bookings still work — customers receive WhatsApp redirect and admin sees bookings here.
+              </p>
+            </CardContent>
+          </Card>
+
+          {status.siteUrl && (
+            <p className="text-xs text-muted-foreground">
+              Production:{" "}
+              <a href={status.siteUrl} className="text-gold hover:underline" target="_blank" rel="noopener noreferrer">
+                {status.siteUrl}
+              </a>
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-muted-foreground">Could not load integration status.</p>
+      )}
+    </div>
   );
 }

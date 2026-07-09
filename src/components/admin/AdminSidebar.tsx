@@ -41,7 +41,7 @@ const links = [
   { href: "/admin/announcements/", label: "Announcements", icon: Megaphone },
   { href: "/admin/gallery/", label: "Gallery", icon: Image },
   { href: "/admin/airlines/", label: "Airlines", icon: Plane },
-  { href: "/admin/settings/", label: "Settings", icon: Settings },
+  { href: "/admin/settings/", label: "Integrations", icon: Settings },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
