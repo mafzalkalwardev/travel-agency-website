@@ -41,7 +41,7 @@ export function TicketFiltersPanel({
   const clearFilters = () => onChange({});
 
   return (
-    <Card className="border-border/60">
+    <Card className="border-border/60 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="font-heading text-lg text-navy">Filter Tickets</CardTitle>

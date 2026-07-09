@@ -67,3 +67,21 @@ export function formatRouteLabel(fromCode: string, fromCity: string, toCode: str
   const to = toCity && toCity !== toCode ? `${toCity} (${toCode})` : toCode;
   return `${from} → ${to}`;
 }
+
+/** Cities shown in search dropdowns — PK origins first, then destinations */
+export const SEARCH_CITIES = [
+  "Islamabad",
+  "Lahore",
+  "Karachi",
+  "Peshawar",
+  "Sialkot",
+  "Multan",
+  "Jeddah",
+  "Madinah",
+  "Riyadh",
+  "Dubai",
+  "Abu Dhabi",
+  "Sharjah",
+  "Doha",
+  "Istanbul",
+] as const;

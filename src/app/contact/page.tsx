@@ -27,7 +27,7 @@ export default function ContactPage() {
         <div className="container-wide">
           <div className="grid gap-10 lg:grid-cols-2">
             <div className="space-y-6">
-              {[OFFICES.headOffice, OFFICES.islamabad].map((office) => (
+              {[OFFICES.headOffice, OFFICES.islamabad, OFFICES.bannu].map((office) => (
                 <div key={office.label} className="rounded-2xl border border-border/60 bg-white p-6">
                   <h2 className="font-heading text-lg font-semibold text-navy">{office.label}</h2>
                   <p className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
@@ -36,6 +36,11 @@ export default function ContactPage() {
                   <a href={`tel:${office.phoneTel}`} className="mt-2 flex items-center gap-2 text-sm hover:text-gold">
                     <Phone className="h-4 w-4 text-gold" /> {office.phone}
                   </a>
+                  {"phoneAlt" in office && office.phoneAlt && (
+                    <a href={`tel:${office.phoneAltTel}`} className="mt-1 flex items-center gap-2 text-sm hover:text-gold">
+                      <Phone className="h-4 w-4 text-gold" /> {office.phoneAlt}
+                    </a>
+                  )}
                 </div>
               ))}
 

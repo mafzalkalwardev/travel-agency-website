@@ -1,10 +1,10 @@
-import { FlightResultsClient } from "@/components/flight/FlightResultsClient";
+import { redirect } from "next/navigation";
+import { resolveAirport } from "@/lib/airport-codes";
 import { createPageMetadata } from "@/lib/metadata";
-import type { CabinClass, TripType } from "@/types/flight-booking";
 
 export const metadata = createPageMetadata({
   title: "Flight Results",
-  description: "Compare flight fares, routes, baggage, and cabin options.",
+  description: "Browse live group flight inventory.",
   path: "/flight-booking/results/",
 });
 
@@ -19,17 +19,14 @@ export default async function FlightResultsPage({
     return Array.isArray(value) ? value[0] : value;
   };
 
-  return (
-    <FlightResultsClient
-      criteria={{
-        from: pick("from"),
-        to: pick("to"),
-        departureDate: pick("departureDate"),
-        returnDate: pick("returnDate"),
-        tripType: (pick("tripType") as TripType) || "roundtrip",
-        passengers: Number(pick("passengers") || 1),
-        cabinClass: (pick("cabinClass") as CabinClass) || "Economy",
-      }}
-    />
-  );
+  const from = pick("from");
+  const to = pick("to");
+  const date = pick("departureDate");
+  const query = new URLSearchParams();
+
+  if (from) query.set("fromCity", resolveAirport(from).city || from);
+  if (to) query.set("toCity", resolveAirport(to).city || to);
+  if (date) query.set("date", date);
+
+  redirect(`/available-tickets/?${query.toString()}`);
 }

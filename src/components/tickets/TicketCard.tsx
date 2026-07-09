@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { ChevronDown, Clock, Plane, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,11 @@ export function TicketCard({ ticket, compact = false }: TicketCardProps) {
 
   return (
     <>
-      <Card className={cn("overflow-hidden border-border/60 transition-shadow hover:shadow-md", compact && "text-sm")}>
+      <motion.div
+        whileHover={{ y: -2 }}
+        transition={{ duration: 0.2 }}
+      >
+      <Card className={cn("overflow-hidden border-border/60 transition-all hover:border-gold/30 hover:shadow-lg", compact && "text-sm")}>
         <CardContent className="p-0">
           <div className="flex flex-col lg:flex-row">
             <div className="flex items-center gap-4 border-b border-border/40 bg-secondary/30 p-4 lg:w-48 lg:border-b-0 lg:border-r">
@@ -135,6 +140,7 @@ export function TicketCard({ ticket, compact = false }: TicketCardProps) {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       <BookRequestSheet
         open={bookOpen}
