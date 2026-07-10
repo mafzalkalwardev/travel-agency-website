@@ -1,11 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Mail, Plane, Database, XCircle } from "lucide-react";
+import { CheckCircle2, Mail, Plane, Database, RefreshCw, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface AdminStatus {
   supabase: boolean;
@@ -15,6 +17,12 @@ interface AdminStatus {
   emailFrom: string | null;
   emailAdmin: string;
   lastSync: { completed_at: string | null; status: string | null; message: string | null } | null;
+  recentSyncLogs: Array<{
+    completed_at: string | null;
+    status: string | null;
+    message: string | null;
+    tickets_processed: number | null;
+  }>;
   outboundTickets: number;
   pendingCustomers: number;
   siteUrl: string | null;
@@ -52,13 +60,34 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [testingEmail, setTestingEmail] = useState(false);
   const [emailTestResult, setEmailTestResult] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
+  function loadStatus() {
+    setLoading(true);
     fetch("/api/admin/status/")
       .then((r) => r.json())
       .then(setStatus)
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadStatus();
   }, []);
+
+  async function runSync() {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/admin/sync/", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Sync failed");
+      toast.success(json.tickets?.message || "Inventory sync complete");
+      loadStatus();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function sendTestEmail() {
     setTestingEmail(true);
@@ -124,11 +153,15 @@ export default function AdminSettingsPage() {
           </div>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2 text-base text-navy">
                 <Database className="h-4 w-4" />
                 Last inventory sync
               </CardTitle>
+              <Button size="sm" variant="outline" disabled={syncing || !status.travellineSync} onClick={runSync}>
+                <RefreshCw className={cn("mr-2 h-4 w-4", syncing && "animate-spin")} />
+                {syncing ? "Syncing…" : "Sync now"}
+              </Button>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               {status.lastSync?.completed_at ? (
@@ -141,6 +174,19 @@ export default function AdminSettingsPage() {
                 </>
               ) : (
                 <p className="text-muted-foreground">No sync recorded yet.</p>
+              )}
+              {status.recentSyncLogs.length > 1 && (
+                <div className="mt-4 space-y-2 border-t border-border/60 pt-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Recent runs
+                  </p>
+                  {status.recentSyncLogs.slice(1).map((log, i) => (
+                    <p key={i} className="text-xs text-muted-foreground">
+                      {log.completed_at ? new Date(log.completed_at).toLocaleString() : "—"} ·{" "}
+                      {log.status} · {log.tickets_processed ?? 0} items
+                    </p>
+                  ))}
+                </div>
               )}
               <Link href="/admin/tickets/">
                 <Button size="sm" variant="outline" className="mt-2">

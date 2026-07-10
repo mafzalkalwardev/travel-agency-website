@@ -11,19 +11,31 @@ export async function GET() {
 
   let lastSync: { completed_at: string | null; status: string | null; message: string | null } | null =
     null;
+  let recentSyncLogs: Array<{
+    completed_at: string | null;
+    status: string | null;
+    message: string | null;
+    tickets_processed: number | null;
+  }> = [];
   let outboundTickets = 0;
   let pendingCustomers = 0;
 
   if (isSupabaseConfigured()) {
     try {
       const supabase = createAdminClient();
-      const [{ data: sync }, { count: tickets }, { count: customers }] = await Promise.all([
+      const [{ data: sync }, { data: syncHistory }, { count: tickets }, { count: customers }] =
+        await Promise.all([
         supabase
           .from("sync_logs")
           .select("completed_at, status, message")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
+        supabase
+          .from("sync_logs")
+          .select("completed_at, status, message, tickets_processed")
+          .order("created_at", { ascending: false })
+          .limit(5),
         supabase
           .from("tickets")
           .select("id", { count: "exact", head: true })
@@ -35,6 +47,7 @@ export async function GET() {
           .eq("approval_status", "pending"),
       ]);
       lastSync = sync;
+      recentSyncLogs = syncHistory || [];
       outboundTickets = tickets ?? 0;
       pendingCustomers = customers ?? 0;
     } catch {
@@ -50,6 +63,7 @@ export async function GET() {
     emailFrom: isEmailConfigured() ? getBookingFromEmail() : null,
     emailAdmin: getBookingAdminEmail(),
     lastSync,
+    recentSyncLogs,
     outboundTickets,
     pendingCustomers,
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || null,

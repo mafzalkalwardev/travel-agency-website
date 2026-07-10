@@ -3,6 +3,7 @@ import { CalendarDays, CircleDollarSign, Plane, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileForm } from "@/components/account/ProfileForm";
+import { CustomerBookingCard } from "@/components/account/CustomerBookingCard";
 import { SignOutButton } from "@/components/account/SignOutButton";
 import { getApprovalMessage } from "@/lib/customer-approval";
 import { createClient } from "@/lib/supabase/server";
@@ -145,37 +146,7 @@ export default async function AccountPage() {
             ) : (
               <div className="space-y-4">
                 {customerBookings.map((booking) => (
-                  <article key={booking.id} className="rounded-xl border border-border bg-white p-4">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h2 className="font-heading text-lg font-semibold text-navy">
-                          {booking.product_title || booking.product_type}
-                        </h2>
-                        <p className="text-xs text-muted-foreground">
-                          Ref {booking.id.slice(0, 8).toUpperCase()} - {new Date(booking.created_at).toLocaleString()}
-                        </p>
-                      </div>
-                      <Badge className={statusColors[booking.status]}>
-                        {booking.status.replace(/_/g, " ")}
-                      </Badge>
-                    </div>
-                    <div className="mt-4 grid gap-2 text-sm text-slate-600 md:grid-cols-4">
-                      <p><strong className="text-slate-900">Type:</strong> {booking.product_type}</p>
-                      <p><strong className="text-slate-900">Passengers:</strong> {booking.passengers}</p>
-                      <p><strong className="text-slate-900">Price:</strong> {Number(booking.quoted_price).toLocaleString()} {booking.currency}</p>
-                      <p><strong className="text-slate-900">Phone:</strong> {booking.customer_phone}</p>
-                    </div>
-                    {booking.passenger_details && Object.keys(booking.passenger_details).length > 0 && (
-                      <pre className="mt-4 max-h-40 overflow-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-                        {JSON.stringify(booking.passenger_details, null, 2)}
-                      </pre>
-                    )}
-                    {booking.error_message && (
-                      <p className="mt-3 rounded-md bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
-                        {booking.error_message}
-                      </p>
-                    )}
-                  </article>
+                  <CustomerBookingCard key={booking.id} booking={booking} />
                 ))}
               </div>
             )}
