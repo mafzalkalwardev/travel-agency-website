@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, Phone, Ticket } from "lucide-react";
+import { ChevronDown, Menu, Phone } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AccountNav } from "@/components/account/AccountNav";
@@ -12,25 +12,16 @@ import { LOGO_PATH, SERVICE_DROPDOWN, SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { assetPath } from "@/lib/base-path";
 
-/** Top-level nav — Umrah, Tours, Corporate live under Services dropdown */
 const MAIN_NAV = [
-  { href: "/", label: "Home" },
-  { href: "/about/", label: "About Us" },
-  { href: "/flight-booking/", label: "Book Flights" },
-  { href: "/available-tickets/", label: "Available Tickets" },
-  { href: "/destinations/", label: "Destinations" },
-  { href: "/gallery/", label: "Gallery" },
-  { href: "/blog/", label: "Blog" },
+  { href: "/available-tickets/", label: "Tickets" },
+  { href: "/umrah-packages/", label: "Umrah" },
+  { href: "/flight-booking/", label: "Flights" },
+  { href: "/about/", label: "About" },
   { href: "/contact/", label: "Contact" },
 ] as const;
 
-const MOBILE_EXTRA = [
-  { href: "/account/", label: "My Trips" },
-  { href: "/inquiry/", label: "Book / Inquiry" },
-] as const;
-
 function isServiceActive(pathname: string | null) {
-  const servicePaths = ["/services", "/umrah-packages", "/tour-packages", "/corporate-travel"];
+  const servicePaths = ["/services", "/tour-packages", "/corporate-travel", "/destinations", "/gallery", "/blog"];
   return servicePaths.some((p) => pathname?.startsWith(p));
 }
 
@@ -53,37 +44,42 @@ export function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-white/10 bg-navy/95 backdrop-blur-xl transition-all duration-300",
-        scrolled && "shadow-xl shadow-black/25"
+        "sticky top-0 z-50 border-b border-white/10 bg-navy/95 backdrop-blur-md transition-shadow",
+        scrolled && "shadow-lg shadow-black/20"
       )}
     >
-      <div className="container-wide flex h-20 items-center justify-between gap-4 lg:h-[88px]">
-        <Link href="/" className="flex shrink-0 items-center gap-3">
+      <div className="container-wide flex h-16 items-center justify-between gap-4">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image
             src={assetPath(LOGO_PATH)}
             alt={SITE.name}
-            width={64}
-            height={64}
-            className="h-14 w-14 rounded-xl object-contain ring-1 ring-white/10 lg:h-16 lg:w-16"
+            width={48}
+            height={48}
+            className="h-10 w-10 rounded-lg object-contain"
             unoptimized
             priority
           />
-          <div className="hidden min-w-0 sm:block">
-            <p className="font-heading text-base font-bold leading-tight text-white lg:text-lg">
-              Al Qibla Air Services
-            </p>
-            <p className="text-xs text-gold-light lg:text-sm">Travel Smart. Travel Safe.</p>
-          </div>
+          <span className="hidden font-semibold text-white sm:block">Al Qibla</span>
         </Link>
 
-        <nav className="hidden items-center gap-0.5 min-[1800px]:flex xl:gap-1">
-          {MAIN_NAV.slice(0, 2).map((link) => (
+        <nav className="hidden items-center gap-1 lg:flex">
+          <Link
+            href="/"
+            className={cn(
+              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              isActive("/") ? "text-gold" : "text-white/80 hover:text-white"
+            )}
+          >
+            Home
+          </Link>
+
+          {MAIN_NAV.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                "whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive(link.href) ? "bg-white/10 text-gold" : "text-white/85 hover:bg-white/5 hover:text-gold"
+                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive(link.href) ? "text-gold" : "text-white/80 hover:text-white"
               )}
             >
               {link.label}
@@ -98,21 +94,21 @@ export function Header() {
             <button
               type="button"
               className={cn(
-                "inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isServiceActive(pathname) ? "bg-white/10 text-gold" : "text-white/85 hover:bg-white/5 hover:text-gold"
+                "inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isServiceActive(pathname) ? "text-gold" : "text-white/80 hover:text-white"
               )}
             >
-              Services
-              <ChevronDown className={cn("h-4 w-4 transition-transform", servicesOpen && "rotate-180")} />
+              More
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", servicesOpen && "rotate-180")} />
             </button>
             {servicesOpen && (
-              <div className="absolute left-0 top-full z-50 pt-2">
-                <div className="min-w-[240px] rounded-xl border border-white/10 bg-navy py-2 shadow-2xl">
+              <div className="absolute left-0 top-full z-50 pt-1">
+                <div className="min-w-[200px] rounded-lg border border-white/10 bg-navy py-1 shadow-xl">
                   {SERVICE_DROPDOWN.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="block px-4 py-2.5 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-gold"
+                      className="block px-4 py-2 text-sm text-white/85 transition-colors hover:bg-white/10 hover:text-gold"
                     >
                       {item.label}
                     </Link>
@@ -121,74 +117,64 @@ export function Header() {
               </div>
             )}
           </div>
-
-          {MAIN_NAV.slice(2).map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive(link.href) ? "bg-white/10 text-gold" : "text-white/85 hover:bg-white/5 hover:text-gold"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
         </nav>
 
-        <div className="flex items-center gap-2.5">
-          <Link
-            href="/available-tickets/"
-            className={cn(buttonVariants({ variant: "outlineLight", size: "default" }), "hidden md:inline-flex h-10 px-4")}
-          >
-            <Ticket className="mr-2 h-4 w-4" />
-            Check Tickets
-          </Link>
+        <div className="flex items-center gap-2">
           <AccountNav />
           <a
             href={SITE.whatsapp}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(buttonVariants({ variant: "primaryGold", size: "default" }), "h-10 px-4")}
+            className={cn(buttonVariants({ variant: "primaryGold", size: "default" }), "hidden h-9 px-3 sm:inline-flex")}
           >
-            <Phone className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Book on </span>WhatsApp
+            <Phone className="mr-1.5 h-4 w-4" />
+            WhatsApp
           </a>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-10 w-10 text-white hover:bg-white/10 min-[1800px]:hidden"
+                "h-9 w-9 text-white hover:bg-white/10 lg:hidden"
               )}
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open menu</span>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[min(100vw-2rem,340px)] overflow-y-auto bg-navy text-white">
+            <SheetContent side="right" className="w-[min(100vw-2rem,300px)] overflow-y-auto bg-navy text-white">
               <SheetHeader>
-                <SheetTitle className="text-left font-heading text-lg text-white">{SITE.name}</SheetTitle>
+                <SheetTitle className="text-left text-base font-semibold text-white">{SITE.shortName}</SheetTitle>
               </SheetHeader>
-              <nav className="mt-8 flex flex-col gap-1">
-                {[...MAIN_NAV, ...MOBILE_EXTRA].map((link) => (
+              <nav className="mt-6 flex flex-col gap-0.5">
+                <Link
+                  href="/"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "rounded-md px-3 py-2.5 text-sm font-medium",
+                    isActive("/") ? "bg-white/10 text-gold" : "text-white/90 hover:bg-white/5"
+                  )}
+                >
+                  Home
+                </Link>
+                {[...MAIN_NAV].map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-white/10",
-                      isActive(link.href) ? "text-gold" : "text-white/90"
+                      "rounded-md px-3 py-2.5 text-sm font-medium",
+                      isActive(link.href) ? "bg-white/10 text-gold" : "text-white/90 hover:bg-white/5"
                     )}
                   >
                     {link.label}
                   </Link>
                 ))}
-                <p className="mt-6 px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-gold">Services</p>
+                <p className="mt-4 px-3 pb-1 text-xs font-medium uppercase tracking-wider text-white/50">More</p>
                 {SERVICE_DROPDOWN.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-lg px-4 py-2.5 text-sm text-white/85 hover:bg-white/10 hover:text-gold"
+                    className="rounded-md px-3 py-2 text-sm text-white/75 hover:bg-white/5 hover:text-gold"
                   >
                     {item.label}
                   </Link>

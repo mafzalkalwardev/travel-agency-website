@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TicketFilters } from "@/types";
 
 interface TicketFiltersPanelProps {
@@ -38,23 +37,20 @@ export function TicketFiltersPanel({
     onChange({ ...filters, [key]: !value || value === "all" ? undefined : value });
   };
 
-  const clearFilters = () => onChange({});
-
   return (
-    <Card className="border-border/60 shadow-sm">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="font-heading text-lg text-navy">Filter Tickets</CardTitle>
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
-            <X className="mr-1 h-3 w-3" /> Clear
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>Airline</Label>
+    <div className="space-y-4 rounded-xl border border-border/60 bg-white p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-navy">Filters</p>
+        <Button variant="ghost" size="sm" onClick={() => onChange({})} className="h-7 px-2 text-xs text-muted-foreground">
+          <X className="mr-1 h-3 w-3" /> Clear
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Airline</Label>
           <Select value={filters.airline || "all"} onValueChange={(v) => update("airline", v)}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="All airlines" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-full"><SelectValue placeholder="All airlines" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Airlines</SelectItem>
               {options.airlines.map((code) => (
@@ -63,22 +59,11 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Sector</Label>
-          <Select value={filters.sector || "all"} onValueChange={(v) => update("sector", v)}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="All sectors" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sectors</SelectItem>
-              {options.sectors.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>From City</Label>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">From</Label>
           <Select value={filters.fromCity || "all"} onValueChange={(v) => update("fromCity", v)}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="All cities" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Cities</SelectItem>
               {options.fromCities.map((c) => (
@@ -87,10 +72,11 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>To City</Label>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">To</Label>
           <Select value={filters.toCity || "all"} onValueChange={(v) => update("toCity", v)}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="All cities" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Cities</SelectItem>
               {options.toCities.map((c) => (
@@ -99,22 +85,11 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Destination</Label>
-          <Select value={filters.destination || "all"} onValueChange={(v) => update("destination", v)}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="All destinations" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Destinations</SelectItem>
-              {options.destinations.map((d) => (
-                <SelectItem key={d} value={d}>{d}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Date</Label>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Date</Label>
           <Select value={filters.date || "all"} onValueChange={(v) => update("date", v)}>
-            <SelectTrigger className="w-full"><SelectValue placeholder="All dates" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Dates</SelectItem>
               {options.dates.map((d) => (
@@ -125,40 +100,22 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label>Max Price (PKR)</Label>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Max Price (PKR)</Label>
           <Input
             type="number"
-            placeholder="e.g. 100000"
+            placeholder="Optional"
+            className="h-9"
             value={filters.maxPrice ?? ""}
             onChange={(e) => update("maxPrice", e.target.value ? Number(e.target.value) : undefined)}
           />
         </div>
-        <div className="space-y-2">
-          <Label>Min Seats Left</Label>
-          <Input
-            type="number"
-            placeholder="e.g. 5"
-            value={filters.minSeats ?? ""}
-            onChange={(e) => update("minSeats", e.target.value ? Number(e.target.value) : undefined)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Trip Type</Label>
-          <Select value={filters.tripType || "all"} onValueChange={(v) => update("tripType", v)}>
-            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="umrah">Umrah</SelectItem>
-              <SelectItem value="oneway">One-way</SelectItem>
-              <SelectItem value="return">Return</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Sort By</Label>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Sort</Label>
           <Select value={filters.sortBy || "date"} onValueChange={(v) => update("sortBy", v)}>
-            <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-9 w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="date">Date</SelectItem>
               <SelectItem value="price">Price</SelectItem>
@@ -166,11 +123,7 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
-        <Button className="w-full bg-navy text-white hover:bg-navy-light">
-          <Search className="mr-2 h-4 w-4" />
-          Apply Filters
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { SlidersHorizontal } from "lucide-react";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import { TicketFiltersPanel } from "@/components/tickets/TicketFiltersPanel";
@@ -19,7 +18,7 @@ import { airlines } from "@/data/airlines";
 import type { Ticket, TicketFilters } from "@/types";
 
 const airlineNames = Object.fromEntries(airlines.map((a) => [a.code, a.name]));
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 20;
 
 interface TicketsPageClientProps {
   tickets: Ticket[];
@@ -42,14 +41,9 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
     const airline = searchParams.get("airline");
     if (airline && airline !== "All Airlines") {
       const codeMap: Record<string, string> = {
-        PIA: "PK",
-        Saudia: "SV",
-        Emirates: "EK",
-        Airblue: "PA",
-        AirSial: "PF",
-        "Qatar Airways": "QR",
-        "Fly Jinnah": "9P",
-        Flynas: "XY",
+        PIA: "PK", Saudia: "SV", Emirates: "EK", Airblue: "PA", AirSial: "PF",
+        "Qatar Airways": "QR", "Fly Jinnah": "9P", Flynas: "XY",
+        PK: "PK", SV: "SV", EK: "EK", PA: "PA", PF: "PF", QR: "QR", "9P": "9P", XY: "XY",
       };
       initial.airline = codeMap[airline] || airline;
     }
@@ -68,8 +62,8 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[300px_1fr] lg:gap-8">
-      <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
+    <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+      <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
         <TicketFiltersPanel
           filters={filters}
           onChange={updateFilters}
@@ -78,47 +72,38 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
         />
       </aside>
 
-      <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Showing <strong className="text-navy">{Math.min(visible.length, filtered.length)}</strong> of{" "}
-            {filtered.length} group tickets
-            {filtered.length !== tickets.length && (
-              <span className="text-muted-foreground/80"> (filtered from {tickets.length})</span>
-            )}
+            {filtered.length} ticket{filtered.length !== 1 ? "s" : ""}
           </p>
 
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <SheetTrigger
               render={
                 <Button variant="outline" size="sm" className="lg:hidden">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  <SlidersHorizontal className="mr-1.5 h-4 w-4" />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="ml-2 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-bold text-navy">
+                    <span className="ml-1.5 rounded-full bg-gold px-1.5 text-[10px] font-bold text-navy">
                       {activeFilterCount}
                     </span>
                   )}
                 </Button>
               }
             />
-            <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
+            <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto rounded-t-xl">
               <SheetHeader>
-                <SheetTitle className="font-heading text-navy">Filter Tickets</SheetTitle>
+                <SheetTitle>Filter Tickets</SheetTitle>
               </SheetHeader>
-              <div className="mt-4 pb-6">
+              <div className="mt-4 pb-4">
                 <TicketFiltersPanel
                   filters={filters}
-                  onChange={(next) => {
-                    updateFilters(next);
-                  }}
+                  onChange={updateFilters}
                   options={options}
                   airlineNames={airlineNames}
                 />
-                <Button
-                  className="mt-4 w-full bg-navy text-white hover:bg-navy-light"
-                  onClick={() => setFiltersOpen(false)}
-                >
+                <Button className="mt-4 w-full bg-navy text-white" onClick={() => setFiltersOpen(false)}>
                   Show {filtered.length} tickets
                 </Button>
               </div>
@@ -127,40 +112,26 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center sm:p-12">
-            <p className="text-muted-foreground">
-              No tickets match your filters. Try adjusting your search criteria.
-            </p>
+          <div className="rounded-xl border border-dashed border-border p-8 text-center">
+            <p className="text-sm text-muted-foreground">No tickets match your filters.</p>
             {activeFilterCount > 0 && (
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => updateFilters({})}>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => updateFilters({})}>
                 Clear filters
               </Button>
             )}
           </div>
         ) : (
           <>
-            <div className="space-y-4">
-              {visible.map((ticket, index) => (
-                <motion.div
-                  key={ticket.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.25) }}
-                >
-                  <TicketCard ticket={ticket} />
-                </motion.div>
+            <div className="space-y-2">
+              {visible.map((ticket) => (
+                <TicketCard key={ticket.id} ticket={ticket} compact />
               ))}
             </div>
 
             {visibleCount < filtered.length && (
-              <div className="pt-4 text-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="min-w-48"
-                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                >
-                  Load more ({filtered.length - visibleCount} remaining)
+              <div className="pt-2 text-center">
+                <Button variant="outline" onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}>
+                  Load more ({filtered.length - visibleCount})
                 </Button>
               </div>
             )}

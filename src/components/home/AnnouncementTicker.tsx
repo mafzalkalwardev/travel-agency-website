@@ -8,7 +8,7 @@ export function AnnouncementTicker({ announcements }: AnnouncementTickerProps) {
   const items = [...announcements, ...announcements];
 
   return (
-    <div className="overflow-hidden bg-gold py-2.5 text-navy">
+    <div className="overflow-hidden border-b border-gold/20 bg-gold/90 py-2 text-navy">
       <div className="flex animate-ticker whitespace-nowrap">
         {items.map((item, i) => (
           <span key={`${item.id}-${i}`} className="mx-8 inline-flex items-center text-sm font-medium">

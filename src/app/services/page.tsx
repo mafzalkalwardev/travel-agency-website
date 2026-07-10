@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { createPageMetadata } from "@/lib/metadata";
-import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
-import { SITE, TRUST_TEXT } from "@/lib/constants";
-import { CheckCircle } from "lucide-react";
+import { SITE } from "@/lib/constants";
 import { Plane, Sparkles, FileText, Hotel, Shield, Car, Building2, Palmtree, Users, Globe, type LucideIcon } from "lucide-react";
 
 export const metadata = createPageMetadata({
@@ -19,11 +17,10 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 const visaServices = [
-  { name: "Thailand E-Visa", desc: "Tourist e-visa processing assistance" },
-  { name: "Malaysia E-Visa", desc: "Fast Malaysia visit visa support" },
-  { name: "UAE Visit Visa", desc: "UAE visit visa for tourism and business" },
-  { name: "Saudi Travel Assistance", desc: "Umrah and visit-related travel support" },
-  { name: "Other Countries", desc: "Contact us for additional destinations" },
+  { name: "Thailand E-Visa", href: "/inquiry/" },
+  { name: "Malaysia E-Visa", href: "/inquiry/" },
+  { name: "UAE Visit Visa", href: "/inquiry/" },
+  { name: "Saudi Travel", href: "/inquiry/" },
 ];
 
 export default async function ServicesPage() {
@@ -35,22 +32,16 @@ export default async function ServicesPage() {
 
       <section className="section-padding">
         <div className="container-wide">
-          <div className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {TRUST_TEXT.map((t) => (
-              <div key={t} className="flex items-start gap-2 rounded-xl border border-gold/20 bg-gold/5 p-4 text-sm">
-                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> {t}
-              </div>
-            ))}
-          </div>
-          <SectionHeading title="What We Offer" />
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => {
               const Icon = iconMap[service.icon] || Plane;
               return (
-                <Link key={service.id} href={service.href} className="card-premium group p-6">
-                  <Icon className="h-10 w-10 text-gold" />
-                  <h3 className="mt-4 font-heading text-lg font-semibold text-navy group-hover:text-royal">{service.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{service.description}</p>
+                <Link key={service.id} href={service.href} className="card-premium flex items-start gap-3 p-4">
+                  <Icon className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-navy">{service.title}</h3>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{service.description}</p>
+                  </div>
                 </Link>
               );
             })}
@@ -60,14 +51,16 @@ export default async function ServicesPage() {
 
       <section id="visit-visa" className="section-padding bg-light-bg">
         <div className="container-wide">
-          <SectionHeading title="Visit Visa Services" subtitle="E-visas and visit visa assistance for popular destinations" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <h2 className="mb-4 text-lg font-semibold text-navy">Visit Visas</h2>
+          <div className="flex flex-wrap gap-2">
             {visaServices.map((v) => (
-              <div key={v.name} className="card-premium p-5">
-                <h3 className="font-heading font-semibold text-navy">{v.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{v.desc}</p>
-                <Link href="/inquiry/" className="mt-3 inline-block text-sm font-medium text-royal hover:text-gold">Apply / Inquire →</Link>
-              </div>
+              <Link
+                key={v.name}
+                href={v.href}
+                className="rounded-full border border-border/60 bg-white px-4 py-2 text-sm text-navy hover:border-gold"
+              >
+                {v.name}
+              </Link>
             ))}
           </div>
         </div>

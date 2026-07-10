@@ -2,11 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowRightLeft, Calendar, MapPin, Search } from "lucide-react";
+import { ArrowRightLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,8 +22,6 @@ const airlines = [
   { label: "Airblue", value: "PA" },
   { label: "Air Sial", value: "PF" },
   { label: "Qatar Airways", value: "QR" },
-  { label: "Fly Jinnah", value: "9P" },
-  { label: "Flynas", value: "XY" },
 ];
 
 interface TicketsSearchBarProps {
@@ -35,20 +31,16 @@ interface TicketsSearchBarProps {
 export function TicketsSearchBar({ className }: TicketsSearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [from, setFrom] = useState("Islamabad");
-  const [to, setTo] = useState("Jeddah");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [date, setDate] = useState("");
   const [airline, setAirline] = useState("all");
 
   useEffect(() => {
-    const fromCity = searchParams.get("fromCity");
-    const toCity = searchParams.get("toCity");
-    const dateParam = searchParams.get("date");
-    const airlineParam = searchParams.get("airline");
-    if (fromCity) setFrom(fromCity);
-    if (toCity) setTo(toCity);
-    if (dateParam) setDate(dateParam);
-    if (airlineParam) setAirline(airlineParam);
+    setFrom(searchParams.get("fromCity") || "");
+    setTo(searchParams.get("toCity") || "");
+    setDate(searchParams.get("date") || "");
+    setAirline(searchParams.get("airline") || "all");
   }, [searchParams]);
 
   function handleSearch(e: React.FormEvent) {
@@ -61,98 +53,59 @@ export function TicketsSearchBar({ className }: TicketsSearchBarProps) {
     router.push(`/available-tickets/?${params.toString()}`);
   }
 
-  function swapCities() {
-    setFrom(to);
-    setTo(from);
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.15 }}
+    <form
+      onSubmit={handleSearch}
       className={className}
     >
-      <form
-        onSubmit={handleSearch}
-        className="rounded-2xl border border-gold/20 bg-white/95 p-5 shadow-2xl shadow-navy/10 backdrop-blur-md md:p-6"
-      >
-        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2 md:gap-4">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5 text-navy">
-              <MapPin className="h-3.5 w-3.5 text-gold" /> From
-            </Label>
-            <Select value={from} onValueChange={(v) => v && setFrom(v)}>
-              <SelectTrigger className="h-11 w-full border-border/60">
-                <SelectValue placeholder="Departure city" />
-              </SelectTrigger>
-              <SelectContent>
-                {SEARCH_CITIES.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="rounded-xl border border-border/60 bg-white p-4 shadow-sm">
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr_auto] sm:items-center">
+          <Select value={from || "all"} onValueChange={(v) => setFrom(!v || v === "all" ? "" : v)}>
+            <SelectTrigger className="h-10 w-full"><SelectValue placeholder="From city" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any city</SelectItem>
+              {SEARCH_CITIES.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <button
             type="button"
-            onClick={swapCities}
-            className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-secondary/50 text-navy transition hover:rotate-180 hover:border-gold hover:text-gold"
+            onClick={() => { const t = from; setFrom(to); setTo(t); }}
+            className="mx-auto flex h-8 w-8 items-center justify-center rounded-full border border-border/60 text-navy hover:border-gold"
             aria-label="Swap cities"
           >
-            <ArrowRightLeft className="h-4 w-4" />
+            <ArrowRightLeft className="h-3.5 w-3.5" />
           </button>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5 text-navy">
-              <MapPin className="h-3.5 w-3.5 text-gold" /> To
-            </Label>
-            <Select value={to} onValueChange={(v) => v && setTo(v)}>
-              <SelectTrigger className="h-11 w-full border-border/60">
-                <SelectValue placeholder="Destination" />
-              </SelectTrigger>
-              <SelectContent>
-                {SEARCH_CITIES.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          <Select value={to || "all"} onValueChange={(v) => setTo(!v || v === "all" ? "" : v)}>
+            <SelectTrigger className="h-10 w-full"><SelectValue placeholder="To city" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any city</SelectItem>
+              {SEARCH_CITIES.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5 text-navy">
-              <Calendar className="h-3.5 w-3.5 text-gold" /> Date
-            </Label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-11 border-border/60"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-navy">Airline</Label>
-            <Select value={airline} onValueChange={(v) => v && setAirline(v)}>
-              <SelectTrigger className="h-11 w-full border-border/60">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {airlines.map((a) => (
-                  <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end">
-            <Button type="submit" className="h-11 w-full bg-navy text-white hover:bg-navy-light lg:min-w-40">
-              <Search className="mr-2 h-4 w-4" />
-              Search
-            </Button>
-          </div>
+          <Button type="submit" className="h-10 bg-navy text-white hover:bg-navy-light">
+            <Search className="mr-1.5 h-4 w-4" />
+            Search
+          </Button>
         </div>
-      </form>
-    </motion.div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10" />
+          <Select value={airline} onValueChange={(v) => v && setAirline(v)}>
+            <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Airline" /></SelectTrigger>
+            <SelectContent>
+              {airlines.map((a) => (
+                <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </form>
   );
 }
