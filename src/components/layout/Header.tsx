@@ -76,7 +76,7 @@ export function Header() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-0.5 lg:flex xl:gap-1">
+        <nav className="hidden items-center gap-0.5 min-[1800px]:flex xl:gap-1">
           {MAIN_NAV.slice(0, 2).map((link) => (
             <Link
               key={link.href}
@@ -158,7 +158,7 @@ export function Header() {
             <SheetTrigger
               className={cn(
                 buttonVariants({ variant: "ghost", size: "icon" }),
-                "h-10 w-10 text-white hover:bg-white/10 lg:hidden"
+                "h-10 w-10 text-white hover:bg-white/10 min-[1800px]:hidden"
               )}
             >
               <Menu className="h-5 w-5" />

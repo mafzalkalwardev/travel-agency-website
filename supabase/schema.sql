@@ -222,6 +222,10 @@ create table if not exists public.customer_profiles (
   email text not null,
   full_name text,
   phone text,
+  approval_status text not null default 'pending' check (approval_status in ('pending', 'approved', 'rejected')),
+  approved_at timestamptz,
+  approved_by uuid references auth.users(id) on delete set null,
+  approval_notes text,
   nationality text,
   passport_number text,
   date_of_birth date,
@@ -306,6 +310,10 @@ create table if not exists public.bookings (
   currency text not null default 'PKR',
   travelline_booking_ref text,
   travelline_response jsonb,
+  supplier_hold_status text check (supplier_hold_status is null or supplier_hold_status in ('held', 'failed', 'pending')),
+  supplier_hold_error text,
+  supplier_hold_attempts int not null default 0,
+  notifications_sent_at timestamptz,
   admin_notes text,
   error_message text,
   source_page text,
@@ -318,6 +326,29 @@ create index if not exists idx_bookings_phone_pending on public.bookings(custome
   where status = 'pending_payment';
 create index if not exists idx_bookings_customer_user on public.bookings(customer_user_id, created_at desc);
 create index if not exists idx_customer_profiles_email on public.customer_profiles(email);
+create index if not exists idx_customer_profiles_approval_status on public.customer_profiles(approval_status, created_at desc);
+
+create index if not exists idx_bookings_supplier_hold_failed
+  on public.bookings (created_at desc)
+  where status = 'pending_payment' and supplier_hold_status = 'failed';
+
+create table if not exists public.notification_log (
+  id uuid primary key default uuid_generate_v4(),
+  booking_id uuid references public.bookings(id) on delete set null,
+  channel text not null check (channel in ('email_customer', 'email_admin')),
+  recipient text not null,
+  template text not null,
+  status text not null check (status in ('sent', 'failed', 'skipped')),
+  error_message text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_notification_log_booking on public.notification_log(booking_id, created_at desc);
+
+alter table public.notification_log enable row level security;
+
+create policy "Admin read notification_log" on public.notification_log
+  for select using (public.is_admin());
 
 -- Sync logs
 create table if not exists public.sync_logs (
@@ -364,6 +395,24 @@ begin
   return new;
 end;
 $$ language plpgsql;
+
+create or replace function public.prevent_customer_profile_approval_change()
+returns trigger as $$
+begin
+  if public.is_admin() then
+    return new;
+  end if;
+
+  if new.approval_status is distinct from old.approval_status
+     or new.approved_at is distinct from old.approved_at
+     or new.approved_by is distinct from old.approved_by
+     or new.approval_notes is distinct from old.approval_notes then
+    raise exception 'Only admins can update customer approval fields';
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer;
 
 -- RLS
 alter table public.profiles enable row level security;
@@ -417,6 +466,11 @@ create policy "Customer read own bookings" on public.bookings for select using (
 create policy "Customer own profile select" on public.customer_profiles for select using (id = auth.uid() or public.is_admin());
 create policy "Customer own profile insert" on public.customer_profiles for insert with check (id = auth.uid());
 create policy "Customer own profile update" on public.customer_profiles for update using (id = auth.uid()) with check (id = auth.uid());
+
+drop trigger if exists prevent_customer_profile_approval_change on public.customer_profiles;
+create trigger prevent_customer_profile_approval_change
+before update on public.customer_profiles
+for each row execute function public.prevent_customer_profile_approval_change();
 
 -- Admin full access
 create policy "Admin all announcements" on public.announcements for all using (public.is_admin());

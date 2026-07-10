@@ -34,112 +34,199 @@ export function TicketCard({ ticket, compact = false }: TicketCardProps) {
   const [bookOpen, setBookOpen] = useState(false);
   const status = statusConfig[ticket.status];
   const productTitle = `${ticket.airline} ${ticket.flightNumber} — ${ticket.fromCity} → ${ticket.toCity} (${ticket.date})`;
+  const dateLabel = new Date(ticket.date).toLocaleDateString("en-PK", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
     <>
-      <motion.div
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.2 }}
-      >
-      <Card className={cn("overflow-hidden border-border/60 transition-all hover:border-gold/30 hover:shadow-lg", compact && "text-sm")}>
-        <CardContent className="p-0">
-          <div className="flex flex-col lg:flex-row">
-            <div className="flex items-center gap-4 border-b border-border/40 bg-secondary/30 p-4 lg:w-48 lg:border-b-0 lg:border-r">
-              <AirlineLogo code={ticket.airlineCode} name={ticket.airline} size={compact ? "sm" : "md"} />
-              <div className="lg:hidden">
-                <p className="font-semibold text-navy">{ticket.airline}</p>
-                <p className="text-xs text-muted-foreground">{ticket.flightNumber}</p>
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex-1 space-y-2">
-                <div className="hidden lg:block">
-                  <p className="font-semibold text-navy">{ticket.airline}</p>
-                  <p className="text-xs text-muted-foreground">{ticket.flightNumber}</p>
-                </div>
+      <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
+        <Card
+          className={cn(
+            "overflow-hidden border-border/60 transition-all hover:border-gold/30 hover:shadow-lg",
+            compact && "text-sm"
+          )}
+        >
+          <CardContent className="p-0">
+            {/* Mobile-first layout */}
+            <div className="flex flex-col lg:hidden">
+              <div className="flex items-center justify-between gap-3 border-b border-border/40 bg-secondary/30 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-navy">{ticket.from}</p>
-                    <p className="text-[11px] text-muted-foreground">{ticket.fromCity}</p>
-                    <p className="text-xs text-muted-foreground">{ticket.departureTime}</p>
+                  <AirlineLogo code={ticket.airlineCode} name={ticket.airline} size={compact ? "sm" : "md"} />
+                  <div>
+                    <p className="font-semibold text-navy">{ticket.airline}</p>
+                    <p className="text-xs text-muted-foreground">{ticket.flightNumber}</p>
                   </div>
-                  <div className="flex flex-1 flex-col items-center px-2">
+                </div>
+                <p className="text-right text-lg font-bold text-gold">
+                  {formatPrice(ticket.price, ticket.currency)}
+                </p>
+              </div>
+
+              <div className="space-y-4 p-4">
+                <div className="flex items-center gap-2">
+                  <div className="min-w-[4.5rem] text-center">
+                    <p className="text-2xl font-bold text-navy">{ticket.from}</p>
+                    <p className="text-[11px] leading-tight text-muted-foreground">{ticket.fromCity}</p>
+                    <p className="text-sm font-medium text-navy">{ticket.departureTime || "—"}</p>
+                  </div>
+                  <div className="flex flex-1 flex-col items-center px-1">
                     <div className="flex w-full items-center gap-1">
                       <div className="h-px flex-1 bg-border" />
-                      <Plane className="h-3 w-3 text-gold" />
+                      <Plane className="h-4 w-4 text-gold" />
                       <div className="h-px flex-1 bg-border" />
                     </div>
-                    <span className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Clock className="h-3 w-3" /> {ticket.duration || "Direct"}
+                    <span className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {ticket.duration || "Direct"}
                     </span>
                   </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-navy">{ticket.to}</p>
-                    <p className="text-[11px] text-muted-foreground">{ticket.toCity}</p>
-                    <p className="text-xs text-muted-foreground">{ticket.arrivalTime}</p>
+                  <div className="min-w-[4.5rem] text-center">
+                    <p className="text-2xl font-bold text-navy">{ticket.to}</p>
+                    <p className="text-[11px] leading-tight text-muted-foreground">{ticket.toCity}</p>
+                    <p className="text-sm font-medium text-navy">{ticket.arrivalTime || "—"}</p>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span>{new Date(ticket.date).toLocaleDateString("en-PK", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</span>
+
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>{dateLabel}</span>
                   <span>•</span>
                   <span>{ticket.sector}</span>
-                  <span>•</span>
-                  <span>{ticket.destination}</span>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4 sm:flex-col sm:items-end">
-                <div className="text-right">
-                  <p className="text-xl font-bold text-gold">{formatPrice(ticket.price, ticket.currency)}</p>
-                  <div className="mt-1 flex items-center justify-end gap-2">
-                    <Badge className={status.className}>{status.label}</Badge>
-                    <span className={cn("flex items-center gap-1 text-xs font-medium", seatsColor(ticket.seatsLeft))}>
-                      <Users className="h-3 w-3" />
-                      {ticket.seatsLeft} seats
-                    </span>
-                  </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className={status.className}>{status.label}</Badge>
+                  <span className={cn("flex items-center gap-1 text-xs font-medium", seatsColor(ticket.seatsLeft))}>
+                    <Users className="h-3.5 w-3.5" />
+                    {ticket.seatsLeft} seats left
+                  </span>
                 </div>
+
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="lg"
+                    className="flex-1"
                     onClick={() => setExpanded(!expanded)}
-                    className="hidden sm:inline-flex"
                   >
                     Details
-                    <ChevronDown className={cn("ml-1 h-3 w-3 transition-transform", expanded && "rotate-180")} />
+                    <ChevronDown className={cn("ml-1 h-4 w-4 transition-transform", expanded && "rotate-180")} />
                   </Button>
                   {ticket.status !== "sold_out" ? (
                     <Button
-                      size="sm"
+                      size="lg"
+                      className="flex-[1.4] bg-gold text-base font-semibold text-navy hover:bg-gold-light"
                       onClick={() => setBookOpen(true)}
-                      className="bg-gold text-navy hover:bg-gold-light whitespace-nowrap"
                     >
                       Hold & Book
                     </Button>
                   ) : (
-                    <Button size="sm" disabled className="whitespace-nowrap">
+                    <Button size="lg" disabled className="flex-[1.4]">
                       Sold Out
                     </Button>
                   )}
                 </div>
               </div>
             </div>
-          </div>
 
-          {expanded && (
-            <div className="border-t border-border/40 bg-secondary/20 p-4 text-sm">
-              <div className="grid gap-2 sm:grid-cols-3">
-                {ticket.baggage && <p><span className="font-medium text-navy">Baggage:</span> {ticket.baggage}</p>}
-                {ticket.aircraft && <p><span className="font-medium text-navy">Aircraft:</span> {ticket.aircraft}</p>}
-                <p><span className="font-medium text-navy">Route:</span> {ticket.fromCity} → {ticket.toCity}</p>
+            {/* Desktop layout */}
+            <div className="hidden lg:flex">
+              <div className="flex w-48 items-center gap-4 border-r border-border/40 bg-secondary/30 p-4">
+                <AirlineLogo code={ticket.airlineCode} name={ticket.airline} size={compact ? "sm" : "md"} />
               </div>
-              {ticket.notes && <p className="mt-2 text-muted-foreground">{ticket.notes}</p>}
+              <div className="flex flex-1 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex-1 space-y-2">
+                  <div>
+                    <p className="font-semibold text-navy">{ticket.airline}</p>
+                    <p className="text-xs text-muted-foreground">{ticket.flightNumber}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-navy">{ticket.from}</p>
+                      <p className="text-[11px] text-muted-foreground">{ticket.fromCity}</p>
+                      <p className="text-xs text-muted-foreground">{ticket.departureTime}</p>
+                    </div>
+                    <div className="flex flex-1 flex-col items-center px-2">
+                      <div className="flex w-full items-center gap-1">
+                        <div className="h-px flex-1 bg-border" />
+                        <Plane className="h-3 w-3 text-gold" />
+                        <div className="h-px flex-1 bg-border" />
+                      </div>
+                      <span className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <Clock className="h-3 w-3" /> {ticket.duration || "Direct"}
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-navy">{ticket.to}</p>
+                      <p className="text-[11px] text-muted-foreground">{ticket.toCity}</p>
+                      <p className="text-xs text-muted-foreground">{ticket.arrivalTime}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span>{dateLabel}</span>
+                    <span>•</span>
+                    <span>{ticket.sector}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 sm:flex-col sm:items-end">
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-gold">{formatPrice(ticket.price, ticket.currency)}</p>
+                    <div className="mt-1 flex items-center justify-end gap-2">
+                      <Badge className={status.className}>{status.label}</Badge>
+                      <span className={cn("flex items-center gap-1 text-xs font-medium", seatsColor(ticket.seatsLeft))}>
+                        <Users className="h-3 w-3" />
+                        {ticket.seatsLeft} seats
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setExpanded(!expanded)}>
+                      Details
+                      <ChevronDown className={cn("ml-1 h-3 w-3 transition-transform", expanded && "rotate-180")} />
+                    </Button>
+                    {ticket.status !== "sold_out" ? (
+                      <Button
+                        size="sm"
+                        onClick={() => setBookOpen(true)}
+                        className="bg-gold text-navy hover:bg-gold-light whitespace-nowrap"
+                      >
+                        Hold & Book
+                      </Button>
+                    ) : (
+                      <Button size="sm" disabled className="whitespace-nowrap">
+                        Sold Out
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {expanded && (
+              <div className="border-t border-border/40 bg-secondary/20 p-4 text-sm">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {ticket.baggage && (
+                    <p>
+                      <span className="font-medium text-navy">Baggage:</span> {ticket.baggage}
+                    </p>
+                  )}
+                  {ticket.aircraft && (
+                    <p>
+                      <span className="font-medium text-navy">Aircraft:</span> {ticket.aircraft}
+                    </p>
+                  )}
+                  <p>
+                    <span className="font-medium text-navy">Route:</span> {ticket.fromCity} → {ticket.toCity}
+                  </p>
+                </div>
+                {ticket.notes && <p className="mt-2 text-muted-foreground">{ticket.notes}</p>}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </motion.div>
 
       <BookRequestSheet

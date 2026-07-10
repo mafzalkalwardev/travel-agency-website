@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRightLeft, Calendar, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,10 +34,22 @@ interface TicketsSearchBarProps {
 
 export function TicketsSearchBar({ className }: TicketsSearchBarProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [from, setFrom] = useState("Islamabad");
   const [to, setTo] = useState("Jeddah");
   const [date, setDate] = useState("");
   const [airline, setAirline] = useState("all");
+
+  useEffect(() => {
+    const fromCity = searchParams.get("fromCity");
+    const toCity = searchParams.get("toCity");
+    const dateParam = searchParams.get("date");
+    const airlineParam = searchParams.get("airline");
+    if (fromCity) setFrom(fromCity);
+    if (toCity) setTo(toCity);
+    if (dateParam) setDate(dateParam);
+    if (airlineParam) setAirline(airlineParam);
+  }, [searchParams]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +77,7 @@ export function TicketsSearchBar({ className }: TicketsSearchBarProps) {
         onSubmit={handleSearch}
         className="rounded-2xl border border-gold/20 bg-white/95 p-5 shadow-2xl shadow-navy/10 backdrop-blur-md md:p-6"
       >
-        <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2 md:gap-4">
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5 text-navy">
               <MapPin className="h-3.5 w-3.5 text-gold" /> From

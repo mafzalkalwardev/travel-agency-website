@@ -20,6 +20,7 @@
     "demo-booking": "npx tsx scripts/demo-live-booking.ts",
     "verify-production": "npx tsx scripts/verify-production-flow.ts",
     "cleanup-tickets": "npx tsx scripts/cleanup-return-tickets.ts",
+    "test-email": "npx tsx scripts/test-booking-email.ts",
     "sync-local": "node scripts/run-sync-local.js",
     "sync-now": "npx tsx scripts/run-sync-now.ts"
   },

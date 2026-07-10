@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Mail, Plane, Database, XCircle } from "lucide-react";
@@ -50,6 +50,8 @@ function StatusRow({
 export default function AdminSettingsPage() {
   const [status, setStatus] = useState<AdminStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [emailTestResult, setEmailTestResult] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/status/")
@@ -57,6 +59,21 @@ export default function AdminSettingsPage() {
       .then(setStatus)
       .finally(() => setLoading(false));
   }, []);
+
+  async function sendTestEmail() {
+    setTestingEmail(true);
+    setEmailTestResult(null);
+    try {
+      const res = await fetch("/api/admin/email/test/", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Send failed");
+      setEmailTestResult(`Test email sent to ${json.sentTo}`);
+    } catch (e) {
+      setEmailTestResult(e instanceof Error ? e.message : "Send failed");
+    } finally {
+      setTestingEmail(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -170,6 +187,16 @@ export default function AdminSettingsPage() {
               <p className="pt-2">
                 Without Resend, bookings still work — customers receive WhatsApp redirect and admin sees bookings here.
               </p>
+              {status.email && (
+                <div className="pt-3">
+                  <Button size="sm" variant="outline" disabled={testingEmail} onClick={sendTestEmail}>
+                    {testingEmail ? "Sending…" : "Send test email"}
+                  </Button>
+                  {emailTestResult && (
+                    <p className="mt-2 text-xs text-muted-foreground">{emailTestResult}</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

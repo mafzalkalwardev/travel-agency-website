@@ -162,7 +162,7 @@ export function BookRequestSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto sm:max-w-md">
+      <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="font-heading text-navy">Hold & Book</SheetTitle>
           <SheetDescription>

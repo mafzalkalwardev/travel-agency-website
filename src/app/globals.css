@@ -86,8 +86,8 @@
 
 @layer base {
   * { @apply border-border outline-ring/50; }
-  body { @apply bg-background text-foreground; }
-  html { @apply scroll-smooth; }
+  html { @apply scroll-smooth; overflow-x: clip; }
+  body { @apply bg-background text-foreground; overflow-x: clip; }
   h1, h2, h3, h4 { font-family: var(--font-heading), serif; }
 }
 
@@ -97,6 +97,7 @@
   }
   .section-padding { @apply py-16 md:py-24; }
   .container-wide { @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .card-premium {
     @apply rounded-2xl border border-border/60 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-xl hover:shadow-gold/5;
   }

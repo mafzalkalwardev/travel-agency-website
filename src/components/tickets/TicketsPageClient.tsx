@@ -3,13 +3,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { SlidersHorizontal } from "lucide-react";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import { TicketFiltersPanel } from "@/components/tickets/TicketFiltersPanel";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { filterTickets, getUniqueFilterOptions } from "@/lib/ticket-filters";
 import { airlines } from "@/data/airlines";
 import type { Ticket, TicketFilters } from "@/types";
 
 const airlineNames = Object.fromEntries(airlines.map((a) => [a.code, a.name]));
+const PAGE_SIZE = 30;
 
 interface TicketsPageClientProps {
   tickets: Ticket[];
@@ -18,6 +28,8 @@ interface TicketsPageClientProps {
 export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState<TicketFilters>({});
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     const initial: TicketFilters = {};
@@ -37,46 +49,122 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
         AirSial: "PF",
         "Qatar Airways": "QR",
         "Fly Jinnah": "9P",
+        Flynas: "XY",
       };
       initial.airline = codeMap[airline] || airline;
     }
     setFilters(initial);
+    setVisibleCount(PAGE_SIZE);
   }, [searchParams]);
 
   const options = useMemo(() => getUniqueFilterOptions(tickets), [tickets]);
   const filtered = useMemo(() => filterTickets(tickets, filters), [tickets, filters]);
+  const visible = filtered.slice(0, visibleCount);
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  function updateFilters(next: TicketFilters) {
+    setFilters(next);
+    setVisibleCount(PAGE_SIZE);
+  }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+    <div className="grid gap-6 lg:grid-cols-[300px_1fr] lg:gap-8">
+      <aside className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
         <TicketFiltersPanel
           filters={filters}
-          onChange={setFilters}
+          onChange={updateFilters}
           options={options}
           airlineNames={airlineNames}
         />
       </aside>
+
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing <strong className="text-navy">{filtered.length}</strong> of {tickets.length} group tickets
+            Showing <strong className="text-navy">{Math.min(visible.length, filtered.length)}</strong> of{" "}
+            {filtered.length} group tickets
+            {filtered.length !== tickets.length && (
+              <span className="text-muted-foreground/80"> (filtered from {tickets.length})</span>
+            )}
           </p>
+
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetTrigger
+              render={
+                <Button variant="outline" size="sm" className="lg:hidden">
+                  <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="ml-2 rounded-full bg-gold px-1.5 py-0.5 text-[10px] font-bold text-navy">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              }
+            />
+            <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle className="font-heading text-navy">Filter Tickets</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 pb-6">
+                <TicketFiltersPanel
+                  filters={filters}
+                  onChange={(next) => {
+                    updateFilters(next);
+                  }}
+                  options={options}
+                  airlineNames={airlineNames}
+                />
+                <Button
+                  className="mt-4 w-full bg-navy text-white hover:bg-navy-light"
+                  onClick={() => setFiltersOpen(false)}
+                >
+                  Show {filtered.length} tickets
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
+
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-12 text-center">
-            <p className="text-muted-foreground">No tickets match your filters. Try adjusting your search criteria.</p>
+          <div className="rounded-xl border border-dashed border-border p-10 text-center sm:p-12">
+            <p className="text-muted-foreground">
+              No tickets match your filters. Try adjusting your search criteria.
+            </p>
+            {activeFilterCount > 0 && (
+              <Button variant="outline" size="sm" className="mt-4" onClick={() => updateFilters({})}>
+                Clear filters
+              </Button>
+            )}
           </div>
         ) : (
-          filtered.map((ticket, index) => (
-            <motion.div
-              key={ticket.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.4) }}
-            >
-              <TicketCard ticket={ticket} />
-            </motion.div>
-          ))
+          <>
+            <div className="space-y-4">
+              {visible.map((ticket, index) => (
+                <motion.div
+                  key={ticket.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.25) }}
+                >
+                  <TicketCard ticket={ticket} />
+                </motion.div>
+              ))}
+            </div>
+
+            {visibleCount < filtered.length && (
+              <div className="pt-4 text-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="min-w-48"
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                >
+                  Load more ({filtered.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

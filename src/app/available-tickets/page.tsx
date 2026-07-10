@@ -22,7 +22,9 @@ export default async function AvailableTicketsPage() {
 
       <section className="relative z-20 -mt-14 pb-4">
         <div className="container-wide">
-          <TicketsSearchBar />
+          <Suspense fallback={null}>
+            <TicketsSearchBar />
+          </Suspense>
         </div>
       </section>
 
