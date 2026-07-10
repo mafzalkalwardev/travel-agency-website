@@ -21,6 +21,8 @@ import type {
   TravelLineSession,
 } from "./types";
 import { resolveTravelLinePackageId, isTravelLineGroupId } from "./resolve-package-id";
+import { TRAVELLINE_GROUP_CATEGORIES, matchGroupFlightToPackage } from "./resolve-group-id";
+import type { TravelLineGroupFlight } from "./mappers";
 import { loginTravelLineViaPlaywright } from "./playwright-auth";
 
 const UMRANH_PACKAGES_PATH = "/api/umrah-packages";
@@ -224,26 +226,23 @@ export class TravelLineClient {
     const session = await this.ensureSession();
     if (!session) return null;
 
-    const groupsRes = await fetch(
-      `${this.config.baseUrl}/api/groups?category=${encodeURIComponent("Umrah Groups")}`,
-      {
-        headers: {
-          Accept: "application/json",
-          Cookie: sessionToCookieHeader(session),
-        },
-      }
-    );
-    if (!groupsRes.ok) return null;
-    const groups = (await groupsRes.json()) as {
-      flights?: Array<{ _id: string; groupPnr?: string; itineraries?: Array<{ segments?: Array<{ flightNumber?: string }> }> }>;
-    };
+    const flights: TravelLineGroupFlight[] = [];
+    for (const category of TRAVELLINE_GROUP_CATEGORIES) {
+      const groupsRes = await fetch(
+        `${this.config.baseUrl}/api/groups?category=${encodeURIComponent(category)}`,
+        {
+          headers: {
+            Accept: "application/json",
+            Cookie: sessionToCookieHeader(session),
+          },
+        }
+      );
+      if (!groupsRes.ok) continue;
+      const groups = (await groupsRes.json()) as { flights?: TravelLineGroupFlight[] };
+      flights.push(...(groups.flights || []));
+    }
 
-    const match = groups.flights?.find((flight) => {
-      const flightNo = flight.itineraries?.[0]?.segments?.[0]?.flightNumber?.replace(/\s+/g, "");
-      const pkgFlight = pkg.departureFlightNo?.replace(/\s+/g, "");
-      return flightNo && pkgFlight && flightNo === pkgFlight;
-    });
-
+    const match = matchGroupFlightToPackage(flights, pkg);
     return match?._id || null;
   }
 
@@ -264,14 +263,19 @@ export class TravelLineClient {
     if (!groupId) {
       const items = await this.fetchUmrahApiItems();
       const pkg = items.find((item) => item.id === packageId);
+      let umrahErr: unknown;
+
       if (pkg?.slug) {
         const umrahPayload = {
+          companyId: this.sessionUser.companyId,
+          packageId: pkg.id,
           adult: input.passengers,
           child: 0,
           infant: 0,
           pricingOption: "sharing",
           agentContactNumber: this.config.username,
           reservedBy: this.sessionUser.agentName || "Al Qibla Agent",
+          saleFare: input.quotedPrice,
           passengers: Array.from({ length: input.passengers }, () =>
             buildPassenger(input.passengerDetails)
           ),
@@ -298,11 +302,18 @@ export class TravelLineClient {
             `TL-${packageId}`;
           return { success: true, bookingRef: String(ref), raw: umrahJson };
         }
+
+        umrahErr =
+          (umrahJson as Record<string, unknown>).message ||
+          (umrahJson as Record<string, unknown>).error;
       }
 
       return {
         success: false,
-        error: "Could not resolve Travel Line group flight for booking",
+        error:
+          typeof umrahErr === "string"
+            ? `Umrah package hold failed: ${umrahErr}`
+            : "Could not resolve Travel Line group flight for booking",
       };
     }
 

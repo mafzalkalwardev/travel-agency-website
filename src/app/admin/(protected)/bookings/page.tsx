@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   Clock,
+  Mail,
   MessageCircle,
   Phone,
   RefreshCw,
@@ -269,6 +270,17 @@ export default function AdminBookingsPage() {
                       </Button>
                     </div>
                   )}
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Mail className="h-3.5 w-3.5" />
+                    {b.notifications_sent_at ? (
+                      <span className="text-emerald-700">
+                        Booking emails sent {new Date(b.notifications_sent_at).toLocaleString()}
+                      </span>
+                    ) : (
+                      <span>Booking emails not sent yet (Resend optional)</span>
+                    )}
+                  </div>
 
                   {passengerText && (
                     <p className="rounded-lg bg-secondary/40 px-3 py-2 text-muted-foreground">
