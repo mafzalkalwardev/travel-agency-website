@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { createPageMetadata } from "@/lib/metadata";
 import { TicketsPageClient } from "@/components/tickets/TicketsPageClient";
 import { TicketsSearchBar } from "@/components/tickets/TicketsSearchBar";
+import { PageHero } from "@/components/shared/PageHero";
+import { PAGE_HEROES } from "@/lib/page-heroes";
 import { SITE } from "@/lib/constants";
 import { dataProvider } from "@/lib/data-provider";
 
@@ -15,21 +17,24 @@ export default async function AvailableTicketsPage() {
   const tickets = await dataProvider.getTickets();
 
   return (
-    <section className="section-padding">
-      <div className="container-wide">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-navy md:text-3xl">Group Flight Tickets</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Search live inventory and book on WhatsApp</p>
+    <>
+      <PageHero {...PAGE_HEROES.tickets} badge="Agent Portal · Live Inventory" />
+
+      <section className="relative z-20 -mt-14 pb-4">
+        <div className="container-wide">
+          <Suspense fallback={null}>
+            <TicketsSearchBar />
+          </Suspense>
         </div>
+      </section>
 
-        <Suspense fallback={null}>
-          <TicketsSearchBar className="mb-6" />
-        </Suspense>
-
-        <Suspense fallback={<div className="text-sm text-muted-foreground">Loading tickets...</div>}>
-          <TicketsPageClient tickets={tickets} />
-        </Suspense>
-      </div>
-    </section>
+      <section className="section-padding pt-6">
+        <div className="container-wide">
+          <Suspense fallback={<div className="text-center text-muted-foreground">Loading tickets...</div>}>
+            <TicketsPageClient tickets={tickets} />
+          </Suspense>
+        </div>
+      </section>
+    </>
   );
 }

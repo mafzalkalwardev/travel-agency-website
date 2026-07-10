@@ -5,34 +5,44 @@ import { SectionHeading } from "@/components/shared/SectionHeading";
 import { MotionSection } from "@/components/motion/MotionSection";
 import { ReviewCard } from "./ReviewCard";
 import { ReviewForm } from "./ReviewForm";
+import { StarRating } from "./StarRating";
 import { Button } from "@/components/ui/button";
 import type { Review, ReviewStats } from "@/types";
 
 interface ReviewsSectionClientProps {
   reviews: Review[];
   stats: ReviewStats;
-  limit?: number;
 }
 
-export function ReviewsSectionClient({ reviews, stats, limit = 6 }: ReviewsSectionClientProps) {
+export function ReviewsSectionClient({ reviews, stats }: ReviewsSectionClientProps) {
   const [showForm, setShowForm] = useState(false);
 
   return (
-    <section className="section-padding bg-light-bg">
+    <section className="section-padding bg-navy-light">
       <div className="container-wide">
         <MotionSection>
           <SectionHeading
             title="What Our Clients Say"
-            subtitle={stats.count > 0 ? `${stats.average.toFixed(1)} ★ from ${stats.count} reviews` : "Trusted by pilgrims and travelers across Pakistan"}
+            subtitle="Trusted by pilgrims, families, and organizations across Pakistan"
+            light
           />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {reviews.slice(0, limit).map((r) => (
+          {stats.count > 0 && (
+            <div className="mb-8 flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-6 py-4">
+              <div>
+                <p className="text-3xl font-bold text-gold">{stats.average.toFixed(1)}</p>
+                <StarRating value={Math.round(stats.average)} readonly size="sm" />
+                <p className="text-xs text-white/60">{stats.count} reviews</p>
+              </div>
+            </div>
+          )}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {reviews.slice(0, 6).map((r) => (
               <ReviewCard key={r.id} review={r} />
             ))}
           </div>
-          <div className="mt-6">
+          <div className="mt-8">
             {!showForm ? (
-              <Button variant="outlineDark" onClick={() => setShowForm(true)}>
+              <Button variant="primaryGold" onClick={() => setShowForm(true)}>
                 Write a Review
               </Button>
             ) : (

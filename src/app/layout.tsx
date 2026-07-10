@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import { Toaster } from "sonner";
 import { ConditionalSiteChrome } from "@/components/layout/ConditionalSiteChrome";
 import { Footer } from "@/components/layout/Footer";
@@ -10,6 +10,7 @@ import { createPageMetadata } from "@/lib/metadata";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"] });
 
 export const metadata: Metadata = createPageMetadata({ title: SITE.name, description: SITE.description });
 
@@ -34,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable} h-full`}>
       <head>
         <script
           type="application/ld+json"

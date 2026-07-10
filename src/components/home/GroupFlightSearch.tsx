@@ -1,24 +1,40 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ArrowRightLeft, Search } from "lucide-react";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowRightLeft, Calendar, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SEARCH_CITIES } from "@/lib/airport-codes";
-import { cn } from "@/lib/utils";
 
-const selectClass =
-  "h-11 w-full rounded-md border border-border/60 bg-white px-3 text-sm text-navy outline-none focus:border-gold focus:ring-2 focus:ring-gold/20";
+const airlines = [
+  { label: "All Airlines", value: "All Airlines" },
+  { label: "PIA", value: "PIA" },
+  { label: "Saudia", value: "Saudia" },
+  { label: "Emirates", value: "Emirates" },
+  { label: "Airblue", value: "Airblue" },
+  { label: "Air Sial", value: "AirSial" },
+  { label: "Qatar Airways", value: "Qatar Airways" },
+  { label: "Fly Jinnah", value: "Fly Jinnah" },
+  { label: "Flynas", value: "Flynas" },
+];
 
 export function GroupFlightSearch() {
   const router = useRouter();
   const [from, setFrom] = useState("Islamabad");
   const [to, setTo] = useState("Jeddah");
   const [date, setDate] = useState("");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const [airline, setAirline] = useState("All Airlines");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,78 +42,90 @@ export function GroupFlightSearch() {
     if (from) params.set("fromCity", from);
     if (to) params.set("toCity", to);
     if (date) params.set("date", date);
+    if (airline !== "All Airlines") params.set("airline", airline);
     router.push(`/available-tickets/?${params.toString()}`);
   };
 
   return (
-    <section className="relative z-20 -mt-8 pb-4">
+    <section className="relative z-20 -mt-16 pb-8">
       <div className="container-wide">
-        <form
-          onSubmit={handleSearch}
-          className="rounded-xl border border-border/60 bg-white p-4 shadow-lg shadow-navy/5 md:p-5"
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55 }}
         >
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr_auto] sm:items-center">
-            {mounted ? (
-              <select
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className={selectClass}
-                aria-label="From city"
-              >
-                {SEARCH_CITIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className={cn(selectClass, "flex items-center text-muted-foreground")}>Islamabad</div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setFrom(to);
-                setTo(from);
-              }}
-              className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-navy transition hover:border-gold hover:text-gold"
-              aria-label="Swap cities"
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-            </button>
-
-            {mounted ? (
-              <select
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className={selectClass}
-                aria-label="To city"
-              >
-                {SEARCH_CITIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className={cn(selectClass, "flex items-center text-muted-foreground")}>Jeddah</div>
-            )}
-
-            <Button type="submit" className="h-11 bg-navy text-white hover:bg-navy-light sm:col-span-1">
-              <Search className="mr-2 h-4 w-4" />
-              Search
-            </Button>
-          </div>
-          <div className="mt-3 sm:max-w-xs">
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-10 border-border/60"
-              placeholder="Travel date (optional)"
-            />
-          </div>
-        </form>
+          <Card className="border-gold/20 shadow-2xl shadow-navy/10">
+            <CardContent className="p-6 md:p-8">
+              <h2 className="mb-6 font-heading text-xl font-semibold text-navy md:text-2xl">
+                Search Group Flights
+              </h2>
+              <form onSubmit={handleSearch} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5 text-navy">
+                      <MapPin className="h-3.5 w-3.5 text-gold" /> From
+                    </Label>
+                    <Select value={from} onValueChange={(v) => v && setFrom(v)}>
+                      <SelectTrigger className="h-11 w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SEARCH_CITIES.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setFrom(to); setTo(from); }}
+                    className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-secondary/50 transition hover:rotate-180 hover:border-gold"
+                    aria-label="Swap cities"
+                  >
+                    <ArrowRightLeft className="h-4 w-4 text-navy" />
+                  </button>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5 text-navy">
+                      <MapPin className="h-3.5 w-3.5 text-gold" /> To
+                    </Label>
+                    <Select value={to} onValueChange={(v) => v && setTo(v)}>
+                      <SelectTrigger className="h-11 w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SEARCH_CITIES.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto]">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5 text-navy">
+                      <Calendar className="h-3.5 w-3.5 text-gold" /> Date
+                    </Label>
+                    <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-navy">Airline</Label>
+                    <Select value={airline} onValueChange={(v) => v && setAirline(v)}>
+                      <SelectTrigger className="h-11 w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {airlines.map((a) => (
+                          <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button type="submit" className="h-11 w-full bg-navy text-white hover:bg-navy-light lg:min-w-44">
+                      <Search className="mr-2 h-4 w-4" />
+                      Search Flights
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </section>
   );

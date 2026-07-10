@@ -1,5 +1,7 @@
 import { createPageMetadata } from "@/lib/metadata";
 import { InquiryForm } from "@/components/forms/InquiryForm";
+import { PageHero } from "@/components/shared/PageHero";
+import { PAGE_HEROES } from "@/lib/page-heroes";
 import { SITE } from "@/lib/constants";
 
 export const metadata = createPageMetadata({
@@ -10,14 +12,13 @@ export const metadata = createPageMetadata({
 
 export default function InquiryPage() {
   return (
-    <section className="section-padding">
-      <div className="container-wide max-w-lg">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-navy">Book / Inquiry</h1>
-          <p className="mt-1 text-sm text-muted-foreground">We&apos;ll respond on WhatsApp</p>
+    <>
+      <PageHero {...PAGE_HEROES.inquiry} />
+      <section className="section-padding">
+        <div className="container-wide max-w-2xl">
+          <InquiryForm />
         </div>
-        <InquiryForm />
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

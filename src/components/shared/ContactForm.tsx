@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const services = [
   "Air Ticketing",
@@ -20,6 +21,7 @@ const services = [
   "Visit Visa",
   "Hotel Reservation",
   "Corporate Travel",
+  "Travel Insurance",
   "Other",
 ];
 
@@ -29,6 +31,7 @@ export function ContactForm() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState({
     name: "",
+    email: "",
     phone: "",
     service: "",
     message: "",
@@ -44,6 +47,7 @@ export function ContactForm() {
         body: JSON.stringify({
           type: "contact",
           name: form.name,
+          email: form.email,
           phone: form.phone,
           service: form.service,
           message: form.message,
@@ -53,11 +57,11 @@ export function ContactForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not submit inquiry");
       setStatus("success");
-      setMessage(data.message || "We'll contact you shortly on WhatsApp.");
-      setForm({ name: "", phone: "", service: "", message: "" });
+      setMessage(data.message || "Your inquiry has been received. We will contact you shortly via phone or WhatsApp.");
+      setForm({ name: "", email: "", phone: "", service: "", message: "" });
     } catch (error) {
       setStatus("error");
-      setMessage(error instanceof Error ? error.message : "Could not submit. Please message us on WhatsApp.");
+      setMessage(error instanceof Error ? error.message : "Could not submit inquiry. Please contact us on WhatsApp.");
     } finally {
       setLoading(false);
     }
@@ -65,59 +69,73 @@ export function ContactForm() {
 
   if (status === "success") {
     return (
-      <div className="rounded-xl border border-gold/30 bg-white p-6 text-center">
-        <h3 className="font-semibold text-navy">Thank you!</h3>
-        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
-        <Button variant="primaryGold" className="mt-4" size="sm" onClick={() => setStatus("idle")}>
-          Send Another
-        </Button>
-      </div>
+      <Card className="border-gold/30">
+        <CardContent className="p-8 text-center">
+          <h3 className="font-heading text-xl font-semibold text-navy">Thank You!</h3>
+          <p className="mt-2 text-muted-foreground">
+            {message}
+          </p>
+          <Button variant="primaryGold" className="mt-4" onClick={() => setStatus("idle")}>
+            Send Another Inquiry
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border/60 bg-white p-5">
-      <h2 className="mb-4 text-sm font-semibold text-navy">Send an Inquiry</h2>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-xs">Name *</Label>
-            <Input id="name" required className="h-9" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+    <Card className="border-border/60">
+      <CardHeader>
+        <CardTitle className="font-heading text-navy">Send Us an Inquiry</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input id="name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone / WhatsApp *</Label>
+              <Input id="phone" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="phone" className="text-xs">Phone / WhatsApp *</Label>
-            <Input id="phone" required className="h-9" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Service *</Label>
-          <Select value={form.service} onValueChange={(v) => v && setForm({ ...form, service: v })} required>
-            <SelectTrigger className="h-9 w-full"><SelectValue placeholder="Select service" /></SelectTrigger>
-            <SelectContent>
-              {services.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="message" className="text-xs">Message *</Label>
-          <Textarea
-            id="message"
-            required
-            rows={3}
-            value={form.message}
-            onChange={(e) => setForm({ ...form, message: e.target.value })}
-            placeholder="Your travel requirements..."
-          />
-        </div>
-        {status === "error" && (
-          <p className="text-xs text-brand-red">{message}</p>
-        )}
-        <Button type="submit" variant="primaryGold" className="w-full" disabled={loading}>
-          {loading ? "Sending..." : "Submit"}
-        </Button>
-      </form>
-    </div>
+          <div className="space-y-2">
+            <Label>Service Required *</Label>
+            <Select value={form.service} onValueChange={(v) => v && setForm({ ...form, service: v })} required>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Select a service" /></SelectTrigger>
+              <SelectContent>
+                {services.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="message">Message *</Label>
+            <Textarea
+              id="message"
+              required
+              rows={4}
+              value={form.message}
+              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              placeholder="Tell us about your travel requirements..."
+            />
+          </div>
+          {status === "error" && (
+            <p className="rounded-md border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
+              {message}
+            </p>
+          )}
+          <Button type="submit" variant="primaryGold" className="w-full" disabled={loading}>
+            {loading ? "Submitting..." : "Submit Inquiry"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

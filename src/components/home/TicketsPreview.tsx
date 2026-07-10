@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { MotionSection } from "@/components/motion/MotionSection";
+import { MotionStagger, MotionStaggerItem } from "@/components/motion/MotionStagger";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import type { Ticket } from "@/types";
@@ -11,29 +13,31 @@ interface TicketsPreviewProps {
 }
 
 export function TicketsPreview({ tickets }: TicketsPreviewProps) {
-  if (tickets.length === 0) return null;
-
   return (
-    <section className="section-padding bg-light-bg">
+    <section className="section-padding">
       <div className="container-wide">
-        <SectionHeading
-          title="Available Group Tickets"
-          subtitle="Live fares — book directly on WhatsApp"
-        />
-        <div className="grid gap-3">
-          {tickets.map((ticket) => (
-            <TicketCard key={ticket.id} ticket={ticket} compact />
+        <MotionSection>
+          <SectionHeading
+            title="Available Group Tickets"
+            subtitle="Browse live group fares and request a booking"
+          />
+        </MotionSection>
+        <MotionStagger className="grid gap-4 md:grid-cols-2">
+          {tickets.slice(0, 4).map((ticket) => (
+            <MotionStaggerItem key={ticket.id}>
+              <TicketCard ticket={ticket} compact />
+            </MotionStaggerItem>
           ))}
-        </div>
-        <div className="mt-6 text-center">
+        </MotionStagger>
+        <MotionSection delay={0.1} className="mt-10 text-center">
           <Link
             href="/available-tickets/"
-            className={cn(buttonVariants({ variant: "navy", size: "lg" }), "h-11 px-6")}
+            className={cn(buttonVariants({ size: "lg" }), "bg-gold text-navy hover:bg-gold-light")}
           >
-            View All Tickets
+            View All Available Tickets
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
-        </div>
+        </MotionSection>
       </div>
     </section>
   );
