@@ -2,18 +2,18 @@ import { ASSETS } from "@/lib/assets";
 import type { GalleryItem, Service } from "@/types";
 
 export const galleryImages: GalleryItem[] = [
-  { id: "g1", src: ASSETS.gallery[0], alt: "Air travel and group tickets", category: "tickets" },
-  { id: "g2", src: ASSETS.gallery[1], alt: "World destinations", category: "tours" },
-  { id: "g3", src: ASSETS.gallery[2], alt: "Travel experiences", category: "tours" },
-  { id: "g4", src: ASSETS.gallery[3], alt: "Dubai skyline", category: "tours" },
-  { id: "g5", src: ASSETS.gallery[4], alt: "Istanbul Turkey", category: "tours" },
-  { id: "g6", src: ASSETS.gallery[5], alt: "Kuala Lumpur Malaysia", category: "tours" },
-  { id: "g7", src: ASSETS.flyers.umrah, alt: "Umrah Special 2026", category: "umrah" },
-  { id: "g8", src: ASSETS.flyers.tickets, alt: "Group Tickets", category: "tickets" },
-  { id: "g9", src: ASSETS.flyers.corporate, alt: "Corporate Travel", category: "announcement" },
-  { id: "g10", src: ASSETS.flyers.tours, alt: "Tour Packages", category: "tours" },
-  { id: "g11", src: ASSETS.flyers.visa, alt: "Visit Visa", category: "visa" },
-  { id: "g12", src: ASSETS.flyers.airfares, alt: "Air Fares", category: "tickets" },
+  { id: "g1", src: ASSETS.gallery[0], alt: "Masjid al-Haram in Makkah", category: "umrah" },
+  { id: "g2", src: ASSETS.gallery[1], alt: "Jeddah, Saudi Arabia", category: "umrah" },
+  { id: "g3", src: ASSETS.gallery[2], alt: "Dubai skyline", category: "tours" },
+  { id: "g4", src: ASSETS.gallery[3], alt: "Istanbul, Turkey", category: "tours" },
+  { id: "g5", src: ASSETS.gallery[4], alt: "Kuala Lumpur, Malaysia", category: "tours" },
+  { id: "g6", src: ASSETS.gallery[5], alt: "Thailand travel destination", category: "tours" },
+  { id: "g7", src: ASSETS.gallery[6], alt: "Premium Umrah accommodation", category: "umrah" },
+  { id: "g8", src: ASSETS.gallery[7], alt: "Family Umrah journey", category: "umrah" },
+  { id: "g9", src: ASSETS.gallery[8], alt: "Dubai holiday experience", category: "tours" },
+  { id: "g10", src: ASSETS.gallery[9], alt: "Turkey tour experience", category: "tours" },
+  { id: "g11", src: ASSETS.gallery[10], alt: "Malaysia tour experience", category: "tours" },
+  { id: "g12", src: ASSETS.gallery[11], alt: "International air travel", category: "tickets" },
 ];
 
 export const services: Service[] = [

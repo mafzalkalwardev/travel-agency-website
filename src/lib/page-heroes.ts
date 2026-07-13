@@ -37,9 +37,9 @@ export const PAGE_HEROES = {
     backgroundImage: ASSETS.heroes.corporate,
   },
   gallery: {
-    title: "Gallery & Flyers",
-    subtitle: "Promotional posters, travel highlights and company announcements.",
-    backgroundImage: ASSETS.heroes.gallery,
+    title: "Travel Gallery",
+    subtitle: "Umrah journeys, trusted destinations and travel experiences offered by Al Qibla.",
+    backgroundImage: ASSETS.heroes.poster,
   },
   blog: {
     title: "Blog & Travel News",

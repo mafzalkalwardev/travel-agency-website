@@ -254,6 +254,7 @@ create table if not exists public.gallery_items (
 alter table public.tickets add column if not exists external_id text;
 alter table public.tickets add column if not exists source_provider text default 'manual';
 alter table public.tickets add column if not exists raw_payload jsonb;
+alter table public.tickets add column if not exists group_category text;
 
 alter table public.umrah_packages add column if not exists external_id text;
 alter table public.umrah_packages add column if not exists source_provider text default 'manual';

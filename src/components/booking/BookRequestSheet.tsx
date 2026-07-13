@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Briefcase, CalendarDays, CheckCircle2, Clock3, Plane, ShieldCheck, Users } from "lucide-react";
+import { AirlineLogo } from "@/components/shared/AirlineLogo";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +20,7 @@ import { SITE } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
-import type { BookingProductType } from "@/types";
+import type { BookingProductType, Ticket } from "@/types";
 
 interface BookRequestSheetProps {
   open: boolean;
@@ -32,6 +34,7 @@ interface BookRequestSheetProps {
   tourPackageId?: string;
   externalProductId?: string;
   sourcePage?: string;
+  ticket?: Ticket;
 }
 
 export function BookRequestSheet({
@@ -46,6 +49,7 @@ export function BookRequestSheet({
   tourPackageId,
   externalProductId,
   sourcePage,
+  ticket,
 }: BookRequestSheetProps) {
   const [loading, setLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -162,27 +166,26 @@ export function BookRequestSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle className="font-heading text-navy">Hold & Book</SheetTitle>
+      <SheetContent className="flex !w-[min(96vw,64rem)] !max-w-none flex-col overflow-y-auto p-0 sm:!max-w-4xl">
+        <SheetHeader className="border-b bg-navy px-6 py-5 text-white sm:px-8">
+          <SheetTitle className="font-heading text-2xl text-white">Review & hold your booking</SheetTitle>
           <SheetDescription>
-            Approved agents can place a supplier hold instantly, then complete payment on WhatsApp.
+            Confirm the live itinerary and fare before continuing. Approved accounts can place a supplier hold instantly.
           </SheetDescription>
         </SheetHeader>
 
+        <div className="px-5 pb-8 sm:px-8">
+          {ticket ? <TicketBookingDetails ticket={ticket} /> : (
+            <div className="mt-6 rounded-2xl border bg-secondary/40 p-5"><p className="font-semibold text-navy">{productTitle}</p><p className="mt-1 text-xl font-bold text-gold">{quotedPrice.toLocaleString()} {currency}</p></div>
+          )}
+
         {!authChecked ? (
-          <div className="mt-6 rounded-lg border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
+          <div className="mt-6 rounded-xl border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
             Checking account session...
           </div>
         ) : !signedIn ? (
           <div className="mt-6 space-y-4">
-            <div className="rounded-lg bg-secondary/50 p-3 text-sm">
-              <p className="font-medium text-navy">{productTitle}</p>
-              <p className="font-bold text-gold">
-                {quotedPrice.toLocaleString()} {currency}
-              </p>
-            </div>
-            <div className="rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-gold/30 bg-gold/10 p-5 text-sm leading-6 text-muted-foreground">
               Create an account or sign in before booking. Your passenger details, requests, and status updates will be saved in My Trips.
             </div>
             <Link
@@ -200,12 +203,6 @@ export function BookRequestSheet({
           </div>
         ) : approvalStatus !== "approved" ? (
           <div className="mt-6 space-y-4">
-            <div className="rounded-lg bg-secondary/50 p-3 text-sm">
-              <p className="font-medium text-navy">{productTitle}</p>
-              <p className="font-bold text-gold">
-                {quotedPrice.toLocaleString()} {currency}
-              </p>
-            </div>
             <div className="rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-muted-foreground">
               {getApprovalMessage(approvalStatus || "pending")}
             </div>
@@ -223,12 +220,6 @@ export function BookRequestSheet({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div className="rounded-lg bg-secondary/50 p-3 text-sm">
-              <p className="font-medium text-navy">{productTitle}</p>
-              <p className="font-bold text-gold">
-                {quotedPrice.toLocaleString()} {currency}
-              </p>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="br-name">Full name</Label>
               <Input id="br-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -266,8 +257,53 @@ export function BookRequestSheet({
             </p>
           </form>
         )}
+        </div>
       </SheetContent>
     </Sheet>
   );
 }
 
+function TicketBookingDetails({ ticket }: { ticket: Ticket }) {
+  const segments = ticket.segments?.length ? ticket.segments : [];
+  return (
+    <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+      <div className="flex flex-col gap-5 bg-gradient-to-r from-navy to-navy-light p-5 text-white sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4"><AirlineLogo code={ticket.airlineCode} name={ticket.airline} size="md" /><div><p className="text-xs font-bold uppercase tracking-[.16em] text-gold-light">Operated by</p><h3 className="mt-1 text-xl font-bold">{ticket.airline}</h3><p className="text-sm text-white/60">{ticket.flightNumber} · {ticket.sector}</p></div></div>
+        <div className="sm:text-right"><p className="text-xs uppercase tracking-[.14em] text-white/50">Fare per traveler</p><p className="mt-1 text-2xl font-bold text-gold">{ticket.currency} {ticket.price.toLocaleString("en-PK")}</p><p className="text-xs text-white/50">Live fare · subject to supplier confirmation</p></div>
+      </div>
+      <div className="grid gap-5 p-5 lg:grid-cols-[1fr_230px]">
+        <div className="space-y-4">
+          {(segments.length ? segments : [{
+            flightNumber: ticket.flightNumber, airline: ticket.airline, airlineCode: ticket.airlineCode,
+            departureAirport: ticket.fromCity, departureCode: ticket.from, departureCity: ticket.fromCity,
+            departureDatetime: `${ticket.date}T${ticket.departureTime || "00:00"}`, arrivalAirport: ticket.toCity,
+            arrivalCode: ticket.to, arrivalCity: ticket.toCity, arrivalDatetime: `${ticket.date}T${ticket.arrivalTime || "00:00"}`,
+          }]).map((segment, index) => (
+            <div key={`${segment.flightNumber}-${index}`} className="relative grid gap-4 rounded-xl border bg-slate-50 p-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+              <div><p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Departure</p><p className="mt-1 text-2xl font-bold text-navy">{segment.departureCode}</p><p className="text-sm">{segment.departureCity}</p><p className="text-xs text-muted-foreground">{formatDateTime(segment.departureDatetime)}</p></div>
+              <div className="flex min-w-28 flex-col items-center"><Plane className="h-5 w-5 text-gold" /><div className="my-2 h-px w-full bg-gold/40" /><p className="text-xs font-semibold text-navy">{segment.flightNumber}</p></div>
+              <div className="sm:text-right"><p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Arrival</p><p className="mt-1 text-2xl font-bold text-navy">{segment.arrivalCode}</p><p className="text-sm">{segment.arrivalCity}</p><p className="text-xs text-muted-foreground">{formatDateTime(segment.arrivalDatetime)}</p></div>
+            </div>
+          ))}
+        </div>
+        <aside className="rounded-xl border bg-secondary/40 p-4 text-sm">
+          <p className="font-bold text-navy">Fare details</p>
+          <ul className="mt-4 space-y-3 text-muted-foreground">
+            <li className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-gold" />{new Date(`${ticket.date}T00:00:00`).toLocaleDateString("en-PK", { dateStyle: "medium" })}</li>
+            <li className="flex items-center gap-2"><Clock3 className="h-4 w-4 text-gold" />{ticket.duration || "Duration TBA"}</li>
+            <li className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-gold" />{ticket.baggage || "Baggage TBA"}</li>
+            <li className="flex items-center gap-2"><Users className="h-4 w-4 text-gold" />{ticket.seatsLeft} live seats</li>
+            <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-gold" />{ticket.meal || "Meal not specified"}</li>
+          </ul>
+          <div className="mt-5 border-t pt-4 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mb-2 h-5 w-5 text-emerald-600" />No payment is collected here. A supplier hold is attempted only after an approved account submits traveler details.</div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-PK", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}

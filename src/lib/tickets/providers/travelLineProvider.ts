@@ -1,5 +1,6 @@
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
 import { scrapeTravelLineTickets } from "@/lib/travelline/scraper";
+import { cleanupReturnLegTickets } from "@/lib/sync/cleanup-return-tickets";
 import { upsertTickets } from "@/lib/sync/upsert-inventory";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { NormalizedTicket, TicketProvider, TicketSyncResult } from "./types";
@@ -41,16 +42,19 @@ export class TravelLineTicketProvider implements TicketProvider {
     try {
       const tickets = await this.fetchTickets();
       const { created, updated, deactivated, skipped, changes } = await upsertTickets(tickets, this.name);
+      const cleanup = await cleanupReturnLegTickets();
+      const cleanupNote =
+        cleanup.deactivated > 0 ? `, ${cleanup.deactivated} wrong-direction cleaned` : "";
       return {
         provider: this.name,
         status: tickets.length ? "success" : "partial",
         ticketsProcessed: tickets.length,
         ticketsCreated: created,
         ticketsUpdated: updated,
-        ticketsDeactivated: deactivated,
+        ticketsDeactivated: deactivated + cleanup.deactivated,
         changes,
         message: tickets.length
-          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped)`
+          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped${cleanupNote})`
           : "No tickets returned from Travel Line scraper",
       };
     } catch (e) {

@@ -82,6 +82,8 @@ export async function upsertTickets(
       meal: t.meal ?? null,
       trip_type: t.tripType ?? "oneway",
       is_direct: t.isDirect ?? true,
+      group_category: t.groupCategory ?? null,
+      aircraft: t.aircraft ?? null,
       active: t.status !== "sold_out",
       last_updated: new Date().toISOString(),
       raw_payload: t,
@@ -355,7 +357,10 @@ const ticketDiffFields = [
   "meal",
   "trip_type",
   "is_direct",
+  "group_category",
+  "aircraft",
   "active",
+  "raw_payload",
 ];
 
 const packageDiffFields = [

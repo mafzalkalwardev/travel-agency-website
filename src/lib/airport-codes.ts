@@ -5,9 +5,11 @@ const AIRPORT_CITIES: Record<string, string> = {
   PEW: "Peshawar",
   SKT: "Sialkot",
   MUX: "Multan",
+  LYP: "Faisalabad",
   JED: "Jeddah",
   MED: "Madinah",
   RUH: "Riyadh",
+  DMM: "Dammam",
   DXB: "Dubai",
   AUH: "Abu Dhabi",
   SHJ: "Sharjah",
@@ -25,9 +27,9 @@ const CITY_TO_CODE: Record<string, string> = Object.fromEntries(
 );
 
 /** Pakistan departure airports for group/Umrah outbound inventory */
-export const PK_AIRPORT_CODES = new Set(["ISB", "LHE", "KHI", "PEW", "SKT", "MUX"]);
+export const PK_AIRPORT_CODES = new Set(["ISB", "LHE", "KHI", "PEW", "SKT", "MUX", "LYP"]);
 
-const GULF_AIRPORT_CODES = new Set(["JED", "MED", "RUH", "DXB", "AUH", "SHJ", "DOH", "BAH", "MCT"]);
+const GULF_AIRPORT_CODES = new Set(["JED", "MED", "RUH", "DMM", "DXB", "AUH", "SHJ", "DOH", "BAH", "MCT"]);
 
 /** Group inventory should be PK → destination, not return legs */
 export function isOutboundGroupTicket(fromCode: string, toCode: string): boolean {
@@ -92,11 +94,13 @@ export const SEARCH_CITIES = [
   "Lahore",
   "Karachi",
   "Peshawar",
+  "Faisalabad",
   "Sialkot",
   "Multan",
   "Jeddah",
   "Madinah",
   "Riyadh",
+  "Dammam",
   "Dubai",
   "Abu Dhabi",
   "Sharjah",

@@ -22,10 +22,10 @@ export function TicketsPreview({ tickets }: TicketsPreviewProps) {
             subtitle="Browse live group fares and request a booking"
           />
         </MotionSection>
-        <MotionStagger className="grid gap-4 md:grid-cols-2">
+        <MotionStagger className="mx-auto max-w-6xl space-y-3">
           {tickets.slice(0, 4).map((ticket) => (
             <MotionStaggerItem key={ticket.id}>
-              <TicketCard ticket={ticket} compact />
+              <TicketCard ticket={ticket} />
             </MotionStaggerItem>
           ))}
         </MotionStagger>

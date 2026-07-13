@@ -124,6 +124,13 @@ export function mapFlightToTicket(
     meal: raw.meal as string | undefined,
     tripType: (raw.tripType as NormalizedTicket["tripType"]) || "oneway",
     isDirect: raw.isDirect !== false,
+    groupCategory: raw.groupCategory as string | undefined,
+    aircraft: raw.aircraft as string | undefined,
+    refundable: raw.refundable as string | undefined,
+    changeFeeApplicable: raw.changeFeeApplicable as string | undefined,
+    groupPnr: raw.groupPnr as string | undefined,
+    supplierUpdatedAt: raw.supplierUpdatedAt as string | undefined,
+    segments: raw.segments as NormalizedTicket["segments"],
   };
 }
 
@@ -145,13 +152,14 @@ export function ticketsFromUmrahApiItems(
 
   for (const item of items) {
     if (!item.departureFlightNo || !item.departureDate) continue;
+    if (!item.departureSectorFrom || !item.departureSectorTo) continue;
 
     const seats = Number(item.seatsAvailable ?? 0);
-    const halfPrice = applyMarkup(Math.round(item.price / 2), markupPercent);
+    const price = applyMarkup(item.price, markupPercent);
     const airline = item.airline || "Unknown";
     const code = airlineToCode(airline, item.departureFlightNo);
-    const fromResolved = resolveAirport(item.departureSectorFrom || item.fromCity);
-    const toResolved = resolveAirport(item.departureSectorTo || item.toCity);
+    const fromResolved = resolveAirport(item.departureSectorFrom);
+    const toResolved = resolveAirport(item.departureSectorTo);
 
     tickets.push(
       mapFlightToTicket(
@@ -167,7 +175,7 @@ export function ticketsFromUmrahApiItems(
           departureDate: item.departureDate,
           departureTime: item.departureTime,
           arrivalTime: item.departureArrivalTime,
-          price: halfPrice,
+          price,
           seatsLeft: seats,
           status: item.status,
           tripType: "umrah",
@@ -187,25 +195,39 @@ export interface TravelLineGroupFlight {
   _id: string;
   availableSeats?: number;
   groupCategory?: string;
-  fares?: { salePrice?: number; currency?: string };
+  fares?: {
+    salePrice?: number;
+    currency?: string;
+    currencyCode?: string;
+    baggage?: { maxWeight?: string };
+    refundable?: string;
+    changeFeeApplicable?: string;
+  };
+  groupPnr?: string;
+  updated_at?: string;
   itineraries?: Array<{
     duration?: string;
     segments?: Array<{
       flightNumber?: string;
+      meal?: string;
       departure?: {
         iataCode?: string;
         at?: string;
         datetime?: string;
-        airport?: { iataCode?: string; city?: string };
+        terminal?: string;
+        airport?: { iataCode?: string; city?: string; name?: string; country?: string };
       };
       arrival?: {
         iataCode?: string;
         at?: string;
         datetime?: string;
-        airport?: { iataCode?: string; city?: string };
+        terminal?: string;
+        airport?: { iataCode?: string; city?: string; name?: string; country?: string };
       };
       duration?: string;
-      airline?: { carrierCode?: string; carrierName?: string };
+      airline?: { carrierCode?: string; carrierName?: string; logo?: string };
+      aircraft?: { type?: string; registration?: string };
+      status?: string;
     }>;
   }>;
 }
@@ -223,6 +245,51 @@ function segmentAirport(point?: {
   return { code, city, datetime };
 }
 
+type GroupSegment = NonNullable<
+  NonNullable<TravelLineGroupFlight["itineraries"]>[number]["segments"]
+>[number];
+
+/**
+ * Pick the outbound itinerary as a whole (first departure → last arrival),
+ * matching how Travel Line displays multi-segment flights (e.g. LHE-MCT-JED
+ * shows as Lahore → Jeddah, 1 stop) instead of a single segment.
+ */
+function pickOutboundItinerary(group: TravelLineGroupFlight): {
+  segments: GroupSegment[];
+  itineraryDuration: string;
+} | null {
+  for (const itinerary of group.itineraries ?? []) {
+    const segments = (itinerary.segments ?? []).filter((segment) => {
+      const dep = segmentAirport(segment.departure);
+      const arr = segmentAirport(segment.arrival);
+      return Boolean(dep.code && arr.code);
+    });
+    if (!segments.length) continue;
+
+    const dep = segmentAirport(segments[0].departure);
+    const arr = segmentAirport(segments[segments.length - 1].arrival);
+    if (isOutboundGroupTicket(dep.code, arr.code)) {
+      return {
+        segments,
+        itineraryDuration: itinerary.duration || segments[0].duration || "",
+      };
+    }
+  }
+  return null;
+}
+
+/** IATA chain across the itinerary, e.g. "LHE-MCT-JED". */
+function sectorChain(segments: GroupSegment[]): string {
+  const codes: string[] = [];
+  for (const segment of segments) {
+    const dep = segmentAirport(segment.departure).code;
+    if (dep && codes[codes.length - 1] !== dep) codes.push(dep);
+  }
+  const finalArr = segmentAirport(segments[segments.length - 1].arrival).code;
+  if (finalArr && codes[codes.length - 1] !== finalArr) codes.push(finalArr);
+  return codes.join("-");
+}
+
 export function ticketsFromGroupFlights(
   flights: TravelLineGroupFlight[],
   markupPercent = 0
@@ -230,24 +297,51 @@ export function ticketsFromGroupFlights(
   const tickets: NormalizedTicket[] = [];
 
   for (const group of flights) {
-    const segment = group.itineraries?.[0]?.segments?.[0];
-    if (!segment) continue;
+    const picked = pickOutboundItinerary(group);
+    if (!picked) continue;
 
-    const dep = segmentAirport(segment.departure);
-    const arr = segmentAirport(segment.arrival);
-    if (!dep.code || !arr.code) continue;
+    const { segments, itineraryDuration } = picked;
+    const first = segments[0];
+    const dep = segmentAirport(first.departure);
+    const arr = segmentAirport(segments[segments.length - 1].arrival);
 
     const seats = Number(group.availableSeats ?? 0);
-    const airline = segment.airline?.carrierName || "Unknown";
-    const flightNumber = (segment.flightNumber || "").replace(/\s+/g, " ").trim();
+    const airline = first.airline?.carrierName || "Unknown";
+    const flightNumber = (first.flightNumber || "").replace(/\s+/g, " ").trim();
     const price = applyMarkup(Number(group.fares?.salePrice ?? 0), markupPercent);
+    const baggage = group.fares?.baggage?.maxWeight;
+    const meal = first.meal || (segments.some((s) => s.meal === "Yes") ? "Yes" : undefined);
+    const detailedSegments = segments.map((segment) => {
+      const segmentDep = segmentAirport(segment.departure);
+      const segmentArr = segmentAirport(segment.arrival);
+      return {
+        flightNumber: (segment.flightNumber || "").replace(/\s+/g, " ").trim(),
+        airline: segment.airline?.carrierName || airline,
+        airlineCode: segment.airline?.carrierCode || airlineToCode(segment.airline?.carrierName, segment.flightNumber),
+        departureAirport: segment.departure?.airport?.name || segmentDep.code,
+        departureCode: segmentDep.code,
+        departureCity: segmentDep.city,
+        departureCountry: segment.departure?.airport?.country,
+        departureTerminal: segment.departure?.terminal,
+        departureDatetime: segmentDep.datetime,
+        arrivalAirport: segment.arrival?.airport?.name || segmentArr.code,
+        arrivalCode: segmentArr.code,
+        arrivalCity: segmentArr.city,
+        arrivalCountry: segment.arrival?.airport?.country,
+        arrivalTerminal: segment.arrival?.terminal,
+        arrivalDatetime: segmentArr.datetime,
+        aircraft: segment.aircraft?.type,
+        meal: segment.meal,
+        status: segment.status,
+      };
+    });
 
     tickets.push(
       mapFlightToTicket(
         {
           id: group._id,
           airlineName: airline,
-          airlineCode: segment.airline?.carrierCode || airlineToCode(airline, flightNumber),
+          airlineCode: first.airline?.carrierCode || airlineToCode(airline, flightNumber),
           flightNumber,
           from: dep.code,
           fromCity: dep.city,
@@ -256,11 +350,21 @@ export function ticketsFromGroupFlights(
           departureDate: dep.datetime.slice(0, 10),
           departureTime: dep.datetime.slice(11, 16),
           arrivalTime: arr.datetime.slice(11, 16),
-          duration: group.itineraries?.[0]?.duration || segment.duration || "",
+          duration: itineraryDuration,
           price,
           seatsLeft: seats,
+          baggage,
+          meal,
           tripType: "group",
-          sector: `${dep.code}-${arr.code}`,
+          sector: sectorChain(segments),
+          isDirect: segments.length <= 1,
+          groupCategory: group.groupCategory,
+          aircraft: first.aircraft?.type,
+          refundable: group.fares?.refundable,
+          changeFeeApplicable: group.fares?.changeFeeApplicable,
+          groupPnr: group.groupPnr,
+          supplierUpdatedAt: group.updated_at,
+          segments: detailedSegments,
         },
         0
       )
@@ -268,7 +372,7 @@ export function ticketsFromGroupFlights(
   }
 
   return tickets
-    .filter((t) => t.externalId && t.date)
+    .filter((t) => t.externalId && t.date && isOutboundGroupTicket(t.from, t.to))
     .sort((a, b) => b.date.localeCompare(a.date) || a.departureTime.localeCompare(b.departureTime));
 }
 
@@ -289,7 +393,9 @@ export function mapTravelLineUmrahApiItem(item: TravelLineUmrahApiItem, markupPe
     category: "standard",
     price: applyMarkup(item.price, markupPercent),
     currency: item.currency || "PKR",
-    duration: item.durationDays ? `${item.durationDays} Days` : "15 Days",
+    duration: item.durationDays
+      ? `${item.durationDays} Days / ${item.durationNights ?? item.durationDays - 1} Nights`
+      : "15 Days",
     departure_city: item.fromCity,
     airline: item.airline,
     hotel_makkah: item.hotel?.makkahName || item.hotel?.name,

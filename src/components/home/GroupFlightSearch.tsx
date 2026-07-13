@@ -57,9 +57,12 @@ export function GroupFlightSearch() {
         >
           <Card className="border-gold/20 shadow-2xl shadow-navy/10">
             <CardContent className="p-6 md:p-8">
-              <h2 className="mb-6 font-heading text-xl font-semibold text-navy md:text-2xl">
-                Search Group Flights
-              </h2>
+              <div className="mb-6">
+                <p className="text-xs font-medium uppercase tracking-widest text-gold">Live Group Inventory</p>
+                <h2 className="mt-1 font-heading text-xl font-semibold text-navy md:text-2xl">
+                  Search Group Flights
+                </h2>
+              </div>
               <form onSubmit={handleSearch} className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
                   <div className="space-y-2">

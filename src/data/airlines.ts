@@ -53,6 +53,8 @@ const regions: Record<string, Airline["regions"]> = {
 export const airlines: Airline[] = codes.map((code) => ({
   code,
   name: names[code],
+  // PNG files are the downloaded carrier marks. The SVG files are only
+  // letter-code fallbacks and should not be presented as official logos.
   logo: `/assets/airlines/${code.toLowerCase()}.png`,
   regions: regions[code] ?? ["International"],
 }));

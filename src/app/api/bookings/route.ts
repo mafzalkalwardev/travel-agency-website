@@ -26,13 +26,10 @@ export async function POST(request: Request) {
     const data = parsed.data;
 
     if (!isSupabaseConfigured()) {
-      return NextResponse.json({
-        success: true,
-        bookingRef: `DEV-${Date.now()}`,
-        message: "Booking request received (development mode).",
-        devFallback: true,
-        supplierHeld: false,
-      });
+      return NextResponse.json(
+        { error: "Live booking is temporarily unavailable. No booking or seat hold was created." },
+        { status: 503 }
+      );
     }
 
     const userClient = await createClient();

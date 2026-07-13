@@ -2,14 +2,14 @@ import { getTravelLineConfig } from "./env";
 import { extractUmrahItemsFromHtml, extractUmrahItemsFromJsonText } from "./extractors";
 import {
   ticketsFromGroupFlights,
-  ticketsFromUmrahApiItems,
   type TravelLineGroupFlight,
   type TravelLineUmrahApiItem,
 } from "./mappers";
+import { TRAVELLINE_GROUP_CATEGORIES } from "./categories";
 import type { NormalizedTicket } from "@/lib/tickets/providers/types";
+import type { Page, Response } from "playwright";
 
 const SCRAPER_PATHS = ["/", "/explore", "/login"] as const;
-const GROUP_CATEGORIES = ["Umrah Groups", "K S A Oneway Groups", "U A E Oneway Groups"] as const;
 
 async function loadPlaywright() {
   try {
@@ -69,21 +69,23 @@ export async function fetchTravelLineGroupFlights(cookie: string): Promise<Trave
   const { baseUrl } = getTravelLineConfig();
   const flights: TravelLineGroupFlight[] = [];
 
-  for (const category of GROUP_CATEGORIES) {
+  for (const category of TRAVELLINE_GROUP_CATEGORIES) {
     const res = await fetch(`${baseUrl}/api/groups?category=${encodeURIComponent(category)}`, {
       headers: { Accept: "application/json", Cookie: cookie },
     });
     if (!res.ok) continue;
     const data = (await res.json()) as { flights?: TravelLineGroupFlight[] };
     for (const flight of data.flights || []) {
-      if ((flight.availableSeats ?? 0) > 0) flights.push(flight);
+      if ((flight.availableSeats ?? 0) > 0) {
+        flights.push({ ...flight, groupCategory: flight.groupCategory || category });
+      }
     }
   }
 
   return flights;
 }
 
-async function tryPortalLogin(page: { goto: Function; locator: Function; waitForTimeout: Function }) {
+async function tryPortalLogin(page: Page) {
   const { baseUrl, adminUrl, username, password } = getTravelLineConfig();
   if (!username || !password) return;
 
@@ -144,6 +146,12 @@ export async function scrapeTravelLineUmrahItems(): Promise<TravelLineUmrahApiIt
     /* fall through to Playwright */
   }
 
+  // Vercel serverless does not ship Playwright browser binaries. Falling back
+  // there turns an otherwise healthy HTTP sync into a runtime module failure.
+  if (process.env.VERCEL === "1") {
+    throw new Error("Travel Line package API returned no usable inventory");
+  }
+
   const { chromium } = await loadPlaywright();
   const browser = await chromium.launch({ headless: true });
 
@@ -155,7 +163,7 @@ export async function scrapeTravelLineUmrahItems(): Promise<TravelLineUmrahApiIt
     const page = await context.newPage();
     let intercepted: TravelLineUmrahApiItem[] = [];
 
-    page.on("response", async (response: { url: Function; text: Function }) => {
+    page.on("response", async (response: Response) => {
       const url = String(response.url());
       if (!url.includes("/api/umrah-packages")) return;
       try {
@@ -198,11 +206,7 @@ function dedupeTickets(tickets: NormalizedTicket[]): NormalizedTicket[] {
   const seen = new Map<string, NormalizedTicket>();
 
   for (const ticket of tickets) {
-    const key = `${ticket.flightNumber}-${ticket.date}-${ticket.from}-${ticket.to}`;
-    const existing = seen.get(key);
-    if (!existing || ticket.seatsLeft > existing.seatsLeft) {
-      seen.set(key, ticket);
-    }
+    seen.set(ticket.externalId, ticket);
   }
 
   return Array.from(seen.values()).sort(
@@ -210,16 +214,12 @@ function dedupeTickets(tickets: NormalizedTicket[]): NormalizedTicket[] {
   );
 }
 
+/** Group flights only — Umrah packages are synced separately via package sync. */
 export async function scrapeTravelLineTickets(): Promise<NormalizedTicket[]> {
   const { markupPercent } = getTravelLineConfig();
-  const items = await scrapeTravelLineUmrahItems();
-  const packageTickets = ticketsFromUmrahApiItems(items, markupPercent);
-
   const cookie = await loginViaHttp();
-  if (!cookie) return packageTickets;
+  if (!cookie) return [];
 
   const groupFlights = await fetchTravelLineGroupFlights(cookie);
-  const groupTickets = ticketsFromGroupFlights(groupFlights, markupPercent);
-
-  return dedupeTickets([...groupTickets, ...packageTickets]);
+  return dedupeTickets(ticketsFromGroupFlights(groupFlights, markupPercent));
 }

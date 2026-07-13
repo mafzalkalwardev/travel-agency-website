@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,7 @@ interface TicketFiltersPanelProps {
     dates: string[];
   };
   airlineNames: Record<string, string>;
+  hideDestination?: boolean;
 }
 
 export function TicketFiltersPanel({
@@ -33,6 +34,7 @@ export function TicketFiltersPanel({
   onChange,
   options,
   airlineNames,
+  hideDestination = false,
 }: TicketFiltersPanelProps) {
   const update = (key: keyof TicketFilters, value: string | number | null | undefined) => {
     onChange({ ...filters, [key]: !value || value === "all" ? undefined : value });
@@ -99,6 +101,7 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
+        {!hideDestination && (
         <div className="space-y-2">
           <Label>Destination</Label>
           <Select value={filters.destination || "all"} onValueChange={(v) => update("destination", v)}>
@@ -111,6 +114,7 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
+        )}
         <div className="space-y-2">
           <Label>Date</Label>
           <Select value={filters.date || "all"} onValueChange={(v) => update("date", v)}>
@@ -166,10 +170,9 @@ export function TicketFiltersPanel({
             </SelectContent>
           </Select>
         </div>
-        <Button className="w-full bg-navy text-white hover:bg-navy-light">
-          <Search className="mr-2 h-4 w-4" />
-          Apply Filters
-        </Button>
+        <p className="pt-1 text-center text-xs text-muted-foreground">
+          Filters apply instantly as you change them.
+        </p>
       </CardContent>
     </Card>
   );

@@ -27,8 +27,9 @@ function loadEnv() {
 
 const env = loadEnv();
 const resendKey = env.RESEND_API_KEY;
-const fromEmail = env.BOOKING_FROM_EMAIL || "bookings@alqiblaairservices.com";
+const fromEmail = env.BOOKING_FROM_EMAIL || "onboarding@resend.dev";
 const adminEmail = env.BOOKING_ADMIN_EMAIL || env.ADMIN_EMAIL || "salesalqibla@gmail.com";
+const sandboxMode = env.RESEND_SANDBOX_MODE ?? "true";
 
 if (!resendKey) {
   console.error(
@@ -48,6 +49,7 @@ const vars = {
   RESEND_API_KEY: resendKey,
   BOOKING_FROM_EMAIL: fromEmail,
   BOOKING_ADMIN_EMAIL: adminEmail,
+  RESEND_SANDBOX_MODE: sandboxMode,
 };
 
 function addEnv(name, value) {
@@ -62,9 +64,12 @@ function addEnv(name, value) {
   const result = spawnSync(
     "npx",
     ["vercel", "env", "add", name, "production", "--value", value, "--yes"],
-    { cwd: path.join(__dirname, ".."), stdio: "inherit", shell: true }
+    { cwd: path.join(__dirname, ".."), stdio: "pipe", shell: true, encoding: "utf8" }
   );
-  if (result.status !== 0) throw new Error(`Failed to set ${name}`);
+  if (result.status !== 0) {
+    const err = (result.stderr || result.stdout || "").trim();
+    throw new Error(`Failed to set ${name}${err ? `: ${err}` : ""}`);
+  }
   console.log(`✓ ${name} → production`);
 }
 

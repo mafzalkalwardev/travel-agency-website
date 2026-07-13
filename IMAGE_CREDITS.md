@@ -18,3 +18,6 @@ Categories mapped to headings:
 To refresh stock images: `npm run download-images`
 
 Replace any image with your own licensed photos by overwriting the JPG in the matching folder and keeping the same filename.
+# 3D / 360 aircraft
+
+- Commercial aircraft 360-degree render sprite: ProductionCrate, "Commercial Airplane". Extended-use commercial license; attribution not required. Stored locally at `public/assets/aircraft/commercial-aircraft-360.jpg`.

@@ -16,8 +16,10 @@ export const ASSETS = {
 
   destinations: {
     umrah: "/assets/destinations/umrah-makkah.jpg",
+    umrahGroups: "/assets/destinations/umrah-makkah.jpg",
     ksa: "/assets/destinations/ksa-jeddah.jpg",
     uae: "/assets/destinations/uae-dubai.jpg",
+    oman: "/assets/destinations/uae-dubai.jpg",
     afghanistan: "/assets/destinations/afghanistan.jpg",
     dubaiTours: "/assets/destinations/dubai-tours.jpg",
     malaysia: "/assets/destinations/malaysia-kl.jpg",
@@ -66,18 +68,18 @@ export const ASSETS = {
   ],
 
   gallery: [
-    "/assets/gallery/travel-1.jpg",
-    "/assets/gallery/travel-2.jpg",
-    "/assets/gallery/travel-3.jpg",
-    "/assets/gallery/travel-4.jpg",
-    "/assets/gallery/travel-5.jpg",
-    "/assets/gallery/travel-6.jpg",
-    "/assets/flyers/flyer-1.jpeg",
-    "/assets/flyers/flyer-2.jpeg",
-    "/assets/flyers/flyer-3.jpeg",
-    "/assets/flyers/flyer-4.jpeg",
-    "/assets/flyers/flyer-5.jpeg",
-    "/assets/flyers/flyer-6.jpeg",
+    "/assets/destinations/umrah-makkah.jpg",
+    "/assets/destinations/ksa-jeddah.jpg",
+    "/assets/destinations/uae-dubai.jpg",
+    "/assets/destinations/turkey-istanbul.jpg",
+    "/assets/destinations/malaysia-kl.jpg",
+    "/assets/destinations/thailand.jpg",
+    "/assets/packages/umrah-premium.jpg",
+    "/assets/packages/umrah-family.jpg",
+    "/assets/packages/tours/dubai.jpg",
+    "/assets/packages/tours/turkey.jpg",
+    "/assets/packages/tours/malaysia.jpg",
+    "/assets/heroes/hero-poster.jpg",
   ],
 } as const;
 

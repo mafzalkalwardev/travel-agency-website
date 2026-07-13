@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRightLeft, Calendar, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -30,9 +29,11 @@ const airlines = [
 
 interface TicketsSearchBarProps {
   className?: string;
+  /** Page to push search params to — keeps category context on group-flights pages. */
+  basePath?: string;
 }
 
-export function TicketsSearchBar({ className }: TicketsSearchBarProps) {
+export function TicketsSearchBar({ className, basePath = "/available-tickets/" }: TicketsSearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [from, setFrom] = useState("Islamabad");
@@ -58,7 +59,7 @@ export function TicketsSearchBar({ className }: TicketsSearchBarProps) {
     if (to) params.set("toCity", to);
     if (date) params.set("date", date);
     if (airline !== "all") params.set("airline", airline);
-    router.push(`/available-tickets/?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   function swapCities() {
@@ -125,11 +126,11 @@ export function TicketsSearchBar({ className }: TicketsSearchBarProps) {
             <Label className="flex items-center gap-1.5 text-navy">
               <Calendar className="h-3.5 w-3.5 text-gold" /> Date
             </Label>
-            <Input
+            <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="h-11 border-border/60"
+              className="h-11 w-full rounded-lg border border-border/60 bg-transparent px-2.5 py-1 text-sm text-navy outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
           </div>
           <div className="space-y-2">

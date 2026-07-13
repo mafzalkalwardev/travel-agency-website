@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, CheckCircle2, Headphones, Send } from "lucide-react";
 
 const services = [
   "Air Ticketing",
@@ -84,30 +85,34 @@ export function ContactForm() {
   }
 
   return (
-    <Card className="border-border/60">
-      <CardHeader>
-        <CardTitle className="font-heading text-navy">Send Us an Inquiry</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Card className="overflow-hidden rounded-[2rem] border-0 bg-white shadow-[0_30px_90px_rgba(25,45,65,.14)]">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#284d44] via-[#35665a] to-[#8b6a3d] p-7 text-white sm:p-9">
+        <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gold/20 blur-3xl" />
+        <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gold text-navy"><Headphones className="h-5 w-5" /></div>
+        <h2 className="relative mt-5 text-2xl font-bold">Tell us where you want to go</h2>
+        <p className="relative mt-2 max-w-lg text-sm leading-6 text-white/70">Share your travel requirements and a specialist will respond with practical options, availability and a clear quotation.</p>
+        <div className="relative mt-5 flex flex-wrap gap-4 text-xs text-white/75"><span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-gold" />No obligation</span><span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-gold" />Human response</span><span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-gold" />Transparent pricing</span></div>
+      </div>
+      <CardContent className="p-7 sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name *</Label>
-              <Input id="name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Input id="name" className="h-12 rounded-xl border-navy/10 bg-[#faf8f4]" placeholder="Your full name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone / WhatsApp *</Label>
-              <Input id="phone" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <Input id="phone" className="h-12 rounded-xl border-navy/10 bg-[#faf8f4]" placeholder="e.g. +92 331 5576169" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <Input id="email" className="h-12 rounded-xl border-navy/10 bg-[#faf8f4]" placeholder="you@company.com" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </div>
           <div className="space-y-2">
             <Label>Service Required *</Label>
             <Select value={form.service} onValueChange={(v) => v && setForm({ ...form, service: v })} required>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Select a service" /></SelectTrigger>
+              <SelectTrigger className="h-12 w-full rounded-xl border-navy/10 bg-[#faf8f4]"><SelectValue placeholder="Choose the service you need" /></SelectTrigger>
               <SelectContent>
                 {services.map((s) => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -120,7 +125,8 @@ export function ContactForm() {
             <Textarea
               id="message"
               required
-              rows={4}
+              rows={5}
+              className="rounded-xl border-navy/10 bg-[#faf8f4]"
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
               placeholder="Tell us about your travel requirements..."
@@ -131,8 +137,8 @@ export function ContactForm() {
               {message}
             </p>
           )}
-          <Button type="submit" variant="primaryGold" className="w-full" disabled={loading}>
-            {loading ? "Submitting..." : "Submit Inquiry"}
+          <Button type="submit" variant="primaryGold" size="lg" className="h-12 w-full text-base" disabled={loading}>
+            {loading ? "Sending securely..." : <><Send className="mr-2 h-4 w-4" />Send my travel request<ArrowRight className="ml-2 h-4 w-4" /></>}
           </Button>
         </form>
       </CardContent>

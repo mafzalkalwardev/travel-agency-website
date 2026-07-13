@@ -16,6 +16,7 @@ interface AdminStatus {
   email: boolean;
   emailFrom: string | null;
   emailAdmin: string;
+  emailSandbox?: boolean;
   lastSync: { completed_at: string | null; status: string | null; message: string | null } | null;
   recentSyncLogs: Array<{
     completed_at: string | null;
@@ -137,7 +138,9 @@ export default function AdminSettingsPage() {
               label="Booking emails (Resend)"
               detail={
                 status.email
-                  ? `From ${status.emailFrom} → ${status.emailAdmin}`
+                  ? status.emailSandbox
+                    ? `Sandbox: ${status.emailFrom} → ${status.emailAdmin} (customer mail routed to admin)`
+                    : `From ${status.emailFrom} → ${status.emailAdmin}`
                   : "Set RESEND_API_KEY and BOOKING_FROM_EMAIL in Vercel env"
               }
             />
@@ -227,9 +230,13 @@ export default function AdminSettingsPage() {
               <p>Add these to Vercel production environment:</p>
               <ul className="list-inside list-disc space-y-1 font-mono text-xs text-navy">
                 <li>RESEND_API_KEY</li>
-                <li>BOOKING_FROM_EMAIL (verified sender in Resend)</li>
-                <li>BOOKING_ADMIN_EMAIL (defaults to ADMIN_EMAIL)</li>
+                <li>BOOKING_FROM_EMAIL (onboarding@resend.dev for test; custom domain when live)</li>
+                <li>BOOKING_ADMIN_EMAIL (must match your Resend account email in sandbox)</li>
+                <li>RESEND_SANDBOX_MODE=true until domain verified</li>
               </ul>
+              <p className="pt-2 text-xs">
+                Live domain checklist: <code>docs/RESEND-LIVE-DOMAIN.md</code>
+              </p>
               <p className="pt-2">
                 Without Resend, bookings still work — customers receive WhatsApp redirect and admin sees bookings here.
               </p>

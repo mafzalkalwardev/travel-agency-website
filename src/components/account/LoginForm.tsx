@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -39,51 +40,59 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="login-email" className="flex items-center gap-2">
-          <Mail className="h-4 w-4 text-gold" /> Email
-        </Label>
-        <Input
-          id="login-email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="space-y-2.5">
+        <Label htmlFor="login-email" className="font-semibold text-navy">Email address</Label>
+        <div className="relative">
+          <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a66d2f]" />
+          <Input
+            id="login-email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            className="h-13 rounded-xl border-navy/10 bg-[#faf8f4] pl-11 pr-4 shadow-inner shadow-navy/[0.02] focus-visible:border-gold focus-visible:ring-gold/20"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="login-password" className="flex items-center gap-2">
-          <Lock className="h-4 w-4 text-gold" /> Password
-        </Label>
-        <Input
-          id="login-password"
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
+      <div className="space-y-2.5">
+        <Label htmlFor="login-password" className="font-semibold text-navy">Password</Label>
+        <div className="relative">
+          <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a66d2f]" />
+          <Input
+            id="login-password"
+            type={showPassword ? "text" : "password"}
+            required
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            className="h-13 rounded-xl border-navy/10 bg-[#faf8f4] pl-11 pr-12 shadow-inner shadow-navy/[0.02] focus-visible:border-gold focus-visible:ring-gold/20"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-navy" aria-label={showPassword ? "Hide password" : "Show password"}>
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
       {error && (
         <p className="rounded-md border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
           {error}
         </p>
       )}
-      <Button type="submit" variant="primaryGold" className="w-full" disabled={loading}>
-        {loading ? "Signing in..." : "Sign In"}
+      <Button type="submit" variant="primaryGold" className="h-13 w-full rounded-xl text-base shadow-lg shadow-gold/20" disabled={loading}>
+        {loading ? "Signing in securely..." : <>Sign in securely <ArrowRight className="ml-2 h-4 w-4" /></>}
       </Button>
-      <p className="text-center text-xs text-muted-foreground">
-        New accounts can sign in immediately, but booking stays locked until an admin approves the customer profile.
+      <p className="flex items-start gap-2 rounded-xl border border-[#d8c7ad] bg-[#f5eee2] px-4 py-3 text-xs leading-5 text-[#725637]">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /> New profiles can sign in immediately; booking access activates after administrator approval.
       </p>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-slate-500">
         New customer?{" "}
-        <Link href={`/account/signup/?next=${encodeURIComponent(nextPath)}`} className="font-semibold text-navy hover:text-gold">
-          Create an account
+        <Link href={`/account/signup/?next=${encodeURIComponent(nextPath)}`} className="font-bold text-navy transition hover:text-[#a66d2f]">
+          Create your account
         </Link>
       </p>
     </form>
   );
 }
-

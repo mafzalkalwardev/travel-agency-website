@@ -1,7 +1,7 @@
 import { announcements } from "@/data/announcements";
 import { airlines } from "@/data/airlines";
 import { blogPosts } from "@/data/blog";
-import { destinations } from "@/data/destinations";
+import { buildExploreDestinations } from "@/lib/explore-destinations";
 import { flyers } from "@/data/flyers";
 import { tourPackages, umrahPackages } from "@/data/packages";
 import { galleryImages, services } from "@/data/services";
@@ -111,7 +111,11 @@ class MockDataProvider implements IDataProvider {
   }
 
   async getDestinations() {
-    return destinations;
+    const [tickets, packages] = await Promise.all([
+      this.getTickets(),
+      this.getUmrahPackages(),
+    ]);
+    return buildExploreDestinations(tickets, packages);
   }
 
   async getBlogPosts() {
@@ -189,10 +193,10 @@ class SupabaseDataProvider implements IDataProvider {
     try {
       const supabase = createAdminClient();
       const { data } = await supabase.from("umrah_packages").select("*").eq("status", "active");
-      if (!data?.length) return this.mock.getUmrahPackages();
+      if (!data?.length) return isTravelLineSyncEnabled() ? [] : this.mock.getUmrahPackages();
       return data.map(mapUmrahPackage);
     } catch {
-      return this.mock.getUmrahPackages();
+      return isTravelLineSyncEnabled() ? [] : this.mock.getUmrahPackages();
     }
   }
 
@@ -250,6 +254,13 @@ class SupabaseDataProvider implements IDataProvider {
         meal: t.meal,
         tripType: (t.tripType as Ticket["tripType"]) || "oneway",
         isDirect: t.isDirect,
+        groupCategory: t.groupCategory,
+        aircraft: t.aircraft,
+        refundable: t.refundable,
+        changeFeeApplicable: t.changeFeeApplicable,
+        groupPnr: t.groupPnr,
+        supplierUpdatedAt: t.supplierUpdatedAt,
+        segments: t.segments,
         lastUpdated: new Date().toISOString(),
       }));
       if (!filters) return mapped;
@@ -291,7 +302,11 @@ class SupabaseDataProvider implements IDataProvider {
   }
 
   async getDestinations() {
-    return this.mock.getDestinations();
+    const [tickets, packages] = await Promise.all([
+      this.getTickets(),
+      this.getUmrahPackages(),
+    ]);
+    return buildExploreDestinations(tickets, packages);
   }
 
   async getBlogPosts() {
@@ -346,6 +361,9 @@ class SupabaseDataProvider implements IDataProvider {
 }
 
 function mapUmrahPackage(row: Record<string, unknown>): TravelPackage {
+  const raw = row.raw_payload as Record<string, unknown> | undefined;
+  const hotel = raw?.hotel as Record<string, unknown> | undefined;
+
   return {
     id: String(row.id),
     title: String(row.title),
@@ -360,15 +378,21 @@ function mapUmrahPackage(row: Record<string, unknown>): TravelPackage {
     type: "umrah",
     packageCode: (row.package_code || row.external_id) as string,
     category: row.category as TravelPackage["category"],
-    departureCity: row.departure_city as string,
-    airline: row.airline as string,
-    hotelMakkah: row.hotel_makkah as string,
-    hotelMadinah: row.hotel_madinah as string,
-    distanceFromHaram: row.distance_from_haram as string,
+    departureCity: (row.departure_city || raw?.fromCity) as string,
+    airline: (row.airline || raw?.airline) as string,
+    hotelMakkah: (row.hotel_makkah || hotel?.makkahName || hotel?.name) as string,
+    hotelMadinah: (row.hotel_madinah || hotel?.madinahName) as string,
+    distanceFromHaram: (row.distance_from_haram || hotel?.makkahDistance) as string,
     transport: Boolean(row.transport),
     visa: Boolean(row.visa),
     ziyarat: Boolean(row.ziyarat),
     seatsLeft: row.seats_left as number,
+    departureDate: raw?.departureDate as string | undefined,
+    departureTime: raw?.departureTime as string | undefined,
+    flightNumber: raw?.departureFlightNo as string | undefined,
+    hotelStars: hotel?.rating as number | undefined,
+    durationDays: raw?.durationDays as number | undefined,
+    durationNights: raw?.durationNights as number | undefined,
   };
 }
 
@@ -403,6 +427,7 @@ function filterDisplayableTickets<T extends Ticket>(tickets: T[]): T[] {
 }
 
 function mapTicket(row: Record<string, unknown>): Ticket {
+  const raw = (row.raw_payload || {}) as Record<string, unknown>;
   return {
     id: String(row.id),
     airline: String(row.airline),
@@ -427,9 +452,16 @@ function mapTicket(row: Record<string, unknown>): Ticket {
     tripType: row.trip_type as Ticket["tripType"],
     isDirect: Boolean(row.is_direct),
     lastUpdated: row.last_updated as string,
+    groupCategory: row.group_category as string | undefined,
+    aircraft: (row.aircraft || raw.aircraft) as string | undefined,
+    refundable: raw.refundable as string | undefined,
+    changeFeeApplicable: raw.changeFeeApplicable as string | undefined,
+    groupPnr: raw.groupPnr as string | undefined,
+    supplierUpdatedAt: raw.supplierUpdatedAt as string | undefined,
+    segments: raw.segments as Ticket["segments"],
   };
 }
 
-export const dataProvider: IDataProvider = isSupabaseConfigured()
+export const dataProvider: IDataProvider = isSupabaseConfigured() || isTravelLineSyncEnabled()
   ? new SupabaseDataProvider()
   : new MockDataProvider();

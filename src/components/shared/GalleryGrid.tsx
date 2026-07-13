@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { assetPath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 import type { GalleryCategory, GalleryItem } from "@/types";
@@ -11,9 +12,7 @@ const filters: { id: GalleryCategory; label: string }[] = [
   { id: "all", label: "All" },
   { id: "umrah", label: "Umrah" },
   { id: "tickets", label: "Tickets" },
-  { id: "visa", label: "Visa" },
   { id: "tours", label: "Tours" },
-  { id: "announcement", label: "Announcements" },
 ];
 
 interface GalleryGridProps {
@@ -42,18 +41,25 @@ export function GalleryGrid({ images }: GalleryGridProps) {
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+      <motion.div layout className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
+        <AnimatePresence mode="popLayout">
         {filtered.map((img) => (
-          <button
+          <motion.button
+            layout
+            initial={{ opacity: 0, scale: 0.94, y: 18 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94 }}
+            transition={{ duration: 0.38 }}
             key={img.id}
             type="button"
             onClick={() => setSelected(img)}
-            className="group relative aspect-square overflow-hidden rounded-xl focus:outline-none focus:ring-2 focus:ring-gold"
+            className="group relative aspect-[4/3] overflow-hidden rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold"
           >
             <Image src={assetPath(img.src)} alt={img.alt} fill className="object-cover transition-transform group-hover:scale-110" unoptimized />
-          </button>
+          </motion.button>
         ))}
-      </div>
+        </AnimatePresence>
+      </motion.div>
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/90 p-4" onClick={() => setSelected(null)} role="dialog" aria-modal="true">
           <button type="button" className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white" onClick={() => setSelected(null)} aria-label="Close">

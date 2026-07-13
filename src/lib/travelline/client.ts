@@ -10,7 +10,6 @@ import {
 import {
   announcementsFromUmrahItems,
   mapTravelLineUmrahApiItem,
-  ticketsFromUmrahApiItems,
 } from "./mappers";
 import type { TravelLineUmrahApiItem } from "./mappers";
 import type {
@@ -21,7 +20,8 @@ import type {
   TravelLineSession,
 } from "./types";
 import { resolveTravelLinePackageId, isTravelLineGroupId } from "./resolve-package-id";
-import { TRAVELLINE_GROUP_CATEGORIES, matchGroupFlightToPackage } from "./resolve-group-id";
+import { TRAVELLINE_GROUP_CATEGORIES } from "./categories";
+import { matchGroupFlightToPackage } from "./resolve-group-id";
 import type { TravelLineGroupFlight } from "./mappers";
 import { loginTravelLineViaPlaywright } from "./playwright-auth";
 
@@ -94,9 +94,9 @@ export class TravelLineClient {
   }
 
   async fetchTickets(): Promise<TravelLineFetchResult> {
-    const items = await this.fetchUmrahApiItems();
-    const tickets = ticketsFromUmrahApiItems(items, this.config.markupPercent);
-    return { tickets, rawTickets: items as unknown as TravelLineFetchResult["rawTickets"] };
+    const { scrapeTravelLineTickets } = await import("./scraper");
+    const tickets = await scrapeTravelLineTickets();
+    return { tickets, rawTickets: [] };
   }
 
   async fetchPackages(): Promise<TravelLinePackageFetchResult> {
@@ -256,7 +256,7 @@ export class TravelLineClient {
     }
 
     const packageId = resolveTravelLinePackageId(input.externalProductId);
-    let groupId = isTravelLineGroupId(input.externalProductId)
+    const groupId = isTravelLineGroupId(input.externalProductId)
       ? input.externalProductId
       : await this.resolveGroupId(input.externalProductId);
 

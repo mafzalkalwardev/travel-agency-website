@@ -1,11 +1,8 @@
+import { TRAVELLINE_GROUP_CATEGORIES } from "./categories";
 import type { TravelLineUmrahApiItem } from "./mappers";
 import type { TravelLineGroupFlight } from "./mappers";
 
-export const TRAVELLINE_GROUP_CATEGORIES = [
-  "Umrah Groups",
-  "K S A Oneway Groups",
-  "U A E Oneway Groups",
-] as const;
+export { TRAVELLINE_GROUP_CATEGORIES };
 
 function normFlight(no?: string): string {
   return (no || "").replace(/\s+/g, "").toUpperCase();

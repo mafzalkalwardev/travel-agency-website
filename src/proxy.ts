@@ -1,39 +1,32 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { updateSession } from "@/lib/supabase/middleware";
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
+/**
+ * Next.js 16 proxy: refresh Supabase auth cookies before Server Components
+ * and route handlers verify the session. Authorization remains in the DAL.
+ */
 export async function proxy(request: NextRequest) {
-  if (!isSupabaseConfigured()) {
-    if (
-      request.nextUrl.pathname.startsWith("/admin") &&
-      !request.nextUrl.pathname.startsWith("/admin/login")
-    ) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login/";
-      return NextResponse.redirect(url);
-    }
-    return NextResponse.next({ request });
-  }
+  let response = NextResponse.next({ request });
+  const url = getSupabaseUrl();
+  const key = getSupabaseAnonKey();
+  if (!url || !key) return response;
 
-  const { supabase, response } = await updateSession(request);
+  const supabase = createServerClient(url, key, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll(cookies) {
+        cookies.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookies.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+      },
+    },
+  });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isAdminRoute =
-    request.nextUrl.pathname.startsWith("/admin") &&
-    !request.nextUrl.pathname.startsWith("/admin/login");
-
-  if (isAdminRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin/login/";
-    return NextResponse.redirect(url);
-  }
-
+  await supabase.auth.getUser();
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };

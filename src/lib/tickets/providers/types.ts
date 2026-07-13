@@ -23,6 +23,34 @@ export interface NormalizedTicket {
   meal?: string;
   tripType?: string;
   isDirect?: boolean;
+  groupCategory?: string;
+  aircraft?: string;
+  refundable?: string;
+  changeFeeApplicable?: string;
+  groupPnr?: string;
+  supplierUpdatedAt?: string;
+  segments?: TicketSegment[];
+}
+
+export interface TicketSegment {
+  flightNumber: string;
+  airline: string;
+  airlineCode: string;
+  departureAirport: string;
+  departureCode: string;
+  departureCity: string;
+  departureCountry?: string;
+  departureTerminal?: string;
+  departureDatetime: string;
+  arrivalAirport: string;
+  arrivalCode: string;
+  arrivalCity: string;
+  arrivalCountry?: string;
+  arrivalTerminal?: string;
+  arrivalDatetime: string;
+  aircraft?: string;
+  meal?: string;
+  status?: string;
 }
 
 export interface TicketSyncResult {

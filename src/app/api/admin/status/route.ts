@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { isEmailConfigured, getBookingAdminEmail, getBookingFromEmail } from "@/lib/email/resend";
+import {
+  isEmailConfigured,
+  isResendSandboxMode,
+  getBookingAdminEmail,
+  getBookingFromEmail,
+} from "@/lib/email/resend";
 import { isTravelLineConfigured, isTravelLineSyncEnabled } from "@/lib/travelline/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -62,6 +67,7 @@ export async function GET() {
     email: isEmailConfigured(),
     emailFrom: isEmailConfigured() ? getBookingFromEmail() : null,
     emailAdmin: getBookingAdminEmail(),
+    emailSandbox: isEmailConfigured() && isResendSandboxMode(),
     lastSync,
     recentSyncLogs,
     outboundTickets,

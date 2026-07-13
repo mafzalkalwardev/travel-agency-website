@@ -49,6 +49,11 @@ export interface TravelPackage {
   ziyarat?: boolean;
   seatsLeft?: number;
   destination?: string;
+  departureDate?: string;
+  departureTime?: string;
+  flightNumber?: string;
+  durationDays?: number;
+  durationNights?: number;
 }
 
 export interface Ticket {
@@ -77,6 +82,31 @@ export interface Ticket {
   tripType?: TripType;
   isDirect?: boolean;
   lastUpdated?: string;
+  groupCategory?: string;
+  refundable?: string;
+  changeFeeApplicable?: string;
+  groupPnr?: string;
+  supplierUpdatedAt?: string;
+  segments?: Array<{
+    flightNumber: string;
+    airline: string;
+    airlineCode: string;
+    departureAirport: string;
+    departureCode: string;
+    departureCity: string;
+    departureCountry?: string;
+    departureTerminal?: string;
+    departureDatetime: string;
+    arrivalAirport: string;
+    arrivalCode: string;
+    arrivalCity: string;
+    arrivalCountry?: string;
+    arrivalTerminal?: string;
+    arrivalDatetime: string;
+    aircraft?: string;
+    meal?: string;
+    status?: string;
+  }>;
 }
 
 export interface BlogPost {
@@ -168,6 +198,8 @@ export interface Destination {
   startingPrice?: number;
   currency?: string;
   href: string;
+  subtitle?: string;
+  displayOrder?: number;
 }
 
 export interface Service {
@@ -190,6 +222,17 @@ export interface TicketFilters {
   minSeats?: number;
   tripType?: TripType | "all";
   isDirect?: boolean;
+  sortBy?: "price" | "date" | "seats";
+  groupCategory?: string;
+  search?: string;
+}
+
+export interface UmrahPackageFilters {
+  search?: string;
+  departureCity?: string;
+  airline?: string;
+  duration?: string;
+  hotelStars?: number;
   sortBy?: "price" | "date" | "seats";
 }
 

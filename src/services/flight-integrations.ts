@@ -1,7 +1,6 @@
-import { mockFlights } from "@/data/flight-booking";
 import type { FlightOption, FlightSearchCriteria, PassengerDetails } from "@/types/flight-booking";
 
-export type FlightProvider = "amadeus" | "duffel" | "sabre" | "mock";
+export type FlightProvider = "amadeus" | "duffel" | "sabre";
 
 export interface FlightSearchProviderResponse {
   provider: FlightProvider;
@@ -19,21 +18,8 @@ export interface BookingConfirmationJob {
 
 export async function searchFlightProvider(
   criteria: FlightSearchCriteria,
-  provider: FlightProvider = "mock"
+  provider: FlightProvider
 ): Promise<FlightSearchProviderResponse> {
-  if (provider === "mock") {
-    return {
-      provider,
-      flights: mockFlights.filter((flight) => {
-        const fromMatch = !criteria.from || flight.from === criteria.from;
-        const toMatch = !criteria.to || flight.to === criteria.to;
-        return fromMatch && toMatch;
-      }),
-      isLive: false,
-      checkedAt: new Date().toISOString(),
-    };
-  }
-
   return {
     provider,
     flights: [],
@@ -58,12 +44,40 @@ export function queueBookingConfirmation(job: Omit<BookingConfirmationJob, "stat
   };
 }
 
+import { isTravelLineConfigured } from "@/lib/travelline/env";
+import { isEmailConfigured } from "@/lib/email/resend";
+
 export function getFlightAutomationReadiness() {
+  const travelline = isTravelLineConfigured();
+  const email = isEmailConfigured();
+
   return [
-    { label: "Flight API adapter", status: "prepared", detail: "Mock provider active; Amadeus, Duffel, and Sabre hooks reserved." },
-    { label: "Fare comparison", status: "prepared", detail: "Cheapest, fastest, and best-value utilities are available." },
-    { label: "Confirmation jobs", status: "prepared", detail: "Email, SMS, and WhatsApp queue shape is defined." },
-    { label: "Payment gateway", status: "prepared", detail: "Stripe-ready UI exists; live payment intent API is not connected." },
-    { label: "Admin analytics", status: "prepared", detail: "Dashboard reads the shared booking catalog and automation status." },
+    {
+      label: "Travel Line inventory",
+      status: travelline ? "live" : "not configured",
+      detail: travelline
+        ? "Group flights synced every 5 min via GitHub Actions"
+        : "Set TRAVELLINE_AGENT_USERNAME and TRAVELLINE_AGENT_PASSWORD",
+    },
+    {
+      label: "Supplier holds",
+      status: travelline ? "live" : "offline",
+      detail: "Holds placed on booking submit via POST /api/booking",
+    },
+    {
+      label: "Booking emails",
+      status: email ? "live" : "optional",
+      detail: email ? "Resend sends customer + admin notifications" : "Configure RESEND_API_KEY for email",
+    },
+    {
+      label: "WhatsApp payment",
+      status: "live",
+      detail: "Customers complete payment via WhatsApp after hold",
+    },
+    {
+      label: "Customer approval",
+      status: "live",
+      detail: "New agents require admin approval before booking",
+    },
   ] as const;
 }

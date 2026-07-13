@@ -2,13 +2,13 @@ import { createPageMetadata } from "@/lib/metadata";
 import { ContactForm } from "@/components/shared/ContactForm";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
-import { OFFICES, SITE, SOCIAL } from "@/lib/constants";
+import { OFFICE_DISPLAY_ORDER, SITE, SOCIAL } from "@/lib/constants";
 import { FacebookIcon, InstagramIcon } from "@/components/shared/SocialIcons";
 import { MapPin, MessageCircle, Phone, Mail, Clock } from "lucide-react";
 
 export const metadata = createPageMetadata({
   title: "Contact Us",
-  description: `Contact ${SITE.name} — Peshawar head office & Islamabad branch. WhatsApp ${SITE.whatsappNumber}`,
+  description: `Contact ${SITE.name} — Peshawar head office, Islamabad & Bannu branches. WhatsApp ${SITE.whatsappNumber}`,
   path: "/contact/",
 });
 
@@ -23,12 +23,13 @@ export default function ContactPage() {
     <>
       <PageHero {...PAGE_HEROES.contact} />
 
-      <section className="section-padding">
+      <section className="section-padding relative overflow-hidden bg-[#f4efe7]">
+        <div className="absolute inset-0 opacity-[0.035] [background-image:radial-gradient(#0a2342_1px,transparent_1px)] [background-size:22px_22px]" />
         <div className="container-wide">
-          <div className="grid gap-10 lg:grid-cols-2">
+          <div className="relative grid gap-10 lg:grid-cols-[.85fr_1.15fr] lg:items-start">
             <div className="space-y-6">
-              {[OFFICES.headOffice, OFFICES.islamabad, OFFICES.bannu].map((office) => (
-                <div key={office.label} className="rounded-2xl border border-border/60 bg-white p-6">
+              {OFFICE_DISPLAY_ORDER.map((office) => (
+                <div key={office.label} className="group rounded-2xl border border-border/60 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-lg">
                   <h2 className="font-heading text-lg font-semibold text-navy">{office.label}</h2>
                   <p className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> {office.address}
@@ -69,15 +70,13 @@ export default function ContactPage() {
             <ContactForm />
           </div>
 
-          <div className="mt-12 grid gap-8 lg:grid-cols-2">
-            <div>
-              <h2 className="mb-4 font-heading text-xl font-semibold text-navy">{OFFICES.islamabad.label}</h2>
-              <iframe src={OFFICES.islamabad.mapEmbed} width="100%" height="400" style={{ border: 0, borderRadius: 16 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Islamabad Office Map" />
-            </div>
-            <div>
-              <h2 className="mb-4 font-heading text-xl font-semibold text-navy">{OFFICES.headOffice.label}</h2>
-              <iframe src={OFFICES.headOffice.mapEmbed} width="100%" height="400" style={{ border: 0, borderRadius: 16 }} allowFullScreen loading="lazy" referrerPolicy="strict-origin-when-cross-origin" title="Peshawar Office Map" />
-            </div>
+          <div className="relative mt-14 grid gap-5 lg:grid-cols-3">
+            {OFFICE_DISPLAY_ORDER.map((office, index) => (
+              <article key={office.label} className={`overflow-hidden rounded-3xl border bg-white shadow-[0_18px_50px_rgba(25,45,65,.09)] ${index === 1 ? "border-gold/50 lg:-translate-y-3" : "border-white"}`}>
+                <div className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#a66d2f]">{index === 1 ? "Main office" : "Branch office"}</p><h2 className="mt-1 font-heading text-xl font-semibold text-navy">{office.label}</h2></div>
+                <iframe src={office.mapEmbed} className="h-72 w-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title={`${office.label} map`} />
+              </article>
+            ))}
           </div>
         </div>
       </section>

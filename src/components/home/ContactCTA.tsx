@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { MotionSection } from "@/components/motion/MotionSection";
 import { MotionStagger, MotionStaggerItem } from "@/components/motion/MotionStagger";
 import { cn } from "@/lib/utils";
-import { OFFICES, SITE } from "@/lib/constants";
+import { OFFICE_DISPLAY_ORDER, SITE } from "@/lib/constants";
 
 export function ContactCTA() {
   const reduced = useReducedMotion();
@@ -17,10 +17,10 @@ export function ContactCTA() {
       <div className="container-wide">
         <MotionSection className="text-center">
           <h2 className="font-heading text-3xl font-bold text-white md:text-4xl">Ready to Start Your Journey?</h2>
-          <p className="mx-auto mt-4 max-w-xl text-white/75">Contact us at Peshawar head office or Islamabad branch. 24/7 WhatsApp support.</p>
+          <p className="mx-auto mt-4 max-w-xl text-white/75">Contact us at our Peshawar head office, Islamabad branch or Bannu branch. 24/7 WhatsApp support.</p>
         </MotionSection>
-        <MotionStagger className="mt-8 grid gap-4 md:grid-cols-2">
-          {[OFFICES.headOffice, OFFICES.islamabad].map((office) => (
+        <MotionStagger className="mt-8 grid gap-4 md:grid-cols-3">
+          {OFFICE_DISPLAY_ORDER.map((office) => (
             <MotionStaggerItem key={office.label}>
               <motion.div
                 whileHover={reduced ? undefined : { y: -4 }}

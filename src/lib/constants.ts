@@ -48,8 +48,13 @@ export const OFFICES = {
     phoneTel: "+923359945722",
     phoneAlt: "0334 9174009",
     phoneAltTel: "+923349174009",
+    mapEmbed:
+      "https://www.google.com/maps?q=Office%20Number%2031%2C%20Regal%20Cinema%20Market%2C%20Bannu&output=embed",
   },
 } as const;
+
+// Public-facing office order: Bannu left, Peshawar head office center, Islamabad right.
+export const OFFICE_DISPLAY_ORDER = [OFFICES.bannu, OFFICES.headOffice, OFFICES.islamabad] as const;
 
 export const SOCIAL = {
   facebook: "https://www.facebook.com/Alqiblaairservices/",
@@ -77,24 +82,13 @@ export const TRUST_TEXT = [
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about/", label: "About Us" },
-  { href: "/flight-booking/", label: "Book Flights" },
-  { href: "/services/", label: "Services" },
+  { href: "/umrah-packages/", label: "Umrah Packages" },
+  { href: "/tour-packages/", label: "Tour Packages" },
   { href: "/available-tickets/", label: "Available Tickets" },
   { href: "/destinations/", label: "Destinations" },
   { href: "/gallery/", label: "Gallery" },
-  { href: "/blog/", label: "Blog" },
   { href: "/contact/", label: "Contact" },
   { href: "/inquiry/", label: "Book / Inquiry" },
-] as const;
-
-export const SERVICE_DROPDOWN = [
-  { href: "/services/", label: "All Services" },
-  { href: "/umrah-packages/", label: "Umrah Packages" },
-  { href: "/tour-packages/", label: "Tour Packages" },
-  { href: "/available-tickets/", label: "Group Tickets" },
-  { href: "/corporate-travel/", label: "Corporate Travel" },
-  { href: "/services/#visit-visa", label: "Visit Visa Services" },
-  { href: "/inquiry/", label: "Hotel & Insurance" },
 ] as const;
 
 export const LOGO_PATH = "/assets/logo/logo.png";

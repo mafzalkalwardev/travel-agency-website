@@ -14,12 +14,29 @@ export function filterTickets(tickets: Ticket[], filters: TicketFilters): Ticket
     if (filters.minSeats !== undefined && ticket.seatsLeft < filters.minSeats) return false;
     if (filters.tripType && filters.tripType !== "all" && ticket.tripType !== filters.tripType) return false;
     if (filters.isDirect === true && ticket.isDirect === false) return false;
+    if (filters.groupCategory && ticket.groupCategory !== filters.groupCategory) return false;
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      const haystack = [
+        ticket.airline,
+        ticket.flightNumber,
+        ticket.fromCity,
+        ticket.toCity,
+        ticket.sector,
+        ticket.from,
+        ticket.to,
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
     return true;
   });
 
   if (filters.sortBy === "price") result = [...result].sort((a, b) => a.price - b.price);
   else if (filters.sortBy === "seats") result = [...result].sort((a, b) => b.seatsLeft - a.seatsLeft);
-  else result = [...result].sort((a, b) => b.date.localeCompare(a.date) || a.departureTime.localeCompare(b.departureTime));
+  // Default: earliest departure first, like the Travel Line portal
+  else result = [...result].sort((a, b) => a.date.localeCompare(b.date) || a.departureTime.localeCompare(b.departureTime));
 
   return result;
 }
@@ -36,7 +53,20 @@ export function getUniqueFilterOptions(tickets: Ticket[]) {
 }
 
 export function formatPrice(price: number, currency: string): string {
-  return `${currency} ${price.toLocaleString("en-PK")}`;
+  return `${currency} ${price.toLocaleString("en-PK", { maximumFractionDigits: 0 })}`;
+}
+
+/** Stable date label for SSR + client (Asia/Karachi). */
+export function formatTicketDate(iso: string): string {
+  const [y, m, d] = iso.split("T")[0].split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.toLocaleDateString("en-PK", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Karachi",
+  });
 }
 
 export function formatSyncTime(iso: string): string {

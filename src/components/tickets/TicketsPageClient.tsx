@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { SlidersHorizontal } from "lucide-react";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import { TicketFiltersPanel } from "@/components/tickets/TicketFiltersPanel";
@@ -19,8 +18,6 @@ import { airlines } from "@/data/airlines";
 import type { Ticket, TicketFilters } from "@/types";
 
 const airlineNames = Object.fromEntries(airlines.map((a) => [a.code, a.name]));
-const PAGE_SIZE = 30;
-
 interface TicketsPageClientProps {
   tickets: Ticket[];
 }
@@ -28,7 +25,6 @@ interface TicketsPageClientProps {
 export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState<TicketFilters>({});
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
@@ -54,17 +50,14 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
       initial.airline = codeMap[airline] || airline;
     }
     setFilters(initial);
-    setVisibleCount(PAGE_SIZE);
   }, [searchParams]);
 
   const options = useMemo(() => getUniqueFilterOptions(tickets), [tickets]);
   const filtered = useMemo(() => filterTickets(tickets, filters), [tickets, filters]);
-  const visible = filtered.slice(0, visibleCount);
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   function updateFilters(next: TicketFilters) {
     setFilters(next);
-    setVisibleCount(PAGE_SIZE);
   }
 
   return (
@@ -81,8 +74,7 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing <strong className="text-navy">{Math.min(visible.length, filtered.length)}</strong> of{" "}
-            {filtered.length} group tickets
+            Showing <strong className="text-navy">all {filtered.length}</strong> group tickets
             {filtered.length !== tickets.length && (
               <span className="text-muted-foreground/80"> (filtered from {tickets.length})</span>
             )}
@@ -126,7 +118,15 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
           </Sheet>
         </div>
 
-        {filtered.length === 0 ? (
+        {tickets.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-10 text-center sm:p-12">
+            <p className="font-medium text-navy">Live inventory is being updated</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              We are syncing the latest group fares from our supplier. Please check back in a few
+              minutes, or contact us on WhatsApp for immediate availability.
+            </p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-10 text-center sm:p-12">
             <p className="text-muted-foreground">
               No tickets match your filters. Try adjusting your search criteria.
@@ -140,30 +140,16 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
         ) : (
           <>
             <div className="space-y-4">
-              {visible.map((ticket, index) => (
-                <motion.div
+              {filtered.map((ticket) => (
+                <div
                   key={ticket.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.25) }}
+                  className="inventory-card-shell"
                 >
                   <TicketCard ticket={ticket} />
-                </motion.div>
+                </div>
               ))}
             </div>
 
-            {visibleCount < filtered.length && (
-              <div className="pt-4 text-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="min-w-48"
-                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                >
-                  Load more ({filtered.length - visibleCount} remaining)
-                </Button>
-              </div>
-            )}
           </>
         )}
       </div>

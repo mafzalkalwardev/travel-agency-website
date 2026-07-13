@@ -1,115 +1,155 @@
-import Link from "next/link";
 import Image from "next/image";
-import { MapPin, MessageCircle, Phone } from "lucide-react";
-import { assetPath } from "@/lib/base-path";
-import { LOGO_PATH, NAV_LINKS, OFFICES, SITE, SOCIAL, TRUST_TEXT } from "@/lib/constants";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight, Mail, MapPin, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import { FacebookIcon, InstagramIcon } from "@/components/shared/SocialIcons";
+import { assetPath } from "@/lib/base-path";
+import { LOGO_PATH, OFFICE_DISPLAY_ORDER, OFFICES, SITE, SOCIAL } from "@/lib/constants";
 
-function TwitterIcon({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
+const travelLinks = [
+  ["Available Tickets", "/available-tickets/"],
+  ["Umrah Packages", "/umrah-packages/"],
+  ["Tour Packages", "/tour-packages/"],
+  ["Corporate Travel", "/corporate-travel/"],
+] as const;
+
+const companyLinks = [
+  ["About Al Qibla", "/about/"],
+  ["Destinations", "/destinations/"],
+  ["Gallery", "/gallery/"],
+  ["Contact Us", "/contact/"],
+  ["Privacy Policy", "/privacy-policy/"],
+] as const;
 
 export function Footer() {
-  const year = new Date().getFullYear();
-
   return (
-    <footer className="bg-navy text-white">
-      <div className="container-wide section-padding">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <div className="mb-4 flex items-center gap-3">
-              <Image src={assetPath(LOGO_PATH)} alt={SITE.name} width={56} height={56} className="h-14 w-14 rounded-lg object-contain ring-1 ring-white/10" unoptimized />
-              <div>
-                <p className="font-heading text-lg font-bold">{SITE.shortName}</p>
-                <p className="text-sm text-gold-light">Air Services</p>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed text-white/70">{SITE.description}</p>
-            <p className="mt-3 text-sm font-medium text-gold">{SITE.tagline}</p>
-          </div>
+    <footer className="relative overflow-hidden bg-[#031328] text-white">
+      <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-royal/15 blur-3xl" />
+      <div className="pointer-events-none absolute -right-36 bottom-0 h-80 w-80 rounded-full bg-gold/10 blur-3xl" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/80 to-transparent" />
 
-          <div>
-            <h3 className="mb-4 font-heading text-lg font-semibold text-gold">Quick Links</h3>
-            <ul className="space-y-2">
-              {NAV_LINKS.slice(0, 8).map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-white/70 hover:text-gold">{link.label}</Link>
-                </li>
-              ))}
-            </ul>
+      <div className="container-wide relative py-12 lg:py-16">
+        <div className="grid gap-8 rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.025] p-7 shadow-2xl shadow-black/25 backdrop-blur-md sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-gold">Your journey starts here</p>
+            <h2 className="mt-3 font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+              Travel with a team that stays with you.
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-white/60 sm:text-base">
+              Flights, Umrah, visas, hotels and group travel handled by one accountable travel partner.
+            </p>
           </div>
-
-          <div>
-            <h3 className="mb-4 font-heading text-lg font-semibold text-gold">Our Offices</h3>
-            <div className="space-y-4 text-sm text-white/70">
-              <div>
-                <p className="font-medium text-white">{OFFICES.headOffice.label}</p>
-                <p className="mt-1 flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                  {OFFICES.headOffice.address}
-                </p>
-                <a href={`tel:${OFFICES.headOffice.phoneTel}`} className="mt-1 flex items-center gap-2 hover:text-gold">
-                  <Phone className="h-4 w-4 text-gold" /> {OFFICES.headOffice.phone}
-                </a>
-              </div>
-              <div>
-                <p className="font-medium text-white">{OFFICES.islamabad.label}</p>
-                <p className="mt-1 flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                  {OFFICES.islamabad.address}
-                </p>
-              </div>
-              <div>
-                <p className="font-medium text-white">{OFFICES.bannu.label}</p>
-                <p className="mt-1 flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                  {OFFICES.bannu.address}
-                </p>
-                <a href={`tel:${OFFICES.bannu.phoneTel}`} className="mt-1 flex items-center gap-2 hover:text-gold">
-                  <Phone className="h-4 w-4 text-gold" /> {OFFICES.bannu.phone}
-                </a>
-                <a href={`tel:${OFFICES.bannu.phoneAltTel}`} className="mt-1 flex items-center gap-2 hover:text-gold">
-                  <Phone className="h-4 w-4 text-gold" /> {OFFICES.bannu.phoneAlt}
-                </a>
-              </div>
-              <a href={SITE.whatsapp} className="flex items-center gap-2 hover:text-gold">
-                <MessageCircle className="h-4 w-4 text-gold" /> WhatsApp: {SITE.whatsappNumber}
-              </a>
-            </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <a
+              href={SITE.whatsapp}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gold px-6 font-semibold text-navy transition hover:-translate-y-0.5 hover:bg-gold-light"
+            >
+              <MessageCircle className="h-4 w-4" /> WhatsApp us
+            </a>
+            <Link
+              href="/inquiry/"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 font-semibold transition hover:-translate-y-0.5 hover:border-gold/40 hover:bg-white/10"
+            >
+              Plan a journey <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
+        </div>
 
+        <div className="mt-14 grid gap-12 md:grid-cols-2 lg:grid-cols-[1.45fr_0.7fr_0.7fr_1.15fr]">
           <div>
-            <h3 className="mb-4 font-heading text-lg font-semibold text-gold">Follow Us</h3>
-            <div className="flex gap-3">
+            <Link href="/" className="inline-flex items-center gap-4">
+              <Image
+                src={assetPath(LOGO_PATH)}
+                alt={SITE.name}
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-2xl bg-white/5 object-contain ring-1 ring-white/10"
+                unoptimized
+              />
+              <div>
+                <p className="font-brand text-xl font-bold">Al Qibla Air Services</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold-light">Travel Smart. Travel Safe.</p>
+              </div>
+            </Link>
+            <p className="mt-6 max-w-sm text-sm leading-7 text-white/55">
+              Professional travel services for pilgrims, families, groups, agents and organizations across Pakistan and worldwide.
+            </p>
+            <div className="mt-6 flex gap-2">
               {[
                 { href: SOCIAL.facebook, label: "Facebook", Icon: FacebookIcon },
-                { href: SOCIAL.facebookGroup, label: "Facebook Group", Icon: FacebookIcon },
                 { href: SOCIAL.instagram, label: "Instagram", Icon: InstagramIcon },
-                { href: SOCIAL.twitter, label: "Twitter", Icon: TwitterIcon },
                 { href: SOCIAL.whatsapp, label: "WhatsApp", Icon: MessageCircle },
               ].map(({ href, label, Icon }) => (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-white/70 hover:border-gold hover:text-gold">
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/10 hover:text-gold"
+                >
                   <Icon className="h-4 w-4" />
                 </a>
               ))}
             </div>
-            <ul className="mt-5 space-y-1.5 text-xs text-white/50">
-              {TRUST_TEXT.map((t) => (
-                <li key={t}>• {t}</li>
-              ))}
-            </ul>
+          </div>
+
+          <FooterLinks title="Travel" links={travelLinks} />
+          <FooterLinks title="Company" links={companyLinks} />
+
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Contact</h3>
+            <div className="mt-6 space-y-4 text-sm">
+              <a href={`tel:${OFFICES.headOffice.phoneTel}`} className="flex items-center gap-3 text-white/65 transition hover:text-white">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-gold"><Phone className="h-4 w-4" /></span>
+                {OFFICES.headOffice.phone}
+              </a>
+              <a href={`mailto:${SITE.email}`} className="flex items-center gap-3 text-white/65 transition hover:text-white">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-gold"><Mail className="h-4 w-4" /></span>
+                <span className="break-all">{SITE.email}</span>
+              </a>
+              <Link href="/portal/" className="group inline-flex items-center gap-2 font-semibold text-gold-light transition hover:text-gold">
+                Customer & agent portal <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="mt-12 border-t border-white/10 pt-6 text-center text-sm text-white/50">
-          <p>&copy; {year} {SITE.name}. All rights reserved.</p>
-          <p className="mt-1 text-gold-light/80">{SITE.tagline}</p>
+        <div className="mt-14 grid overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] md:grid-cols-3">
+          {OFFICE_DISPLAY_ORDER.map((office, index) => (
+            <div key={office.label} className={`p-5 sm:p-6 ${index ? "border-t border-white/10 md:border-l md:border-t-0" : ""}`}>
+              <p className="flex items-center gap-2 text-sm font-semibold text-white"><MapPin className="h-4 w-4 text-gold" />{office.label}</p>
+              <p className="mt-2 text-xs leading-5 text-white/45">{office.address}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-7 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} {SITE.name}. All rights reserved.</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-gold" /> Trusted travel support</span>
+            <span>Department of Tourist Services registered</span>
+          </div>
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterLinks({ title, links }: { title: string; links: ReadonlyArray<readonly [string, string]> }) {
+  return (
+    <div>
+      <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-gold">{title}</h3>
+      <ul className="mt-6 space-y-3.5">
+        {links.map(([label, href]) => (
+          <li key={href}>
+            <Link href={href} className="group inline-flex items-center gap-1.5 text-sm text-white/55 transition hover:translate-x-0.5 hover:text-white">
+              {label}<ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

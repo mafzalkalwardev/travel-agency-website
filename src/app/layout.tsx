@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Playfair_Display } from "next/font/google";
 import { Toaster } from "sonner";
 import { ConditionalSiteChrome } from "@/components/layout/ConditionalSiteChrome";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
-import { OFFICES, SITE } from "@/lib/constants";
+import { SiteArrivalIntro } from "@/components/motion/SiteArrivalIntro";
+import { OFFICE_DISPLAY_ORDER, SITE } from "@/lib/constants";
 import { createPageMetadata } from "@/lib/metadata";
 import "./globals.css";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"] });
 
 export const metadata: Metadata = createPageMetadata({ title: SITE.name, description: SITE.description });
@@ -21,10 +21,11 @@ const jsonLd = {
   description: SITE.description,
   url: SITE.url,
   telephone: SITE.whatsappNumber,
-  address: [
-    { "@type": "PostalAddress", streetAddress: OFFICES.headOffice.address, addressLocality: "Peshawar", addressCountry: "PK" },
-    { "@type": "PostalAddress", streetAddress: OFFICES.islamabad.address, addressLocality: "Islamabad", addressCountry: "PK" },
-  ],
+  address: OFFICE_DISPLAY_ORDER.map((office) => ({
+    "@type": "PostalAddress",
+    streetAddress: office.address,
+    addressCountry: "PK",
+  })),
   areaServed: SITE.regions,
   sameAs: [SITE.url],
 };
@@ -35,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} h-full`}>
+    <html lang="en" className={`${playfair.variable} h-full`}>
       <head>
         <script
           type="application/ld+json"
@@ -43,6 +44,7 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-full flex-col font-sans antialiased">
+        <SiteArrivalIntro />
         <ConditionalSiteChrome
           header={<Header />}
           footer={<Footer />}
