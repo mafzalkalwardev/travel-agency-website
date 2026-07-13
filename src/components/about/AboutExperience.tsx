@@ -90,7 +90,7 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
           <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-bold uppercase tracking-[.22em] text-[#a66d2f]">People behind your journey</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl">Meet our leadership team</h2>
-            <p className="mt-4 leading-7 text-slate-600">Leadership, finance, management, operations and technology work together to keep every journey organized from inquiry to arrival.</p>
+            <p className="mt-4 leading-7 text-slate-600">Leadership, management, operations and technology work together to keep every journey organized from inquiry to arrival.</p>
           </motion.div>
           <div className="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-12">
             {leadership.map((member) => (
