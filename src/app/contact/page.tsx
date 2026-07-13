@@ -23,8 +23,8 @@ export default function ContactPage() {
     <>
       <PageHero {...PAGE_HEROES.contact} />
 
-      <section className="section-padding relative overflow-hidden bg-[#f4efe7]">
-        <div className="absolute inset-0 opacity-[0.035] [background-image:radial-gradient(#0a2342_1px,transparent_1px)] [background-size:22px_22px]" />
+      <section className="section-padding relative overflow-hidden bg-light-bg">
+        <div className="absolute inset-0 opacity-[0.03] [background-image:radial-gradient(var(--navy)_1px,transparent_1px)] [background-size:22px_22px]" />
         <div className="container-wide">
           <div className="relative grid gap-10 lg:grid-cols-[.85fr_1.15fr] lg:items-start">
             <div className="space-y-6">
@@ -73,7 +73,7 @@ export default function ContactPage() {
           <div className="relative mt-14 grid gap-5 lg:grid-cols-3">
             {OFFICE_DISPLAY_ORDER.map((office, index) => (
               <article key={office.label} className={`overflow-hidden rounded-3xl border bg-white shadow-[0_18px_50px_rgba(25,45,65,.09)] ${index === 1 ? "border-gold/50 lg:-translate-y-3" : "border-white"}`}>
-                <div className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#a66d2f]">{index === 1 ? "Main office" : "Branch office"}</p><h2 className="mt-1 font-heading text-xl font-semibold text-navy">{office.label}</h2></div>
+                <div className="p-5"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-gold">{index === 1 ? "Main office" : "Branch office"}</p><h2 className="mt-1 font-heading text-xl font-semibold text-navy">{office.label}</h2></div>
                 <iframe src={office.mapEmbed} className="h-72 w-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title={`${office.label} map`} />
               </article>
             ))}

@@ -5,8 +5,8 @@ import {
   UserCheck,
   type LucideIcon,
 } from "lucide-react";
-import { MotionSection } from "@/components/motion/MotionSection";
-import { MotionStagger, MotionStaggerItem } from "@/components/motion/MotionStagger";
+import { GsapReveal } from "@/components/motion/GsapReveal";
+import { GsapStagger, GsapStaggerItem } from "@/components/motion/GsapStagger";
 
 const reasons: Array<{ icon: LucideIcon; title: string; text: string }> = [
   {
@@ -33,43 +33,46 @@ const reasons: Array<{ icon: LucideIcon; title: string; text: string }> = [
 
 export function WhyChooseUs() {
   return (
-    <section className="section-padding relative overflow-hidden bg-[#f7f1e7] text-navy">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#c68b43]/60 to-transparent" />
-      <div className="absolute -left-28 top-12 h-72 w-72 rounded-full bg-[#d8a85f]/15 blur-3xl" />
-      <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-[#7d9475]/15 blur-3xl" />
-      <div className="absolute inset-0 opacity-[0.035] [background-image:radial-gradient(#0a2342_1px,transparent_1px)] [background-size:22px_22px]" />
+    <section className="section-padding relative overflow-hidden bg-light-bg text-navy">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
+      <div className="absolute -left-28 top-12 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
+      <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-royal/10 blur-3xl" />
+      <div className="absolute inset-0 opacity-[0.03] [background-image:radial-gradient(var(--navy)_1px,transparent_1px)] [background-size:22px_22px]" />
       <div className="container-wide relative">
-        <MotionSection className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex rounded-full border border-[#c68b43]/25 bg-white/65 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-[#9a642c] shadow-sm">
+        <GsapReveal className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex rounded-full border border-gold/30 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-gold shadow-sm">
             Built for professionals
           </span>
           <h2 className="mt-5 font-heading text-3xl font-bold tracking-tight md:text-5xl">
             Why agents choose Al Qibla
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
             Reliable operations, live inventory and responsive support give travel professionals the confidence to serve every client well.
           </p>
-        </MotionSection>
+        </GsapReveal>
 
-        <MotionStagger className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {reasons.map((reason, index) => (
-            <MotionStaggerItem key={reason.title}>
-              <article className="group relative h-full overflow-hidden rounded-3xl border border-[#dccdb8] bg-white/80 p-7 shadow-[0_18px_50px_rgba(74,51,25,0.07)] backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-[#c89b60] hover:shadow-[0_24px_60px_rgba(74,51,25,0.13)]">
-                <div className={`absolute inset-x-0 top-0 h-1 ${["bg-[#c4774e]", "bg-[#4f8b79]", "bg-[#c79a3b]", "bg-[#806a91]"][index]}`} />
-                <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${["bg-[#f4e3d8] text-[#a95735]", "bg-[#dcebe5] text-[#31715f]", "bg-[#f6e9c8] text-[#9a6b15]", "bg-[#e9e2ed] text-[#6c547d]"][index]}`}>
+        <GsapStagger className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {reasons.map((reason) => (
+            <GsapStaggerItem key={reason.title}>
+              <article className="group relative h-full overflow-hidden rounded-3xl border border-border bg-white p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-gold/40 hover:shadow-lg hover:shadow-gold/5">
+                <div className="absolute inset-x-0 top-0 h-1 bg-gold" />
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/15 text-gold">
                   <reason.icon className="h-6 w-6" />
                 </span>
                 <h3 className="mt-6 font-heading text-lg font-semibold text-navy">{reason.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{reason.text}</p>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{reason.text}</p>
               </article>
-            </MotionStaggerItem>
+            </GsapStaggerItem>
           ))}
-        </MotionStagger>
+        </GsapStagger>
 
-        <MotionSection className="mt-7 flex flex-col items-center justify-between gap-4 rounded-2xl border border-[#d8c4a7] bg-[#efe3cf]/65 px-6 py-5 text-center sm:flex-row sm:text-left">
+        <GsapReveal
+          delay={0.1}
+          className="mt-7 flex flex-col items-center justify-between gap-4 rounded-2xl border border-gold/25 bg-gold/5 px-6 py-5 text-center sm:flex-row sm:text-left"
+        >
           <p className="font-heading text-lg font-semibold text-navy">A dependable partner behind every booking.</p>
-          <p className="text-sm font-medium text-[#78572f]">Verified service · Controlled access · Human support</p>
-        </MotionSection>
+          <p className="text-sm font-medium text-gold">Verified service · Controlled access · Human support</p>
+        </GsapReveal>
       </div>
     </section>
   );

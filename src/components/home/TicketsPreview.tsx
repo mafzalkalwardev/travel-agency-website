@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MotionSection } from "@/components/motion/MotionSection";
-import { MotionStagger, MotionStaggerItem } from "@/components/motion/MotionStagger";
+import { GsapReveal } from "@/components/motion/GsapReveal";
+import { GsapStagger, GsapStaggerItem } from "@/components/motion/GsapStagger";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { TicketCard } from "@/components/tickets/TicketCard";
 import type { Ticket } from "@/types";
@@ -16,20 +16,20 @@ export function TicketsPreview({ tickets }: TicketsPreviewProps) {
   return (
     <section className="section-padding">
       <div className="container-wide">
-        <MotionSection>
+        <GsapReveal>
           <SectionHeading
             title="Available Group Tickets"
             subtitle="Browse live group fares and request a booking"
           />
-        </MotionSection>
-        <MotionStagger className="mx-auto max-w-6xl space-y-3">
+        </GsapReveal>
+        <GsapStagger className="mx-auto max-w-6xl space-y-3" stagger={0.08}>
           {tickets.slice(0, 4).map((ticket) => (
-            <MotionStaggerItem key={ticket.id}>
+            <GsapStaggerItem key={ticket.id}>
               <TicketCard ticket={ticket} />
-            </MotionStaggerItem>
+            </GsapStaggerItem>
           ))}
-        </MotionStagger>
-        <MotionSection delay={0.1} className="mt-10 text-center">
+        </GsapStagger>
+        <GsapReveal delay={0.1} className="mt-10 text-center">
           <Link
             href="/available-tickets/"
             className={cn(buttonVariants({ size: "lg" }), "bg-gold text-navy hover:bg-gold-light")}
@@ -37,7 +37,7 @@ export function TicketsPreview({ tickets }: TicketsPreviewProps) {
             View All Available Tickets
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
-        </MotionSection>
+        </GsapReveal>
       </div>
     </section>
   );

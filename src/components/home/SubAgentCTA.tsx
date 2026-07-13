@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Headphones, UserPlus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { MotionSection } from "@/components/motion/MotionSection";
+import { GsapReveal } from "@/components/motion/GsapReveal";
 import { cn } from "@/lib/utils";
 
 export function SubAgentCTA() {
   return (
     <section className="section-padding bg-white">
       <div className="container-wide">
-        <MotionSection className="relative isolate overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-navy via-[#082a50] to-royal px-7 py-12 text-white shadow-2xl shadow-navy/20 sm:px-12 lg:px-16 lg:py-16">
+        <GsapReveal className="relative isolate overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-navy via-navy-light to-royal px-7 py-12 text-white shadow-2xl shadow-navy/20 sm:px-12 lg:px-16 lg:py-16">
           <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full border border-gold/20 bg-gold/10 blur-sm" />
           <div className="absolute -bottom-40 left-1/3 h-80 w-80 rounded-full bg-royal/30 blur-3xl" />
           <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_auto]">
@@ -40,7 +40,7 @@ export function SubAgentCTA() {
               </Link>
             </div>
           </div>
-        </MotionSection>
+        </GsapReveal>
       </div>
     </section>
   );
