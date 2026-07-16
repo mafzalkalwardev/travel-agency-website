@@ -3,40 +3,62 @@
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
 import { assetPath } from "@/lib/base-path";
 import { LOGO_PATH } from "@/lib/constants";
 
-const INTRO_DURATION_MS = 3100;
+const INTRO_DURATION_MS = 1300;
+const INTRO_SESSION_KEY = "al-qibla-arrival-intro-seen";
 
 export function SiteArrivalIntro() {
   const pathname = usePathname();
   const reducedMotion = useReducedMotion();
   const [visible, setVisible] = useState(false);
+  const [ready, setReady] = useState(false);
 
   const finish = useCallback(() => {
     setVisible(false);
   }, []);
 
-  useEffect(() => {
-    if (pathname !== "/" || reducedMotion) return;
+  useLayoutEffect(() => {
+    if (pathname !== "/" || reducedMotion) {
+      setVisible(false);
+      return;
+    }
+
+    let seen = false;
+    try {
+      seen = Boolean(window.sessionStorage.getItem(INTRO_SESSION_KEY));
+    } catch {
+      seen = false;
+    }
+
+    if (seen) {
+      setVisible(false);
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(INTRO_SESSION_KEY, "true");
+    } catch {
+      // ignore storage failures
+    }
 
     setVisible(true);
     const timer = window.setTimeout(finish, INTRO_DURATION_MS);
 
-    return () => window.clearTimeout(timer);
-  }, [finish, pathname, reducedMotion]);
-
-  useEffect(() => {
-    if (!visible) return;
-
-    const previousOverflow = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "Enter") finish();
+    };
+    window.addEventListener("keydown", onKey);
 
     return () => {
-      document.documentElement.style.overflow = previousOverflow;
+      window.clearTimeout(timer);
+      window.removeEventListener("keydown", onKey);
     };
-  }, [visible]);
+  }, [finish, pathname, reducedMotion]);
+
+  if (!visible) return null;
 
   return (
     <AnimatePresence>
@@ -79,25 +101,26 @@ export function SiteArrivalIntro() {
 
           <motion.div
             className="arrival-aircraft absolute z-20 transform-gpu"
-            initial={{ x: "-94%", y: "44%", scale: 0.34, rotate: -2, opacity: 0 }}
+            initial={{ x: "-74%", y: "34%", scale: 0.38, rotate: -2, opacity: 0 }}
             animate={{
-              x: ["-94%", "-34%", "5%", "72%"],
-              y: ["44%", "10%", "-10%", "-55%"],
-              scale: [0.34, 0.62, 0.88, 1.12],
-              rotate: [-2, -4, -7, -10],
-              opacity: [0, 1, 1, 0.98],
+              x: ["-74%", "-22%", "32%"],
+              y: ["34%", "4%", "-36%"],
+              scale: [0.38, 0.68, 0.96],
+              rotate: [-2, -5, -8],
+              opacity: ready ? [0, 1, 1, 0.98] : 0,
             }}
-            transition={{ duration: 2.72, times: [0, 0.34, 0.7, 1], ease: [0.22, 0.72, 0.2, 1] }}
+            transition={{ duration: 1.45, times: [0, 0.42, 1], ease: [0.22, 0.72, 0.2, 1] }}
           >
             <Image
-              src={assetPath("/assets/aircraft/arrival-aircraft-hq.webp")}
+              src={assetPath("/assets/aircraft/arrival-aircraft-v2.webp")}
               alt=""
-              width={3344}
-              height={1882}
+              width={1200}
+              height={675}
               sizes="(max-width: 640px) 135vw, 94vw"
               className="h-auto w-full select-none drop-shadow-[0_28px_32px_rgba(0,10,28,0.32)]"
               loading="eager"
-              fetchPriority="high"
+              onLoad={() => setReady(true)}
+              onError={finish}
               draggable={false}
             />
           </motion.div>
