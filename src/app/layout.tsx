@@ -42,6 +42,13 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* Runs before hydration so the homepage hero waits for the arrival intro. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){try{var r=window.matchMedia("(prefers-reduced-motion: reduce)").matches;if(location.pathname==="/"&&!r){window.__alqiblaIntroPlaying=true;document.documentElement.classList.add("intro-playing");}}catch(e){}})();',
+          }}
+        />
       </head>
       <body className="flex min-h-full flex-col font-sans antialiased">
         <SiteArrivalIntro />

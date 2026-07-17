@@ -211,14 +211,50 @@
     radial-gradient(ellipse at center, transparent 46%, rgba(0, 8, 22, 0.36) 100%);
 }
 
-.arrival-aircraft {
-  left: 0;
-  top: 34%;
-  width: min(94vw, 1800px);
+.intro-plane {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(48vw, 560px);
+  margin-left: calc(min(48vw, 560px) / -2);
   backface-visibility: hidden;
-  transform-style: preserve-3d;
   will-change: transform, opacity;
 }
+
+.intro-plane--a { top: 56%; }
+.intro-plane--b { top: 30%; }
+.intro-plane--b img { transform: scaleX(-1); }
+
+.intro-logo-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.intro-glow {
+  position: absolute;
+  width: min(72vw, 540px);
+  height: min(72vw, 540px);
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(214, 168, 79, 0.42), rgba(214, 168, 79, 0.08) 46%, transparent 66%);
+  filter: blur(4px);
+}
+
+.intro-logo-plate {
+  position: relative;
+  width: min(44vw, 190px);
+  aspect-ratio: 1;
+  padding: 14px;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 30px 90px rgba(0, 10, 28, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.55), 0 0 0 6px rgba(214, 168, 79, 0.28);
+}
+
+.intro-tagline { margin-top: 26px; }
 
 @keyframes arrival-cloud-drift {
   from { transform: translate3d(-2.5%, 0, 0) scale(1.02); }
@@ -226,14 +262,10 @@
 }
 
 @media (max-width: 640px) {
-  .arrival-aircraft {
-    top: 40%;
-    width: 135vw;
-  }
-
-  .arrival-aircraft img {
-    transform: translateX(-24%);
-  }
+  .intro-plane { width: 76vw; margin-left: -38vw; }
+  .intro-plane--a { top: 58%; }
+  .intro-plane--b { top: 26%; }
+  .intro-logo-plate { width: 54vw; }
 }
 
 @media (prefers-reduced-motion: reduce) {
