@@ -8,7 +8,7 @@ import { assetPath } from "@/lib/base-path";
 import { LOGO_PATH, SITE } from "@/lib/constants";
 import { INTRO_DONE_EVENT } from "@/lib/intro";
 
-const INTRO_DURATION_MS = 3600;
+const INTRO_DURATION_MS = 4300;
 const AIRCRAFT_SRC = "/assets/aircraft/arrival-aircraft-hq.webp";
 
 const planeTransition = {
@@ -127,13 +127,13 @@ export function SiteArrivalIntro() {
               className="intro-glow"
               initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: [0, 0.9, 0.85], scale: [0.6, 1.05, 1] }}
-              transition={{ delay: 1.7, duration: 1.1, ease: "easeOut" }}
+              transition={{ delay: 1.9, duration: 1.1, ease: "easeOut" }}
             />
             <motion.div
               className="intro-logo-plate"
               initial={{ opacity: 0, scale: 0.55, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: 1.8, duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: 2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
               <Image
                 src={assetPath(LOGO_PATH)}
@@ -149,7 +149,7 @@ export function SiteArrivalIntro() {
               className="intro-tagline font-brand text-sm font-semibold tracking-[0.28em] text-gold-light sm:text-base"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 2.3, duration: 0.6, ease: "easeOut" }}
+              transition={{ delay: 2.55, duration: 0.6, ease: "easeOut" }}
             >
               TRAVEL SMART · TRAVEL SAFE
             </motion.p>
