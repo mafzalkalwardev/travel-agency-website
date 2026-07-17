@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { assetPath } from "@/lib/base-path";
 import { ASSETS } from "@/lib/assets";
 import { SITE } from "@/lib/constants";
+import { INTRO_DONE_EVENT } from "@/lib/intro";
 
 gsap.registerPlugin(useGSAP);
 
@@ -22,12 +23,26 @@ export function HeroSection() {
     () => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+        const shouldWait =
+          typeof window !== "undefined" && window.__alqiblaIntroPlaying === true;
+        const tl = gsap.timeline({ paused: shouldWait, defaults: { ease: "power2.out" } });
         tl.from(".hero-badge", { opacity: 0, y: 20, duration: 0.55 })
           .from(".hero-title", { opacity: 0, y: 28, duration: 0.7 }, "-=0.25")
           .from(".hero-sub", { opacity: 0, y: 20, duration: 0.55 }, "-=0.35")
           .from(".hero-cta", { opacity: 0, y: 16, duration: 0.5, stagger: 0.08 }, "-=0.2")
           .from(".hero-trust", { opacity: 0, y: 12, duration: 0.45 }, "-=0.15");
+
+        if (!shouldWait) return;
+
+        // Play the entrance exactly as the arrival intro lifts; fall back to a
+        // timeout so the hero never stays hidden if the event is missed.
+        const play = () => tl.play();
+        window.addEventListener(INTRO_DONE_EVENT, play, { once: true });
+        const fallback = window.setTimeout(play, 5200);
+        return () => {
+          window.removeEventListener(INTRO_DONE_EVENT, play);
+          window.clearTimeout(fallback);
+        };
       });
       mm.add("(prefers-reduced-motion: reduce)", () => {
         gsap.set([".hero-badge", ".hero-title", ".hero-sub", ".hero-cta", ".hero-trust"], {

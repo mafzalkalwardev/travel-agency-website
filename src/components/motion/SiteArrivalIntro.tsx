@@ -5,9 +5,17 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { assetPath } from "@/lib/base-path";
-import { LOGO_PATH } from "@/lib/constants";
+import { LOGO_PATH, SITE } from "@/lib/constants";
+import { INTRO_DONE_EVENT } from "@/lib/intro";
 
-const INTRO_DURATION_MS = 3100;
+const INTRO_DURATION_MS = 4300;
+const AIRCRAFT_SRC = "/assets/aircraft/arrival-aircraft-hq.webp";
+
+const planeTransition = {
+  duration: 2,
+  times: [0, 0.15, 0.85, 1],
+  ease: [0.4, 0, 0.3, 1] as const,
+};
 
 export function SiteArrivalIntro() {
   const pathname = usePathname();
@@ -15,12 +23,19 @@ export function SiteArrivalIntro() {
   const [visible, setVisible] = useState(false);
 
   const finish = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.__alqiblaIntroPlaying = false;
+      window.dispatchEvent(new Event(INTRO_DONE_EVENT));
+      document.documentElement.classList.remove("intro-playing");
+    }
     setVisible(false);
   }, []);
 
   useEffect(() => {
     if (pathname !== "/" || reducedMotion) return;
 
+    window.__alqiblaIntroPlaying = true;
+    document.documentElement.classList.add("intro-playing");
     setVisible(true);
     const timer = window.setTimeout(finish, INTRO_DURATION_MS);
 
@@ -55,52 +70,90 @@ export function SiteArrivalIntro() {
           <div className="arrival-cloud arrival-cloud-near absolute inset-x-[-16%] bottom-[-18%] h-[48%]" />
           <div className="arrival-vignette absolute inset-0" />
 
+          {/* Plane A — enters from the left, climbs to the right */}
           <motion.div
-            className="absolute left-5 top-5 z-30 flex items-center gap-3 sm:left-8 sm:top-8"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: [0, 1, 1, 0], y: [-10, 0, 0, -8] }}
-            transition={{ duration: 2.75, times: [0, 0.16, 0.76, 1] }}
-          >
-            <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-white/15 bg-white/10 shadow-2xl backdrop-blur sm:h-12 sm:w-12">
-              <Image
-                src={assetPath(LOGO_PATH)}
-                alt=""
-                fill
-                sizes="48px"
-                className="object-contain p-0.5"
-                loading="eager"
-              />
-            </div>
-            <div>
-              <p className="font-brand text-sm font-bold tracking-[0.12em] sm:text-base">AL QIBLA</p>
-              <p className="text-[9px] font-semibold tracking-[0.3em] text-white/60 sm:text-[10px]">AIR SERVICES</p>
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="arrival-aircraft absolute z-20 transform-gpu"
-            initial={{ x: "-94%", y: "44%", scale: 0.34, rotate: -2, opacity: 0 }}
+            className="intro-plane intro-plane--a z-20 transform-gpu"
+            initial={{ x: "-78vw", y: "6vh", rotate: -7, scale: 0.9, opacity: 0 }}
             animate={{
-              x: ["-94%", "-34%", "5%", "72%"],
-              y: ["44%", "10%", "-10%", "-55%"],
-              scale: [0.34, 0.62, 0.88, 1.12],
-              rotate: [-2, -4, -7, -10],
-              opacity: [0, 1, 1, 0.98],
+              x: ["-78vw", "-40vw", "40vw", "78vw"],
+              y: ["6vh", "0vh", "-10vh", "-16vh"],
+              rotate: [-7, -8, -9, -10],
+              scale: [0.9, 0.97, 1.04, 1.08],
+              opacity: [0, 1, 1, 0],
             }}
-            transition={{ duration: 2.72, times: [0, 0.34, 0.7, 1], ease: [0.22, 0.72, 0.2, 1] }}
+            transition={{ ...planeTransition, delay: 0.15 }}
           >
             <Image
-              src={assetPath("/assets/aircraft/arrival-aircraft-hq.webp")}
+              src={assetPath(AIRCRAFT_SRC)}
               alt=""
               width={3344}
               height={1882}
-              sizes="(max-width: 640px) 135vw, 94vw"
-              className="h-auto w-full select-none drop-shadow-[0_28px_32px_rgba(0,10,28,0.32)]"
+              sizes="(max-width: 640px) 74vw, 48vw"
+              className="h-auto w-full select-none drop-shadow-[0_26px_30px_rgba(0,10,28,0.34)]"
               loading="eager"
               fetchPriority="high"
               draggable={false}
             />
           </motion.div>
+
+          {/* Plane B — enters from the right (mirrored), descends to the left */}
+          <motion.div
+            className="intro-plane intro-plane--b z-20 transform-gpu"
+            initial={{ x: "78vw", y: "-6vh", rotate: 7, scale: 0.9, opacity: 0 }}
+            animate={{
+              x: ["78vw", "40vw", "-40vw", "-78vw"],
+              y: ["-6vh", "0vh", "10vh", "16vh"],
+              rotate: [7, 8, 9, 10],
+              scale: [0.9, 0.97, 1.04, 1.06],
+              opacity: [0, 1, 1, 0],
+            }}
+            transition={{ ...planeTransition, delay: 0.35 }}
+          >
+            <Image
+              src={assetPath(AIRCRAFT_SRC)}
+              alt=""
+              width={3344}
+              height={1882}
+              sizes="(max-width: 640px) 74vw, 48vw"
+              className="h-auto w-full select-none drop-shadow-[0_26px_30px_rgba(0,10,28,0.34)]"
+              loading="eager"
+              draggable={false}
+            />
+          </motion.div>
+
+          {/* Logo reveal — appears once the planes clear the frame */}
+          <div className="intro-logo-wrap z-30">
+            <motion.div
+              className="intro-glow"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: [0, 0.9, 0.85], scale: [0.6, 1.05, 1] }}
+              transition={{ delay: 1.9, duration: 1.1, ease: "easeOut" }}
+            />
+            <motion.div
+              className="intro-logo-plate"
+              initial={{ opacity: 0, scale: 0.55, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ delay: 2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Image
+                src={assetPath(LOGO_PATH)}
+                alt={SITE.name}
+                width={512}
+                height={512}
+                sizes="190px"
+                className="h-full w-full object-contain"
+                loading="eager"
+              />
+            </motion.div>
+            <motion.p
+              className="intro-tagline font-brand text-sm font-semibold tracking-[0.28em] text-gold-light sm:text-base"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.55, duration: 0.6, ease: "easeOut" }}
+            >
+              TRAVEL SMART · TRAVEL SAFE
+            </motion.p>
+          </div>
 
           <motion.div
             className="absolute inset-x-0 bottom-0 z-40 h-[3px] bg-white/10"
