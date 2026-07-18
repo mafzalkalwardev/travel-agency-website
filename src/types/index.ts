@@ -1,4 +1,4 @@
-export type TicketStatus = "available" | "limited" | "sold_out";
+export type TicketStatus = "available" | "limited" | "sold_out" | "cancelled";
 export type PackageStatus = "active" | "sold_out" | "coming_soon";
 export type UmrahCategory = "economy" | "standard" | "premium" | "group" | "family" | "corporate";
 export type FlyerCategory = "umrah" | "visa" | "tickets" | "tours" | "announcement";
@@ -87,6 +87,7 @@ export interface Ticket {
   changeFeeApplicable?: string;
   groupPnr?: string;
   supplierUpdatedAt?: string;
+  imageUrl?: string;
   segments?: Array<{
     flightNumber: string;
     airline: string;

@@ -1,4 +1,4 @@
-export type TicketStatus = "available" | "limited" | "sold_out" | "booked";
+export type TicketStatus = "available" | "limited" | "sold_out" | "booked" | "cancelled";
 
 export interface NormalizedTicket {
   externalId: string;
@@ -30,6 +30,12 @@ export interface NormalizedTicket {
   groupPnr?: string;
   supplierUpdatedAt?: string;
   segments?: TicketSegment[];
+  /**
+   * TravelLine has no per-ticket image — this falls back to the
+   * category's own imageUrl from GET /api/categories (see
+   * docs/REDESIGN.md §3.6/§3.2).
+   */
+  imageUrl?: string;
 }
 
 export interface TicketSegment {

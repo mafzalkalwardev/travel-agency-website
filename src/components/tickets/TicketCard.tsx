@@ -21,6 +21,7 @@ const statusConfig = {
   available: { label: "Available", className: "bg-green-100 text-green-800" },
   limited: { label: "Limited", className: "bg-amber-100 text-amber-800" },
   sold_out: { label: "Sold Out", className: "bg-red-100 text-brand-red" },
+  cancelled: { label: "Cancelled", className: "bg-red-100 text-brand-red" },
 };
 
 function seatsColor(seats: number) {
@@ -42,7 +43,7 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
   const [bookOpen, setBookOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const status = statusConfig[ticket.status];
-  const soldOut = ticket.status === "sold_out";
+  const soldOut = ticket.status === "sold_out" || ticket.status === "cancelled";
   const productTitle = `${ticket.airline} ${ticket.flightNumber} — ${ticket.fromCity} → ${ticket.toCity} (${ticket.date})`;
   const dateLabel = formatTicketDate(ticket.date);
   const stops = stopsLabel(ticket);

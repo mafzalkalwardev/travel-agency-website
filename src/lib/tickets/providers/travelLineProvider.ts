@@ -1,5 +1,6 @@
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
 import { scrapeTravelLineTickets } from "@/lib/travelline/scraper";
+import { checkForNewCategories } from "@/lib/travelline/category-discovery";
 import { cleanupReturnLegTickets } from "@/lib/sync/cleanup-return-tickets";
 import { upsertTickets } from "@/lib/sync/upsert-inventory";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -45,6 +46,19 @@ export class TravelLineTicketProvider implements TicketProvider {
       const cleanup = await cleanupReturnLegTickets();
       const cleanupNote =
         cleanup.deactivated > 0 ? `, ${cleanup.deactivated} wrong-direction cleaned` : "";
+
+      // Non-blocking: a category-discovery failure should never fail the
+      // primary ticket sync. See docs/REDESIGN.md §6.
+      let categoryNote = "";
+      try {
+        const discovery = await checkForNewCategories();
+        if (discovery.newCategories.length) {
+          categoryNote = `, ${discovery.newCategories.length} new category(s) flagged for review`;
+        }
+      } catch {
+        /* category discovery is best-effort */
+      }
+
       return {
         provider: this.name,
         status: tickets.length ? "success" : "partial",
@@ -54,7 +68,7 @@ export class TravelLineTicketProvider implements TicketProvider {
         ticketsDeactivated: deactivated + cleanup.deactivated,
         changes,
         message: tickets.length
-          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped${cleanupNote})`
+          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped${cleanupNote}${categoryNote})`
           : "No tickets returned from Travel Line scraper",
       };
     } catch (e) {

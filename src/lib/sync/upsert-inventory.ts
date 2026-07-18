@@ -84,7 +84,8 @@ export async function upsertTickets(
       is_direct: t.isDirect ?? true,
       group_category: t.groupCategory ?? null,
       aircraft: t.aircraft ?? null,
-      active: t.status !== "sold_out",
+      image_url: t.imageUrl ?? null,
+      active: t.status !== "sold_out" && t.status !== "cancelled",
       last_updated: new Date().toISOString(),
       raw_payload: t,
     };
@@ -149,7 +150,35 @@ export async function upsertTickets(
     }
   }
 
-  return { created, updated, deactivated, skipped, changes };
+  const departedDeactivated = await deactivateDepartedTickets(supabase);
+
+  return { created, updated, deactivated: deactivated + departedDeactivated, skipped, changes };
+}
+
+/**
+ * Defense-in-depth against stale/departed flights staying bookable: the
+ * seenIds-based deactivation above only catches a ticket once it *drops
+ * out* of a fresh sync batch, so any gap in sync cadence (e.g. the 4-day
+ * cron outage found 2026-07-17, see docs/REDESIGN.md) leaves already-
+ * departed flights visible and "bookable" until the next sync happens to
+ * omit them. This runs on every sync regardless of gaps and hides any
+ * still-active ticket whose departure date has already passed.
+ */
+async function deactivateDepartedTickets(
+  supabase: ReturnType<typeof createAdminClient>
+): Promise<number> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: departedRows } = await supabase
+    .from("tickets")
+    .select("id")
+    .eq("active", true)
+    .lt("departure_date", today);
+
+  const ids = (departedRows ?? []).map((r) => r.id);
+  if (!ids.length) return 0;
+
+  await supabase.from("tickets").update({ active: false }).in("id", ids);
+  return ids.length;
 }
 
 export async function upsertUmrahPackages(
@@ -359,6 +388,7 @@ const ticketDiffFields = [
   "is_direct",
   "group_category",
   "aircraft",
+  "image_url",
   "active",
   "raw_payload",
 ];

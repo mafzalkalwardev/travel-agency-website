@@ -33,7 +33,7 @@ function cookieHeader(headers: string[]): string {
   return headers.map((header) => header.split(";")[0]).join("; ");
 }
 
-async function loginViaHttp(): Promise<string | null> {
+export async function loginViaHttp(): Promise<string | null> {
   const { baseUrl, username, password } = getTravelLineConfig();
   if (!username || !password) return null;
 
@@ -63,6 +63,31 @@ async function loginViaHttp(): Promise<string | null> {
   });
   const session = (await sessionRes.json()) as { user?: { companyId?: string } };
   return session.user?.companyId ? cookie : null;
+}
+
+export interface TravelLineLiveCategory {
+  name: string;
+  imageUrl?: string;
+  availableGroupsCount?: number;
+}
+
+/** TravelLine's own category list — see docs/REDESIGN.md §3.6. */
+export async function fetchLiveCategories(cookie: string): Promise<TravelLineLiveCategory[]> {
+  const { baseUrl } = getTravelLineConfig();
+  const res = await fetch(`${baseUrl}/api/categories`, {
+    headers: { Accept: "application/json", Cookie: cookie },
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as TravelLineLiveCategory[];
+  return Array.isArray(data) ? data : [];
+}
+
+function buildCategoryImageMap(categories: TravelLineLiveCategory[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const c of categories) {
+    if (c.name && c.imageUrl) map[c.name] = c.imageUrl;
+  }
+  return map;
 }
 
 export async function fetchTravelLineGroupFlights(cookie: string): Promise<TravelLineGroupFlight[]> {
@@ -220,6 +245,10 @@ export async function scrapeTravelLineTickets(): Promise<NormalizedTicket[]> {
   const cookie = await loginViaHttp();
   if (!cookie) return [];
 
-  const groupFlights = await fetchTravelLineGroupFlights(cookie);
-  return dedupeTickets(ticketsFromGroupFlights(groupFlights, markupPercent));
+  const [groupFlights, categories] = await Promise.all([
+    fetchTravelLineGroupFlights(cookie),
+    fetchLiveCategories(cookie).catch(() => []),
+  ]);
+  const categoryImageMap = buildCategoryImageMap(categories);
+  return dedupeTickets(ticketsFromGroupFlights(groupFlights, markupPercent, categoryImageMap));
 }
