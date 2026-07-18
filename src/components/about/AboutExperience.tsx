@@ -31,7 +31,6 @@ const leadership = [
   { name: "Muhammad Farman", role: "Founder", image: "/assets/team/muhammad-farman.png", bio: "Founded Al Qibla with a commitment to dependable travel services, transparent fares and long-term customer trust." },
   { name: "Khizr", role: "Co-Founder", image: "/assets/team/khizr.png", bio: "Supports strategic direction, partnerships and service growth across Pakistan and the Gulf region." },
   { name: "Muhammad Ahmed", role: "Chief Executive Officer", image: "/assets/team/muhammad-ahmed.png", bio: "Leads company operations and customer experience, keeping every team focused on reliable travel delivery." },
-  { name: "Candy", role: "Finance Officer", image: "/assets/team/candy.png", bio: "Oversees financial coordination, payment records and the accurate handling of customer and supplier transactions." },
   { name: "Muhamad Afzal", role: "Developer", image: "/assets/team/muhamad-afzal.png", bio: "Builds and maintains Al Qibla’s digital booking experience, live inventory connections and internal travel technology." },
 ];
 

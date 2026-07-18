@@ -11,7 +11,7 @@
 export const TRAVELLINE_GROUP_CATEGORIES = [
   "Umrah Groups",
   "U A E Oneway Groups",
-  "O M A N Oneway Groups",
+  "OMAN Oneway Groups",
   "K S A Oneway Groups",
   "Bahrain Oneway Groups",
 ] as const;
@@ -57,7 +57,7 @@ export const EXPLORE_CATEGORIES: ExploreCategory[] = [
   {
     slug: "oman-oneway",
     label: "OMAN Oneway Groups",
-    apiCategory: "O M A N Oneway Groups",
+    apiCategory: "OMAN Oneway Groups",
     kind: "group-flights",
     country: "Oman",
     imageKey: "oman",
