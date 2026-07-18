@@ -131,6 +131,7 @@ export function mapFlightToTicket(
     groupPnr: raw.groupPnr as string | undefined,
     supplierUpdatedAt: raw.supplierUpdatedAt as string | undefined,
     segments: raw.segments as NormalizedTicket["segments"],
+    imageUrl: raw.imageUrl as string | undefined,
   };
 }
 
@@ -292,7 +293,8 @@ function sectorChain(segments: GroupSegment[]): string {
 
 export function ticketsFromGroupFlights(
   flights: TravelLineGroupFlight[],
-  markupPercent = 0
+  markupPercent = 0,
+  categoryImageMap: Record<string, string> = {}
 ): NormalizedTicket[] {
   const tickets: NormalizedTicket[] = [];
 
@@ -365,6 +367,7 @@ export function ticketsFromGroupFlights(
           groupPnr: group.groupPnr,
           supplierUpdatedAt: group.updated_at,
           segments: detailedSegments,
+          imageUrl: group.groupCategory ? categoryImageMap[group.groupCategory] : undefined,
         },
         0
       )

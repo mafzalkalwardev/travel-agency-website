@@ -8,6 +8,7 @@ const MIRROR_IMAGES: Record<string, string> = {
   uae: "/assets/destinations/uae-dubai.jpg",
   oman: "/assets/destinations/uae-dubai.jpg",
   ksa: "/assets/destinations/ksa-jeddah.jpg",
+  bahrain: "/assets/destinations/bahrain.jpg",
 };
 
 function formatDateTime(datetime?: string): { time: string; label: string } {

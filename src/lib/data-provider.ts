@@ -458,6 +458,7 @@ function mapTicket(row: Record<string, unknown>): Ticket {
     changeFeeApplicable: raw.changeFeeApplicable as string | undefined,
     groupPnr: raw.groupPnr as string | undefined,
     supplierUpdatedAt: raw.supplierUpdatedAt as string | undefined,
+    imageUrl: (row.image_url || raw.imageUrl) as string | undefined,
     segments: raw.segments as Ticket["segments"],
   };
 }

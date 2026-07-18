@@ -12,6 +12,7 @@ const IMAGE_MAP: Record<ExploreCategory["imageKey"], string> = {
   uae: ASSETS.destinations.uae,
   oman: ASSETS.destinations.oman,
   ksa: ASSETS.destinations.ksa,
+  bahrain: ASSETS.destinations.bahrain,
 };
 
 export function buildExploreDestinations(

@@ -35,6 +35,8 @@ export function HeroSection() {
           y: 0,
         });
       });
+
+      return () => mm.revert();
     },
     { scope: sectionRef }
   );
@@ -48,7 +50,7 @@ export function HeroSection() {
         />
         <div className="absolute inset-0 bg-gradient-to-br from-navy/95 via-navy/80 to-royal/40" />
         <FloatingAircraftLayer density="medium" />
-        <AnimatedFlightPath variant="hero" className="bottom-[20%] h-32 md:h-40" />
+        <AnimatedFlightPath variant="hero" speed={6} className="bottom-[20%] h-32 md:h-40" />
       </div>
 
       <div className="container-wide relative z-10 flex min-h-[85vh] flex-col justify-center py-16 md:py-20">

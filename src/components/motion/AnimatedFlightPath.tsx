@@ -26,7 +26,7 @@ export function AnimatedFlightPath({
   className,
   variant = "section",
   direction = "left-right",
-  speed = 8,
+  speed = variant === "hero" ? 6 : 8,
   showDots = true,
   color = "#D6A84F",
 }: AnimatedFlightPathProps) {
@@ -82,7 +82,7 @@ export function AnimatedFlightPath({
           strokeDasharray="6 10"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity }}
-          transition={{ duration: 2.5, ease: "easeInOut" }}
+          transition={{ duration: variant === "hero" ? 1.7 : 2.4, ease: "easeInOut" }}
         />
         {showDots && (
           <>

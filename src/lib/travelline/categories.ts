@@ -1,9 +1,19 @@
-/** Travel Line group-flight categories (API `category` query param values). */
+/**
+ * Travel Line group-flight categories (API `category` query param values).
+ *
+ * This list is a seed/fallback, not the authoritative source — TravelLine's
+ * own `GET /api/categories` endpoint (see checkForNewCategories() in
+ * category-discovery.ts) returns the live category list and is what the
+ * sync should trust for detecting new categories. This array only needs to
+ * stay in sync when a new category is deliberately approved for display
+ * (see docs/REDESIGN.md §6).
+ */
 export const TRAVELLINE_GROUP_CATEGORIES = [
   "Umrah Groups",
   "U A E Oneway Groups",
   "O M A N Oneway Groups",
   "K S A Oneway Groups",
+  "Bahrain Oneway Groups",
 ] as const;
 
 export type TravelLineGroupCategory = (typeof TRAVELLINE_GROUP_CATEGORIES)[number];
@@ -14,7 +24,7 @@ export interface ExploreCategory {
   apiCategory: TravelLineGroupCategory | null;
   kind: "umrah-packages" | "group-flights";
   country: string;
-  imageKey: "umrah" | "umrahGroups" | "uae" | "oman" | "ksa";
+  imageKey: "umrah" | "umrahGroups" | "uae" | "oman" | "ksa" | "bahrain";
   subtitle?: string;
 }
 
@@ -59,6 +69,14 @@ export const EXPLORE_CATEGORIES: ExploreCategory[] = [
     kind: "group-flights",
     country: "Saudi Arabia",
     imageKey: "ksa",
+  },
+  {
+    slug: "bahrain-oneway",
+    label: "Bahrain Oneway Groups",
+    apiCategory: "Bahrain Oneway Groups",
+    kind: "group-flights",
+    country: "Bahrain",
+    imageKey: "bahrain",
   },
 ];
 

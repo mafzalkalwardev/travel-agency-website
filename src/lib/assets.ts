@@ -20,6 +20,7 @@ export const ASSETS = {
     ksa: "/assets/destinations/ksa-jeddah.jpg",
     uae: "/assets/destinations/uae-dubai.jpg",
     oman: "/assets/destinations/uae-dubai.jpg",
+    bahrain: "/assets/destinations/bahrain.jpg",
     afghanistan: "/assets/destinations/afghanistan.jpg",
     dubaiTours: "/assets/destinations/dubai-tours.jpg",
     malaysia: "/assets/destinations/malaysia-kl.jpg",

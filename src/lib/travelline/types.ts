@@ -38,6 +38,7 @@ export interface TravelLineRawFlight {
   tripType?: string;
   isDirect?: boolean;
   sector?: string;
+  imageUrl?: string;
   [key: string]: unknown;
 }
 

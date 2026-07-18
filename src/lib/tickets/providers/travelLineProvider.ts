@@ -1,5 +1,6 @@
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
-import { scrapeTravelLineTickets } from "@/lib/travelline/scraper";
+import { scrapeTravelLineTickets, scrapeTravelLineTicketsWithCategories } from "@/lib/travelline/scraper";
+import { recordNewCategories } from "@/lib/travelline/category-discovery";
 import { cleanupReturnLegTickets } from "@/lib/sync/cleanup-return-tickets";
 import { upsertTickets } from "@/lib/sync/upsert-inventory";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -40,11 +41,28 @@ export class TravelLineTicketProvider implements TicketProvider {
     }
 
     try {
-      const tickets = await this.fetchTickets();
+      // Single login, reused for both the ticket fetch and the category
+      // list (used for ticket imagery + new-category detection) — a
+      // second independent login here previously pushed sync past
+      // Vercel's function timeout.
+      const { tickets, categories } = await scrapeTravelLineTicketsWithCategories();
       const { created, updated, deactivated, skipped, changes } = await upsertTickets(tickets, this.name);
       const cleanup = await cleanupReturnLegTickets();
       const cleanupNote =
         cleanup.deactivated > 0 ? `, ${cleanup.deactivated} wrong-direction cleaned` : "";
+
+      // Non-blocking: a category-discovery failure should never fail the
+      // primary ticket sync. See docs/REDESIGN.md §6.
+      let categoryNote = "";
+      try {
+        const discovery = await recordNewCategories(categories);
+        if (discovery.newCategories.length) {
+          categoryNote = `, ${discovery.newCategories.length} new category(s) flagged for review`;
+        }
+      } catch {
+        /* category discovery is best-effort */
+      }
+
       return {
         provider: this.name,
         status: tickets.length ? "success" : "partial",
@@ -54,7 +72,7 @@ export class TravelLineTicketProvider implements TicketProvider {
         ticketsDeactivated: deactivated + cleanup.deactivated,
         changes,
         message: tickets.length
-          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped${cleanupNote})`
+          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped${cleanupNote}${categoryNote})`
           : "No tickets returned from Travel Line scraper",
       };
     } catch (e) {
