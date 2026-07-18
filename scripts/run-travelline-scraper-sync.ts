@@ -1,20 +1,19 @@
 import { loadEnv } from "./load-env";
-import { TravelLineTicketProvider } from "@/lib/tickets/providers/travelLineProvider";
+import { runTicketSync } from "@/lib/sync/run-ticket-sync";
 import { syncTravelLinePackages } from "@/lib/sync/sync-packages";
 
 loadEnv();
 
 async function main() {
-  const provider = new TravelLineTicketProvider();
-  const [tickets, packages] = await Promise.all([
-    provider.sync(),
+  const [ticketOutcome, packages] = await Promise.all([
+    runTicketSync(),
     syncTravelLinePackages(),
   ]);
 
   console.log(
     JSON.stringify(
       {
-        tickets,
+        tickets: ticketOutcome,
         packages,
         at: new Date().toISOString(),
       },
@@ -23,7 +22,7 @@ async function main() {
     )
   );
 
-  if (tickets.status === "failed") {
+  if (!ticketOutcome.skipped && ticketOutcome.result.status === "failed") {
     process.exitCode = 1;
   }
 }

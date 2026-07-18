@@ -1,37 +1,41 @@
-name: TravelLine Scraper Sync
+name: TravelLine Ticket Sync
+
+# Triggers the already-deployed, lock-protected /api/cron/sync-tickets
+# endpoint every minute. Deliberately lightweight (no checkout/npm
+# install/Playwright) — a full local scrape run here was previously
+# ~1-3 min of setup overhead per invocation, impractical at a 1-minute
+# cadence. Ticket sync itself never needs Playwright (only the Umrah
+# package HTTP-fallback does, and that's guarded server-side). See
+# docs/REDESIGN.md §4/§7.
+#
+# Note: GitHub Actions' schedule trigger is best-effort, not a hard
+# real-time guarantee — under platform load, runs can be delayed by a
+# few minutes. This is the accepted tradeoff for a free external
+# scheduler; Vercel's own daily cron (vercel.json) remains as a backstop.
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "* * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: travelline-ticket-sync
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Scrape and sync inventory
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TRAVELLINE_BASE_URL: ${{ secrets.TRAVELLINE_BASE_URL }}
-          TRAVELLINE_ADMIN_URL: ${{ secrets.TRAVELLINE_ADMIN_URL }}
-          TRAVELLINE_AGENT_USERNAME: ${{ secrets.TRAVELLINE_AGENT_USERNAME }}
-          TRAVELLINE_AGENT_PASSWORD: ${{ secrets.TRAVELLINE_AGENT_PASSWORD }}
-          TRAVELLINE_SYNC_ENABLED: "true"
-          TRAVELLINE_PRICE_MARKUP_PERCENT: ${{ vars.TRAVELLINE_PRICE_MARKUP_PERCENT || '0' }}
-        run: npm run sync-scraper
+      - name: Trigger ticket sync
+        run: |
+          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
+            --max-time 150 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://flywithalqibla.com/api/cron/sync-tickets)
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 400 ]; then
+            echo "Sync request failed"
+            exit 1
+          fi

@@ -466,6 +466,63 @@ guess-and-probe plan — no name-pattern brute-forcing needed at all.
 
 ---
 
+## 6.1 Phase 3 execution notes (2026-07-18)
+
+- Phase 3 shipped: migrations 007-009 (cancelled state, image_url,
+  booking_status_history, TravelLine order/status cross-reference,
+  sub-agent role + credit ledger, category_alerts, public RLS excluding
+  cancelled tickets), Bahrain added, ticket images sourced from
+  `/api/categories`, and the departed-ticket safety-net deactivation.
+- **The new category-alert system immediately caught a real, pre-existing
+  bug**: `TRAVELLINE_GROUP_CATEGORIES` had `"O M A N Oneway Groups"`
+  (letter-spaced) as the `/api/groups` query param, but TravelLine's real
+  category name has no internal spaces (`"OMAN Oneway Groups"`) — verified
+  live, the spaced query always returned 0 flights while the correct one
+  returned 14. This predates this session; Oman group flights had likely
+  never synced correctly before. Fixed by correcting the string in
+  `categories.ts`.
+- First sync-tickets run after adding category discovery hit Vercel's
+  120s function timeout, because `recordNewCategories` was logging into
+  TravelLine a second time on top of the ticket fetch's own login.
+  Fixed by merging both into one login via
+  `scrapeTravelLineTicketsWithCategories()`. Post-fix run: 200 OK in
+  ~111s — still close to the ceiling, worth watching once Phase 4's
+  1-minute cadence is live (see §7 risk below).
+- Removed the "Candy" / Finance Officer entry from the About Us page per
+  request (a separate session running in parallel on this same repo had
+  independently done the same removal and gone further, trimming
+  leadership down to Farman Ullah only — reconciled via a normal git
+  merge, no work lost).
+
+## 6.2 Phase 4 execution notes (2026-07-18) — 1-minute sync
+
+- `src/lib/sync/sync-lock.ts` + migration 010 (`sync_locks` table): a
+  best-effort overlap lock (5-minute staleness timeout so a crashed run
+  can't deadlock future ones). Wired into every sync trigger via a new
+  shared `src/lib/sync/run-ticket-sync.ts` — the Vercel cron route
+  (`/api/cron/sync-tickets`), the admin "Sync Now" button
+  (`/api/admin/sync`), and the GitHub Actions script all now go through
+  one code path instead of three that could drift.
+- **`.github/workflows/travelline-sync.yml` existed already** (from the
+  parallel session working on this repo) at a 5-minute cadence, running a
+  full `npm ci` + Playwright install + local scrape every invocation.
+  That's impractical at 1-minute cadence (the setup overhead alone could
+  exceed the 60s gap between runs). Replaced with a lightweight workflow
+  that just calls the deployed, lock-protected
+  `/api/cron/sync-tickets` endpoint via `curl` — no checkout, no install,
+  no Playwright. `CRON_SECRET` was already present as a GitHub repo
+  secret.
+- **Honesty note for the user**: GitHub Actions' `schedule` trigger is
+  best-effort, not a real-time guarantee — GitHub explicitly documents
+  that scheduled workflows can be delayed by several minutes during
+  platform load, especially on the free tier. "Every minute" here means
+  "as close to every minute as a free scheduler allows," with Vercel's
+  own daily cron (`vercel.json`) kept as an unrelated backstop in case the
+  GitHub side goes quiet entirely.
+- Package sync (Umrah packages) intentionally stays on Vercel's existing
+  daily cron — the user's "every minute" ask was about ticket
+  availability/seats, which changes far more often than package content.
+
 ## 7. Open questions / risks carried into execution
 
 - **Vercel plan**: not yet confirmed whether the linked Vercel project is
@@ -476,6 +533,13 @@ guess-and-probe plan — no name-pattern brute-forcing needed at all.
   sustained frequency. `integration_sessions` session reuse should help;
   Phase 4 includes a burn-in observation period specifically to catch this
   before calling it done.
+- **Sync duration vs. 1-minute cadence**: a full sync now takes ~110s
+  (confirmed live 2026-07-18), close to Vercel's 120s function ceiling and
+  uncomfortably close to the 60s gap between runs Phase 4 introduces.
+  Overlapping runs need to be prevented explicitly (e.g. a simple
+  in-flight lock via `sync_logs`/a dedicated lock row) rather than assumed
+  away — a naive every-60s external trigger risks a second run starting
+  before the first finishes.
 - **WebGL 3D hero perf on low-end/mobile devices**: real risk given
   `@react-three/fiber` is unused today (unproven in this codebase). Phase 5
   ships a static-carousel (`embla-carousel-react`) fallback path gated on
