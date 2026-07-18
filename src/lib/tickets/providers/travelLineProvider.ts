@@ -1,6 +1,6 @@
 import { isTravelLineSyncEnabled } from "@/lib/travelline/env";
-import { scrapeTravelLineTickets } from "@/lib/travelline/scraper";
-import { checkForNewCategories } from "@/lib/travelline/category-discovery";
+import { scrapeTravelLineTickets, scrapeTravelLineTicketsWithCategories } from "@/lib/travelline/scraper";
+import { recordNewCategories } from "@/lib/travelline/category-discovery";
 import { cleanupReturnLegTickets } from "@/lib/sync/cleanup-return-tickets";
 import { upsertTickets } from "@/lib/sync/upsert-inventory";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -41,7 +41,11 @@ export class TravelLineTicketProvider implements TicketProvider {
     }
 
     try {
-      const tickets = await this.fetchTickets();
+      // Single login, reused for both the ticket fetch and the category
+      // list (used for ticket imagery + new-category detection) — a
+      // second independent login here previously pushed sync past
+      // Vercel's function timeout.
+      const { tickets, categories } = await scrapeTravelLineTicketsWithCategories();
       const { created, updated, deactivated, skipped, changes } = await upsertTickets(tickets, this.name);
       const cleanup = await cleanupReturnLegTickets();
       const cleanupNote =
@@ -51,7 +55,7 @@ export class TravelLineTicketProvider implements TicketProvider {
       // primary ticket sync. See docs/REDESIGN.md §6.
       let categoryNote = "";
       try {
-        const discovery = await checkForNewCategories();
+        const discovery = await recordNewCategories(categories);
         if (discovery.newCategories.length) {
           categoryNote = `, ${discovery.newCategories.length} new category(s) flagged for review`;
         }

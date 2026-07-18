@@ -239,16 +239,33 @@ function dedupeTickets(tickets: NormalizedTicket[]): NormalizedTicket[] {
   );
 }
 
-/** Group flights only — Umrah packages are synced separately via package sync. */
-export async function scrapeTravelLineTickets(): Promise<NormalizedTicket[]> {
+export interface TravelLineTicketScrapeResult {
+  tickets: NormalizedTicket[];
+  categories: TravelLineLiveCategory[];
+}
+
+/**
+ * Group flights only — Umrah packages are synced separately via package
+ * sync. Logs in once and reuses that session for both the group-flight
+ * fetch and the categories fetch (used for ticket imagery and category
+ * discovery) rather than logging in twice per sync — a second login here
+ * previously pushed sync past Vercel's function timeout.
+ */
+export async function scrapeTravelLineTicketsWithCategories(): Promise<TravelLineTicketScrapeResult> {
   const { markupPercent } = getTravelLineConfig();
   const cookie = await loginViaHttp();
-  if (!cookie) return [];
+  if (!cookie) return { tickets: [], categories: [] };
 
   const [groupFlights, categories] = await Promise.all([
     fetchTravelLineGroupFlights(cookie),
     fetchLiveCategories(cookie).catch(() => []),
   ]);
   const categoryImageMap = buildCategoryImageMap(categories);
-  return dedupeTickets(ticketsFromGroupFlights(groupFlights, markupPercent, categoryImageMap));
+  const tickets = dedupeTickets(ticketsFromGroupFlights(groupFlights, markupPercent, categoryImageMap));
+  return { tickets, categories };
+}
+
+/** Group flights only. Thin wrapper for callers that only need tickets. */
+export async function scrapeTravelLineTickets(): Promise<NormalizedTicket[]> {
+  return (await scrapeTravelLineTicketsWithCategories()).tickets;
 }
