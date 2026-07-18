@@ -31,7 +31,6 @@ const leadership = [
   { name: "Muhammad Farman", role: "Founder", image: "/assets/team/muhammad-farman.png", bio: "Founded Al Qibla with a commitment to dependable travel services, transparent fares and long-term customer trust." },
   { name: "Khizr", role: "Co-Founder", image: "/assets/team/khizr.png", bio: "Supports strategic direction, partnerships and service growth across Pakistan and the Gulf region." },
   { name: "Muhammad Ahmed", role: "Chief Executive Officer", image: "/assets/team/muhammad-ahmed.png", bio: "Leads company operations and customer experience, keeping every team focused on reliable travel delivery." },
-  { name: "Candy", role: "Finance Officer", image: "/assets/team/candy.png", bio: "Oversees financial coordination, payment records and the accurate handling of customer and supplier transactions." },
   { name: "Muhamad Afzal", role: "Developer", image: "/assets/team/muhamad-afzal.png", bio: "Builds and maintains Al Qibla’s digital booking experience, live inventory connections and internal travel technology." },
 ];
 
@@ -91,7 +90,7 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
           <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-bold uppercase tracking-[.22em] text-[#a66d2f]">People behind your journey</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl">Meet our leadership team</h2>
-            <p className="mt-4 leading-7 text-slate-600">Leadership, finance, management, operations and technology work together to keep every journey organized from inquiry to arrival.</p>
+            <p className="mt-4 leading-7 text-slate-600">Leadership, management, operations and technology work together to keep every journey organized from inquiry to arrival.</p>
           </motion.div>
           <div className="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-12">
             {leadership.map((member) => (
