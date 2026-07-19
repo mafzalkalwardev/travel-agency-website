@@ -29,10 +29,14 @@ jobs:
     steps:
       - name: Trigger ticket sync
         run: |
+          # next.config.ts sets trailingSlash: true, so the bare path
+          # 308-redirects — hit the trailing-slash URL directly rather
+          # than relying on curl -L (which previously wasn't set here,
+          # so the sync silently never ran despite a "successful" 3xx).
           status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
             --max-time 150 \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://flywithalqibla.com/api/cron/sync-tickets)
+            https://flywithalqibla.com/api/cron/sync-tickets/)
           echo "HTTP status: $status"
           cat /tmp/response.json
           if [ "$status" -ge 400 ]; then
