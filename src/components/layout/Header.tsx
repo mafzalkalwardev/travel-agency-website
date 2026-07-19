@@ -31,6 +31,8 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  const isHome = pathname === "/" || pathname === "";
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -41,10 +43,17 @@ export function Header() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" || pathname === "" : pathname?.startsWith(href.replace(/\/$/, ""));
 
+  // Transparent over the homepage hero until the user scrolls past it,
+  // then the same solid navy bar every other page always uses.
+  const transparent = isHome && !scrolled;
+
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-white/10 bg-navy/90 backdrop-blur-2xl transition-all duration-500",
+        "fixed inset-x-0 top-0 z-50 border-b transition-all duration-500",
+        transparent
+          ? "border-transparent bg-transparent"
+          : "border-white/10 bg-navy/90 backdrop-blur-2xl",
         scrolled && "bg-navy/95 shadow-[0_16px_50px_rgba(0,0,0,.22)]"
       )}
     >

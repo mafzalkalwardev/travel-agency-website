@@ -7,7 +7,7 @@ import { useCallback, useLayoutEffect, useState } from "react";
 import { assetPath } from "@/lib/base-path";
 import { LOGO_PATH } from "@/lib/constants";
 
-const INTRO_DURATION_MS = 1300;
+const INTRO_DURATION_MS = 5000;
 const INTRO_SESSION_KEY = "al-qibla-arrival-intro-seen";
 
 export function SiteArrivalIntro() {
@@ -81,7 +81,7 @@ export function SiteArrivalIntro() {
             className="absolute left-5 top-5 z-30 flex items-center gap-3 sm:left-8 sm:top-8"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: [0, 1, 1, 0], y: [-10, 0, 0, -8] }}
-            transition={{ duration: 2.75, times: [0, 0.16, 0.76, 1] }}
+            transition={{ duration: 4.6, times: [0, 0.09, 0.9, 1] }}
           >
             <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-white/15 bg-white/10 shadow-2xl backdrop-blur sm:h-12 sm:w-12">
               <Image
@@ -109,7 +109,7 @@ export function SiteArrivalIntro() {
               rotate: [-2, -5, -8],
               opacity: ready ? [0, 1, 1, 0.98] : 0,
             }}
-            transition={{ duration: 1.45, times: [0, 0.42, 1], ease: [0.22, 0.72, 0.2, 1] }}
+            transition={{ duration: 3.2, times: [0, 0.42, 1], ease: [0.22, 0.72, 0.2, 1] }}
           >
             <Image
               src={assetPath("/assets/aircraft/arrival-aircraft-v2.webp")}
@@ -123,6 +123,20 @@ export function SiteArrivalIntro() {
               onError={finish}
               draggable={false}
             />
+          </motion.div>
+
+          <motion.div
+            className="absolute inset-x-0 bottom-[18%] z-30 flex flex-col items-center px-6 text-center sm:bottom-[22%]"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: [0, 1, 1, 0], y: [14, 0, 0, -6] }}
+            transition={{ duration: 5, times: [0.52, 0.64, 0.92, 1] }}
+          >
+            <p className="font-brand text-2xl font-bold tracking-tight sm:text-4xl">
+              Travel Smart. Travel Safe.
+            </p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.28em] text-gold-light sm:text-sm">
+              Travel with Al Qibla
+            </p>
           </motion.div>
 
           <motion.div
