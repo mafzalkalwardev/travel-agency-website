@@ -132,6 +132,18 @@ export function Footer() {
             <span>Department of Tourist Services registered</span>
           </div>
         </div>
+
+        <div className="mt-5 flex justify-center border-t border-white/5 pt-5 text-xs text-white/35 sm:justify-end">
+          <a
+            href="https://www.induswebagency.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center gap-1.5 transition hover:text-gold-light"
+          >
+            Made by <span className="font-semibold text-white/55 group-hover:text-gold-light">INDUS WEB AGENCY</span>
+            <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
+          </a>
+        </div>
       </div>
     </footer>
   );
