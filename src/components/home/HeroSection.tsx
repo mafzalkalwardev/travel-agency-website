@@ -8,6 +8,7 @@ import { ArrowRight, Plane } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { AnimatedFlightPath } from "@/components/motion/AnimatedFlightPath";
 import { FloatingAircraftLayer } from "@/components/motion/FloatingAircraftLayer";
+import { HeroPosterCarousel } from "@/components/home/HeroPosterCarousel";
 import { cn } from "@/lib/utils";
 import { assetPath } from "@/lib/base-path";
 import { ASSETS } from "@/lib/assets";
@@ -53,7 +54,7 @@ export function HeroSection() {
         <AnimatedFlightPath variant="hero" speed={6} className="bottom-[20%] h-32 md:h-40" />
       </div>
 
-      <div className="container-wide relative z-10 flex min-h-[85vh] flex-col justify-center py-16 md:py-20">
+      <div className="container-wide relative z-10 flex min-h-[85vh] flex-col justify-center gap-10 py-16 md:py-20 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-3xl">
           <div className="hero-badge mb-5 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-white/5 px-4 py-1.5 text-sm text-gold-light backdrop-blur-sm">
             <Plane className="h-4 w-4" />
@@ -89,6 +90,10 @@ export function HeroSection() {
             <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,.8)]" />
             Live inventory · IATA verified · Support until you land
           </div>
+        </div>
+
+        <div className="hero-cta hidden h-[440px] w-[300px] shrink-0 lg:block">
+          <HeroPosterCarousel />
         </div>
       </div>
     </section>
