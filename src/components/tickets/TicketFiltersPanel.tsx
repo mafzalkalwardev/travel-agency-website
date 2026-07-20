@@ -43,11 +43,11 @@ export function TicketFiltersPanel({
   const clearFilters = () => onChange({});
 
   return (
-    <Card className="border-border/60 shadow-sm">
+    <Card className="border-gray-200 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="font-heading text-lg text-navy">Filter Tickets</CardTitle>
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+          <CardTitle className="font-heading text-lg text-gray-900">Filter Tickets</CardTitle>
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="text-gray-500 hover:text-gray-700">
             <X className="mr-1 h-3 w-3" /> Clear
           </Button>
         </div>
