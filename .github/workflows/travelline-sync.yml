@@ -1,21 +1,24 @@
-name: TravelLine Ticket Sync
+name: TravelLine Ticket Sync (backstop)
 
-# Triggers the already-deployed, lock-protected /api/cron/sync-tickets
-# endpoint every minute. Deliberately lightweight (no checkout/npm
-# install/Playwright) — a full local scrape run here was previously
-# ~1-3 min of setup overhead per invocation, impractical at a 1-minute
-# cadence. Ticket sync itself never needs Playwright (only the Umrah
-# package HTTP-fallback does, and that's guarded server-side). See
-# docs/REDESIGN.md §4/§7.
+# SECONDARY backstop only. The primary 1-minute trigger is a Supabase
+# pg_cron + pg_net job (`sync-tickets-every-minute`, scheduled directly in
+# the database — see docs/REDESIGN.md §6.3) calling the same
+# /api/cron/sync-tickets endpoint.
 #
-# Note: GitHub Actions' schedule trigger is best-effort, not a hard
-# real-time guarantee — under platform load, runs can be delayed by a
-# few minutes. This is the accepted tradeoff for a free external
-# scheduler; Vercel's own daily cron (vercel.json) remains as a backstop.
+# Why this isn't primary: measured in production 2026-07-19, GitHub
+# Actions' `schedule` trigger on this repo ran roughly once per HOUR
+# despite being configured for every minute — this is a real, currently
+# undocumented-in-our-plan GitHub platform throttling behavior for
+# low-activity repos, not a config mistake. It cannot be tuned around, so
+# it was demoted to a sparse backstop rather than removed outright.
+#
+# Shares the same overlap lock (sync_locks table) as every other
+# trigger, so running alongside pg_cron is always safe — worst case is a
+# wasted "already in progress" 200 response.
 
 on:
   schedule:
-    - cron: "* * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 concurrency:

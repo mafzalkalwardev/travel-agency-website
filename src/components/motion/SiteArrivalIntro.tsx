@@ -13,7 +13,13 @@ const INTRO_SESSION_KEY = "al-qibla-arrival-intro-seen";
 export function SiteArrivalIntro() {
   const pathname = usePathname();
   const reducedMotion = useReducedMotion();
-  const [visible, setVisible] = useState(false);
+  // Optimistically match the final client state at SSR time (pathname is
+  // known on the server; sessionStorage/reduced-motion aren't). This
+  // makes the intro part of the FIRST rendered HTML on the homepage
+  // instead of appearing only after a client effect mounts it — the
+  // previous default-false state let the real homepage flash on screen
+  // for a frame before the intro popped in on top of it.
+  const [visible, setVisible] = useState(() => pathname === "/");
   const [ready, setReady] = useState(false);
 
   const finish = useCallback(() => {
@@ -100,7 +106,7 @@ export function SiteArrivalIntro() {
           </motion.div>
 
           <motion.div
-            className="arrival-aircraft absolute z-20 transform-gpu"
+            className="arrival-aircraft absolute z-20 aspect-[16/8.5] w-[135vw] max-w-[1600px] overflow-hidden transform-gpu sm:w-[94vw]"
             initial={{ x: "-74%", y: "34%", scale: 0.38, rotate: -2, opacity: 0 }}
             animate={{
               x: ["-74%", "-22%", "32%"],
@@ -111,13 +117,21 @@ export function SiteArrivalIntro() {
             }}
             transition={{ duration: 3.2, times: [0, 0.42, 1], ease: [0.22, 0.72, 0.2, 1] }}
           >
+            {/*
+              Only a real aircraft-photo asset swap fixes the angle
+              properly (no image-generation tool available here) — as a
+              real improvement within existing assets, this crops toward
+              the nose/cockpit (upper-right of the source photo) instead
+              of showing the full belly-on silhouette, and uses the
+              higher-resolution transparent asset.
+            */}
             <Image
-              src={assetPath("/assets/aircraft/arrival-aircraft-v2.webp")}
+              src={assetPath("/assets/aircraft/arrival-aircraft-hq.webp")}
               alt=""
               width={1200}
               height={675}
               sizes="(max-width: 640px) 135vw, 94vw"
-              className="h-auto w-full select-none drop-shadow-[0_28px_32px_rgba(0,10,28,0.32)]"
+              className="h-full w-full select-none object-cover object-[68%_35%] drop-shadow-[0_28px_32px_rgba(0,10,28,0.32)]"
               loading="eager"
               onLoad={() => setReady(true)}
               onError={finish}

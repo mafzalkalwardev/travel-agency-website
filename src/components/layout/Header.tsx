@@ -52,7 +52,7 @@ export function Header() {
       className={cn(
         "fixed inset-x-0 top-0 z-50 border-b transition-all duration-500",
         transparent
-          ? "border-transparent bg-transparent"
+          ? "border-white/15 bg-white/10 backdrop-blur-xl"
           : "border-white/10 bg-navy/90 backdrop-blur-2xl",
         scrolled && "bg-navy/95 shadow-[0_16px_50px_rgba(0,0,0,.22)]"
       )}

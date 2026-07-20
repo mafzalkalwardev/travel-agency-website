@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { RoundedBox, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { assetPath } from "@/lib/base-path";
 
@@ -54,13 +54,10 @@ function Screen() {
 
   return (
     <group ref={groupRef}>
-      <RoundedBox args={[1.8, 2.58, 0.12]} radius={0.08} smoothness={4}>
-        <meshStandardMaterial color="#071b3a" metalness={0.4} roughness={0.35} />
-      </RoundedBox>
       {previous !== null && fade < 1 && (
-        <PosterPlane texture={textures[previous]} opacity={1 - fade} z={0.0605} />
+        <PosterPlane texture={textures[previous]} opacity={1 - fade} z={-0.0005} />
       )}
-      <PosterPlane texture={textures[current]} opacity={fade} z={0.061} />
+      <PosterPlane texture={textures[current]} opacity={fade} z={0} />
     </group>
   );
 }
@@ -89,7 +86,10 @@ function SceneLights() {
 export function Hero3DScreen() {
   const dpr = useMemo<[number, number]>(() => [1, 1.75], []);
   return (
-    <div className="relative h-full w-full">
+    <div
+      className="relative h-full w-full"
+      style={{ filter: "drop-shadow(0 25px 45px rgba(0,0,0,.45))" }}
+    >
       <Canvas
         dpr={dpr}
         camera={{ position: [0, 0, 4.4], fov: 32 }}
