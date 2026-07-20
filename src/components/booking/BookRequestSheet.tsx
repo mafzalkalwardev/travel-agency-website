@@ -18,7 +18,6 @@ import {
 import { getApprovalMessage } from "@/lib/customer-approval";
 import { SITE } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
-import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { BookingProductType, Ticket } from "@/types";
 
@@ -145,17 +144,10 @@ export function BookRequestSheet({
       if (!res.ok) throw new Error(json.error || "Request failed");
       const ref = json.bookingRef || "";
 
-      const waMsg = buildBookingWhatsAppMessage({
-        bookingRef: ref,
-        productTitle,
-        customerName: form.name,
-        customerPhone: form.phone,
-        passengers: Number(form.passengers) || 1,
-        quotedPrice,
-        currency,
-        supplierRef: json.supplierRef || undefined,
-      });
-      window.location.href = whatsappLink(waMsg);
+      // Redirect to our own confirmation page (same order id TravelLine
+      // itself would show) instead of jumping straight to WhatsApp — see
+      // docs/REDESIGN.md §8.2. Payment/WhatsApp is now a CTA on that page.
+      window.location.href = `/account/bookings/${ref}/`;
       return;
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Could not submit booking request.");
