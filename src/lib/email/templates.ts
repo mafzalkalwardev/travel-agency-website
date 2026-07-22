@@ -140,3 +140,26 @@ export function accountVerificationCustomerHtml(params: {
   );
 }
 
+export function accountPasswordResetCustomerHtml(params: {
+  fullName?: string;
+  resetUrl: string;
+}) {
+  const name = params.fullName?.trim() || "there";
+  return layout(
+    "Reset your Al Qibla password",
+    `<h2 style="color:#1a2744">Reset your password</h2>
+    <p>Hello ${name},</p>
+    <p>We received a request to reset the password for your <strong>${SITE.name}</strong> account.</p>
+    <p style="margin:28px 0">
+      <a href="${params.resetUrl}" style="display:inline-block;background:#071b3a;color:#ffffff;padding:12px 22px;text-decoration:none;border-radius:8px;font-weight:bold">
+        Choose a new password
+      </a>
+    </p>
+    <p style="font-size:13px;color:#666">If the button does not work, copy and paste this link into your browser:<br>
+      <a href="${params.resetUrl}" style="color:#0b5da8;word-break:break-all">${params.resetUrl}</a>
+    </p>
+    <p style="font-size:13px;color:#666">If you did not request this, you can ignore this email. Your password will stay the same.</p>
+    <p style="font-size:12px;color:#888">This message was sent by ${SITE.name} · ${SITE.email}</p>`
+  );
+}
+

@@ -58,7 +58,15 @@ export function LoginForm({ nextPath }: LoginFormProps) {
         </div>
       </div>
       <div className="space-y-2.5">
-        <Label htmlFor="login-password" className="font-semibold text-navy">Password</Label>
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor="login-password" className="font-semibold text-navy">Password</Label>
+          <Link
+            href={`/account/forgot-password/?next=${encodeURIComponent(nextPath)}`}
+            className="text-xs font-semibold text-[#a66d2f] transition hover:text-navy"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <div className="relative">
           <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a66d2f]" />
           <Input

@@ -7,7 +7,7 @@ import { assetPath } from "@/lib/base-path";
 import { LOGO_PATH, SITE } from "@/lib/constants";
 
 type AccountAccessShellProps = {
-  mode: "login" | "signup";
+  mode: "login" | "signup" | "forgot" | "reset";
   children: React.ReactNode;
 };
 
@@ -23,6 +23,18 @@ const copy = {
     title: "Start a smarter way to manage travel.",
     formTitle: "Create your Al Qibla account",
     formText: "Set up your secure profile for faster quotations, bookings and follow-up.",
+  },
+  forgot: {
+    eyebrow: "Account recovery",
+    title: "We will help you get back into your account.",
+    formTitle: "Forgot your password?",
+    formText: "Enter your email and we will send a secure reset link from Al Qibla Air Services.",
+  },
+  reset: {
+    eyebrow: "Account recovery",
+    title: "Choose a new password and continue booking with confidence.",
+    formTitle: "Set a new password",
+    formText: "Pick a strong password for your Al Qibla customer account.",
   },
 } as const;
 
