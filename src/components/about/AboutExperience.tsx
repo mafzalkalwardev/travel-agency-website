@@ -28,6 +28,9 @@ const portals = [
 
 const leadership = [
   { name: "Farman Ullah", role: "Founder & CEO", image: "/assets/team/muhammad-farman.png", bio: "Founded Al Qibla with a commitment to dependable travel services, transparent fares and long-term customer trust." },
+  { name: "Muhammad Ahmed", role: "Chief Executive Director", image: "/assets/team/muhammad-ahmed.png", bio: "Leads day-to-day operations and strategic direction so every booking, package and client request stays on track." },
+  { name: "Muhammad Khizr", role: "Ticket Booking Agent", image: "/assets/team/khizr.png", bio: "Handles flight reservations, group ticketing and seat coordination with clear fares and timely confirmations." },
+  { name: "Muhammad Afzal", role: "Intern Developer", image: "/assets/team/muhamad-afzal.png", bio: "Supports the digital platforms that power live inventory, portals and smoother booking experiences for our clients." },
 ];
 
 export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; reviewStats: ReviewStats }) {
