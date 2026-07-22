@@ -194,15 +194,19 @@ export async function POST(request: Request) {
       supplierHeld,
       supplierRef: supplierRef || null,
       message:
-        "Booking request submitted. Redirecting you to WhatsApp to complete payment.",
+        "Booking submitted. Seats held at Travel Line when available — opening WhatsApp to complete payment.",
       whatsapp: {
         productTitle: productLabel,
         customerName: data.customer_name,
         customerPhone: data.customer_phone,
+        customerEmail: data.customer_email || null,
         passengers: data.passengers,
+        passengerNames: data.passenger_details?.names || null,
         quotedPrice: data.quoted_price,
         currency: data.currency,
         supplierRef: supplierRef || null,
+        supplierHeld,
+        notes: data.passenger_details?.notes || null,
       },
     });
   } catch {

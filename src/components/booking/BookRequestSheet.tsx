@@ -19,6 +19,7 @@ import { getApprovalMessage } from "@/lib/customer-approval";
 import { SITE } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import type { BookingProductType, Ticket } from "@/types";
 
 interface BookRequestSheetProps {
@@ -142,12 +143,41 @@ export function BookRequestSheet({
         throw new Error(json.error || "Your account is awaiting approval.");
       }
       if (!res.ok) throw new Error(json.error || "Request failed");
-      const ref = json.bookingRef || "";
+      const ref = String(json.bookingRef || "");
+      const wa = json.whatsapp as
+        | {
+            productTitle?: string;
+            customerName?: string;
+            customerPhone?: string;
+            passengers?: number;
+            quotedPrice?: number;
+            currency?: string;
+            supplierRef?: string | null;
+          }
+        | undefined;
 
-      // Redirect to our own confirmation page (same order id TravelLine
-      // itself would show) instead of jumping straight to WhatsApp — see
-      // docs/REDESIGN.md §8.2. Payment/WhatsApp is now a CTA on that page.
-      window.location.href = `/account/bookings/${ref}/`;
+      const waMsg = buildBookingWhatsAppMessage({
+        bookingRef: ref,
+        productTitle: wa?.productTitle || productTitle,
+        customerName: wa?.customerName || form.name,
+        customerPhone: wa?.customerPhone || form.phone,
+        customerEmail: form.email || undefined,
+        passengers: wa?.passengers || Number(form.passengers) || 1,
+        passengerNames: form.passengerNames || undefined,
+        quotedPrice: wa?.quotedPrice ?? quotedPrice,
+        currency: wa?.currency || currency,
+        supplierRef: wa?.supplierRef || json.supplierRef || undefined,
+        supplierHeld: Boolean(json.supplierHeld),
+        route: ticket ? `${ticket.from} → ${ticket.to}` : undefined,
+        departureDate: ticket?.date,
+        flightNumber: ticket?.flightNumber,
+        airline: ticket?.airline,
+        notes: form.notes || undefined,
+      });
+
+      // Hold is already on Travel Line + Admin Bookings; open WhatsApp
+      // immediately with ticket + customer details for payment.
+      window.location.href = whatsappLink(waMsg);
       return;
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Could not submit booking request.");
@@ -160,9 +190,9 @@ export function BookRequestSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex !w-[min(96vw,64rem)] !max-w-none flex-col overflow-y-auto p-0 sm:!max-w-4xl">
         <SheetHeader className="border-b bg-navy px-6 py-5 text-white sm:px-8">
-          <SheetTitle className="font-heading text-2xl text-white">Review & hold your booking</SheetTitle>
+          <SheetTitle className="font-heading text-2xl text-white">Review & book</SheetTitle>
           <SheetDescription>
-            Confirm the live itinerary and fare before continuing. Approved accounts can place a supplier hold instantly.
+            Confirmed accounts place a Travel Line seat hold instantly, then open WhatsApp with your ticket details to pay.
           </SheetDescription>
         </SheetHeader>
 

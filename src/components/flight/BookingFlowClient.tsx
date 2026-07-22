@@ -154,10 +154,22 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
         productTitle: `${flight.airline} ${flight.flightNumber} - ${flight.from} to ${flight.to}`,
         customerName: `${passenger.firstName} ${passenger.lastName}`.trim(),
         customerPhone: passenger.phone,
+        customerEmail: passenger.email || undefined,
         passengers: 1,
+        passengerNames: `${passenger.firstName} ${passenger.lastName}`.trim(),
         quotedPrice: total,
         currency: flight.currency,
         supplierRef: json.supplierRef || undefined,
+        supplierHeld: Boolean(json.supplierHeld),
+        route: `${flight.from} → ${flight.to}`,
+        flightNumber: flight.flightNumber,
+        airline: flight.airline,
+        notes: [
+          `Gender: ${passenger.gender}`,
+          `Date of birth: ${passenger.dateOfBirth}`,
+          `Seat: ${selectedSeat ? `${selectedSeat.id} (${formatCurrency(selectedSeat.price, flight.currency)})` : "Not selected"}`,
+          `Add-ons: ${addOnSummary}`,
+        ].join("; "),
       });
       window.location.href = whatsappLink(waMsg);
       return;

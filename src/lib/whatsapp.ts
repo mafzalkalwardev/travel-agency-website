@@ -14,10 +14,19 @@ export interface BookingWhatsAppInput {
   productTitle: string;
   customerName: string;
   customerPhone: string;
+  customerEmail?: string;
   passengers: number;
+  passengerNames?: string;
   quotedPrice: number;
   currency?: string;
   supplierRef?: string;
+  supplierHeld?: boolean;
+  /** Ticket / itinerary extras */
+  route?: string;
+  departureDate?: string;
+  flightNumber?: string;
+  airline?: string;
+  notes?: string;
 }
 
 export function buildBookingWhatsAppMessage(input: BookingWhatsAppInput): string {
@@ -25,18 +34,41 @@ export function buildBookingWhatsAppMessage(input: BookingWhatsAppInput): string
   const lines = [
     `Hello ${SITE.name},`,
     ``,
-    `I have submitted a booking request and would like to complete payment.`,
+    `I just booked online and would like to complete payment.`,
     ``,
     `*Reference:* ${ref}`,
-    `*Product:* ${input.productTitle}`,
-    `*Name:* ${input.customerName}`,
-    `*Phone:* ${input.customerPhone}`,
-    `*Passengers:* ${input.passengers}`,
-    `*Amount:* ${input.quotedPrice.toLocaleString()} ${input.currency || "PKR"}`,
+    `*Ticket / Product:* ${input.productTitle}`,
   ];
 
+  if (input.airline || input.flightNumber) {
+    lines.push(
+      `*Flight:* ${[input.airline, input.flightNumber].filter(Boolean).join(" ")}`
+    );
+  }
+  if (input.route) lines.push(`*Route:* ${input.route}`);
+  if (input.departureDate) lines.push(`*Date:* ${input.departureDate}`);
+
+  lines.push(
+    `*Customer:* ${input.customerName}`,
+    `*Phone:* ${input.customerPhone}`
+  );
+
+  if (input.customerEmail) lines.push(`*Email:* ${input.customerEmail}`);
+  lines.push(`*Passengers:* ${input.passengers}`);
+  if (input.passengerNames) lines.push(`*Passenger names:* ${input.passengerNames}`);
+  if (input.notes) lines.push(`*Notes:* ${input.notes}`);
+
+  lines.push(
+    `*Amount:* ${input.quotedPrice.toLocaleString()} ${input.currency || "PKR"}`
+  );
+
   if (input.supplierRef) {
-    lines.push(`*Supplier Ref:* ${input.supplierRef}`);
+    lines.push(`*Travel Line ref:* ${input.supplierRef}`);
+    if (input.supplierHeld !== false) {
+      lines.push(`*Supplier:* seats held on Travel Line`);
+    }
+  } else if (input.supplierHeld === false) {
+    lines.push(`*Supplier:* hold pending — please confirm seats`);
   }
 
   lines.push(

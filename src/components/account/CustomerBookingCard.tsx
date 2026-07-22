@@ -45,10 +45,14 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
           productTitle: booking.product_title || booking.product_type,
           customerName: booking.customer_name,
           customerPhone: booking.customer_phone,
+          customerEmail: booking.customer_email || undefined,
           passengers: booking.passengers,
+          passengerNames: passengers?.names || undefined,
           quotedPrice: Number(booking.quoted_price),
           currency: booking.currency,
           supplierRef: booking.travelline_booking_ref || undefined,
+          supplierHeld: booking.supplier_hold_status === "held",
+          notes: passengers?.notes || undefined,
         })
       )
     : null;

@@ -56,10 +56,22 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
     productTitle: booking.product_title || booking.product_type,
     customerName: booking.customer_name,
     customerPhone: booking.customer_phone,
+    customerEmail: booking.customer_email || undefined,
     passengers: booking.passengers,
+    passengerNames:
+      booking.passenger_details &&
+      typeof booking.passenger_details === "object" &&
+      "names" in booking.passenger_details
+        ? String((booking.passenger_details as { names?: unknown }).names || "")
+        : undefined,
     quotedPrice: Number(booking.quoted_price),
     currency: booking.currency,
     supplierRef: orderId || undefined,
+    supplierHeld: booking.supplier_hold_status === "held",
+    route: ticket ? `${ticket.from} → ${ticket.to}` : undefined,
+    departureDate: ticket?.date,
+    flightNumber: ticket?.flightNumber,
+    airline: ticket?.airline,
   });
 
   const segments = ticket?.segments?.length
