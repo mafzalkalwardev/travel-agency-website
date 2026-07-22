@@ -54,6 +54,12 @@ export interface TravelPackage {
   flightNumber?: string;
   durationDays?: number;
   durationNights?: number;
+  returnFlightNumber?: string;
+  returnDate?: string;
+  makkahNights?: number;
+  madinahNights?: number;
+  departureBaggage?: string;
+  shortDescription?: string;
 }
 
 export interface Ticket {
