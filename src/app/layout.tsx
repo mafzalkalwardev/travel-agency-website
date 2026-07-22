@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import { ConditionalSiteChrome } from "@/components/layout/ConditionalSiteChrome";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
+import { SupportChatWidget } from "@/components/chat/SupportChatWidget";
 import { SiteArrivalIntro } from "@/components/motion/SiteArrivalIntro";
 import { OFFICE_DISPLAY_ORDER, SITE } from "@/lib/constants";
 import { createPageMetadata } from "@/lib/metadata";
@@ -50,7 +50,7 @@ export default function RootLayout({
         <ConditionalSiteChrome
           header={<Header />}
           footer={<Footer />}
-          whatsapp={<WhatsAppFloat />}
+          whatsapp={<SupportChatWidget />}
         >
           {children}
         </ConditionalSiteChrome>

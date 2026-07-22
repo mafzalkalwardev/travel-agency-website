@@ -9,16 +9,14 @@ import {
   Clock,
   Globe,
   Mail,
-  MapPin,
-  MessageCircle,
   Phone,
   ShieldCheck,
 } from "lucide-react";
-import { FacebookIcon, InstagramIcon } from "@/components/shared/SocialIcons";
+import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "@/components/shared/SocialIcons";
 import { GsapReveal } from "@/components/motion/GsapReveal";
 import { GsapStagger, GsapStaggerItem } from "@/components/motion/GsapStagger";
 import { assetPath } from "@/lib/base-path";
-import { LOGO_PATH, OFFICE_DISPLAY_ORDER, OFFICES, SITE, SOCIAL, TRUST_BADGES } from "@/lib/constants";
+import { LOGO_PATH, OFFICES, SITE, SOCIAL, TRUST_BADGES } from "@/lib/constants";
 
 const exploreLinks = [
   ["Available Tickets", "/available-tickets/"],
@@ -38,7 +36,7 @@ const companyLinks = [
 const socialLinks = [
   { href: SOCIAL.facebook, label: "Facebook", Icon: FacebookIcon },
   { href: SOCIAL.instagram, label: "Instagram", Icon: InstagramIcon },
-  { href: SOCIAL.whatsapp, label: "WhatsApp", Icon: MessageCircle },
+  { href: SOCIAL.whatsapp, label: "WhatsApp", Icon: WhatsAppIcon },
 ] as const;
 
 const trustIcons = [BadgeCheck, ShieldCheck, Clock, Globe] as const;
@@ -50,7 +48,6 @@ export function Footer() {
     <footer className="relative bg-navy text-white">
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
 
-      {/* CTA band */}
       <div className="relative overflow-hidden border-b border-white/10 bg-navy-light">
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-royal/20 blur-3xl" />
         <GsapReveal
@@ -71,9 +68,9 @@ export function Footer() {
               href={SITE.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gold px-6 font-semibold text-navy transition hover:-translate-y-0.5 hover:bg-gold-light"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-110"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp us
+              <WhatsAppIcon className="h-4 w-4" /> WhatsApp us
             </a>
             <Link
               href="/inquiry/"
@@ -85,7 +82,6 @@ export function Footer() {
         </GsapReveal>
       </div>
 
-      {/* Main content */}
       <div className="container-wide py-14 lg:py-16">
         <GsapStagger className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.75fr_0.75fr_1.1fr] lg:gap-10">
           <GsapStaggerItem>
@@ -93,9 +89,9 @@ export function Footer() {
               <Image
                 src={assetPath(LOGO_PATH)}
                 alt={SITE.name}
-                width={60}
-                height={60}
-                className="h-14 w-14 rounded-2xl bg-white/5 object-contain ring-1 ring-white/10"
+                width={64}
+                height={64}
+                className="h-14 w-14 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,.35)]"
                 unoptimized
               />
               <div>
@@ -133,7 +129,11 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/10 hover:text-gold"
+                  className={
+                    label === "WhatsApp"
+                      ? "flex h-11 w-11 items-center justify-center rounded-xl border border-[#25D366]/35 bg-[#25D366]/15 text-[#25D366] transition hover:-translate-y-0.5 hover:bg-[#25D366]/25"
+                      : "flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/10 hover:text-gold"
+                  }
                 >
                   <Icon className="h-4 w-4" />
                 </a>
@@ -168,7 +168,7 @@ export function Footer() {
                 className="flex items-center gap-3 text-white/65 transition hover:text-white"
               >
                 <IconBubble>
-                  <MessageCircle className="h-4 w-4" />
+                  <WhatsAppIcon className="h-4 w-4" />
                 </IconBubble>
                 WhatsApp chat
               </a>
@@ -198,30 +198,8 @@ export function Footer() {
             </Link>
           </GsapStaggerItem>
         </GsapStagger>
-
-        {/* Offices */}
-        <GsapReveal y={20} delay={0.05} className="mt-14">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Our Offices</p>
-          <div className="mt-5 grid gap-px overflow-hidden rounded-2xl bg-white/10 sm:grid-cols-3">
-            {OFFICE_DISPLAY_ORDER.map((office) => (
-              <div key={office.label} className="group bg-navy p-6 transition hover:bg-navy-light sm:p-7">
-                <p className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <MapPin className="h-4 w-4 shrink-0 text-gold" /> {office.label}
-                </p>
-                <p className="mt-3 text-xs leading-5 text-white/45">{office.address}</p>
-                <a
-                  href={`tel:${office.phoneTel}`}
-                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-gold-light transition group-hover:text-gold"
-                >
-                  <Phone className="h-3.5 w-3.5" /> {office.phone}
-                </a>
-              </div>
-            ))}
-          </div>
-        </GsapReveal>
       </div>
 
-      {/* Legal bar */}
       <div className="border-t border-white/10">
         <div className="container-wide flex flex-col gap-4 py-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <p>
@@ -243,7 +221,6 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Site credit */}
       <div className="border-t border-white/5">
         <div className="container-wide flex justify-center py-4 text-[11px] text-white/35 sm:justify-end">
           <a

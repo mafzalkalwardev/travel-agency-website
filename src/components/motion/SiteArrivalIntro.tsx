@@ -89,13 +89,13 @@ export function SiteArrivalIntro() {
             animate={{ opacity: [0, 1, 1, 0], y: [-10, 0, 0, -8] }}
             transition={{ duration: 4.6, times: [0, 0.09, 0.9, 1] }}
           >
-            <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-white/15 bg-white/10 shadow-2xl backdrop-blur sm:h-12 sm:w-12">
+            <div className="relative h-11 w-11 overflow-hidden sm:h-12 sm:w-12">
               <Image
                 src={assetPath(LOGO_PATH)}
                 alt=""
                 fill
                 sizes="48px"
-                className="object-contain p-0.5"
+                className="object-contain"
                 loading="eager"
               />
             </div>

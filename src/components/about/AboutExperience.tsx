@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight, BadgeCheck, Building2, CheckCircle2, Clock3, Globe2, HeartHandshake,
-  LockKeyhole, MapPin, Plane, ShieldCheck, Sparkles, Star, Users,
+  MapPin, Plane, ShieldCheck, Sparkles, Star, Users,
 } from "lucide-react";
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
 import { airlines } from "@/data/airlines";
@@ -24,7 +24,6 @@ const services = ["Worldwide air ticketing", "Umrah packages", "Group fares", "C
 const portals = [
   { icon: Users, title: "Customer & Agent Portal", text: "Sign in to request bookings, save passenger details and follow booking progress.", href: "/account/login/", cta: "Open portal" },
   { icon: Plane, title: "Live Flight Inventory", text: "Search the complete synchronized group inventory with routes, dates, seats and fares.", href: "/available-tickets/", cta: "View live inventory" },
-  { icon: LockKeyhole, title: "Administration", text: "Secure access for authorized staff to manage inventory, bookings, reviews and operations.", href: "/admin/login/", cta: "Admin sign in" },
 ];
 
 const leadership = [
@@ -131,7 +130,7 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
       <section className="section-padding">
         <div className="container-wide">
           <motion.div {...reveal} className="text-center"><p className="text-sm font-bold uppercase tracking-[.22em] text-royal">Secure access</p><h2 className="mt-3 text-3xl font-bold text-navy sm:text-4xl">Your travel portals</h2></motion.div>
-          <div className="mt-10 grid gap-5 lg:grid-cols-3">{portals.map((portal) => <article key={portal.title} className="group rounded-2xl border border-border bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-gold/50 hover:shadow-xl"><portal.icon className="h-9 w-9 text-royal" /><h3 className="mt-5 text-xl font-bold text-navy">{portal.title}</h3><p className="mt-3 min-h-12 text-sm leading-6 text-muted-foreground">{portal.text}</p><Link href={portal.href} className="mt-6 inline-flex items-center gap-2 font-semibold text-royal">{portal.cta}<ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link></article>)}</div>
+          <div className="mt-10 grid gap-5 lg:grid-cols-2">{portals.map((portal) => <article key={portal.title} className="group rounded-2xl border border-border bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:border-gold/50 hover:shadow-xl"><portal.icon className="h-9 w-9 text-royal" /><h3 className="mt-5 text-xl font-bold text-navy">{portal.title}</h3><p className="mt-3 min-h-12 text-sm leading-6 text-muted-foreground">{portal.text}</p><Link href={portal.href} className="mt-6 inline-flex items-center gap-2 font-semibold text-royal">{portal.cta}<ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link></article>)}</div>
         </div>
       </section>
 

@@ -55,7 +55,7 @@ export function AccountAccessShell({ mode, children }: AccountAccessShellProps) 
 
           <div className="relative">
             <Link href="/" className="inline-flex items-center gap-3">
-              <Image src={assetPath(LOGO_PATH)} alt={SITE.name} width={58} height={58} className="h-14 w-14 rounded-2xl bg-white/10 object-contain ring-1 ring-white/15" unoptimized />
+              <Image src={assetPath(LOGO_PATH)} alt={SITE.name} width={58} height={58} className="h-14 w-14 object-contain drop-shadow" unoptimized />
               <div>
                 <p className="font-brand text-lg font-bold">Al Qibla Air Services</p>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-light">Travel Smart. Travel Safe.</p>
@@ -90,7 +90,7 @@ export function AccountAccessShell({ mode, children }: AccountAccessShellProps) 
         <div className="relative flex items-center p-6 sm:p-10 lg:p-12 xl:p-16">
           <div className="mx-auto w-full max-w-md">
             <Link href="/" className="mb-9 inline-flex items-center gap-3 lg:hidden">
-              <Image src={assetPath(LOGO_PATH)} alt={SITE.name} width={48} height={48} className="h-12 w-12 rounded-xl object-contain" unoptimized />
+              <Image src={assetPath(LOGO_PATH)} alt={SITE.name} width={48} height={48} className="h-12 w-12 object-contain" unoptimized />
               <span className="font-brand font-bold text-navy">Al Qibla Air Services</span>
             </Link>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#a66d2f]">Secure travel portal</p>

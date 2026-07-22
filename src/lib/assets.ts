@@ -2,6 +2,7 @@
 
 export const ASSETS = {
   logo: "/assets/logo/logo.png",
+  logoNav: "/assets/logo/logo-nav.png",
   heroVideo: "/assets/videos/hero-flight.mp4",
   heroPoster: "/assets/heroes/hero-poster.jpg",
 

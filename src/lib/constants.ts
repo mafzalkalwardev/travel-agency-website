@@ -92,6 +92,8 @@ export const NAV_LINKS = [
 ] as const;
 
 export const LOGO_PATH = "/assets/logo/logo.png";
+/** Compact transparent mark optimized for navbar / compact chrome */
+export const LOGO_NAV_PATH = "/assets/logo/logo-nav.png";
 export const LOGO_ALT_PATH = "/assets/logo/logo-alt.png";
 
 // Legacy alias

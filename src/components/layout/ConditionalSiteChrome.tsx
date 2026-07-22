@@ -31,7 +31,7 @@ export function ConditionalSiteChrome({
         whose hero section is meant to bleed up under the transparent
         header (see Header.tsx's `transparent` state).
       */}
-      <main className={cn("flex-1", !isHome && "pt-[76px]")}>{children}</main>
+      <main className={cn("flex-1", !isHome && "pt-[88px]")}>{children}</main>
       {footer}
       {whatsapp}
     </>
