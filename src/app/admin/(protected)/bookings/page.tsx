@@ -18,8 +18,10 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { formatHoldCountdown, isHoldExpiringSoon } from "@/lib/booking/hold-expiry";
 import { SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Booking, BookingStatus } from "@/types";
+import type { Booking, BookingStatus, CustomerProfile } from "@/types";
 import { toast } from "sonner";
+
+type AgentCompanyInfo = Pick<CustomerProfile, "id" | "company_name" | "city" | "full_name">;
 
 const statusColors: Record<BookingStatus, string> = {
   pending_payment: "bg-amber-100 text-amber-800",
@@ -60,6 +62,7 @@ function whatsappCustomerLink(phone: string, name: string, ref: string) {
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [agentById, setAgentById] = useState<Record<string, AgentCompanyInfo>>({});
   const [filter, setFilter] = useState<BookingStatus | "all">("all");
   const [loading, setLoading] = useState(true);
 
@@ -73,7 +76,26 @@ export default function AdminBookingsPage() {
     let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
     if (filter !== "all") query = query.eq("status", filter);
     const { data } = await query;
-    setBookings((data as Booking[]) || []);
+    const rows = (data as Booking[]) || [];
+    setBookings(rows);
+
+    const userIds = [
+      ...new Set(rows.map((b) => b.customer_user_id).filter((id): id is string => Boolean(id))),
+    ];
+    if (userIds.length) {
+      const { data: profiles } = await supabase
+        .from("customer_profiles")
+        .select("id, company_name, city, full_name")
+        .in("id", userIds);
+      const map: Record<string, AgentCompanyInfo> = {};
+      for (const profile of (profiles as AgentCompanyInfo[]) || []) {
+        map[profile.id] = profile;
+      }
+      setAgentById(map);
+    } else {
+      setAgentById({});
+    }
+
     setLoading(false);
   }, [filter]);
 
@@ -252,6 +274,9 @@ export default function AdminBookingsPage() {
         <div className="space-y-4">
           {bookings.map((b) => {
             const ref = b.id.slice(0, 8).toUpperCase();
+            const agent = b.customer_user_id ? agentById[b.customer_user_id] : undefined;
+            const companyLabel = agent?.company_name || null;
+            const cityLabel = agent?.city || null;
             const passengerText = formatPassengerDetails(
               b.passenger_details as Record<string, unknown> | undefined
             );
@@ -272,6 +297,12 @@ export default function AdminBookingsPage() {
                       <p className="mt-1 text-sm text-muted-foreground">
                         {b.customer_name} · Ref <strong className="text-navy">{ref}</strong>
                       </p>
+                      {(companyLabel || cityLabel) && (
+                        <p className="mt-0.5 text-sm font-medium text-navy">
+                          {companyLabel || "Agency"}
+                          {cityLabel ? ` · ${cityLabel}` : ""}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         {new Date(b.created_at).toLocaleString()}
                       </p>
@@ -303,6 +334,14 @@ export default function AdminBookingsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4 text-sm">
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <p>
+                      <span className="text-muted-foreground">Company</span>
+                      <br />
+                      <span className="font-medium text-navy">
+                        {companyLabel || "—"}
+                        {cityLabel ? ` · ${cityLabel}` : ""}
+                      </span>
+                    </p>
                     <p>
                       <span className="text-muted-foreground">Phone</span>
                       <br />

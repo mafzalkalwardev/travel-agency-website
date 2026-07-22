@@ -23,7 +23,7 @@ const MAIN_NAV = [
 ] as const;
 
 const MOBILE_EXTRA = [
-  { href: "/account/", label: "My Trips" },
+  { href: "/account/", label: "Agent portal" },
   { href: "/inquiry/", label: "Book / Inquiry" },
   { href: "/portal/", label: "Portal" },
 ] as const;
@@ -78,28 +78,28 @@ export function Header() {
               priority
             />
             <div className="hidden min-w-0 md:block">
-              <p className="font-brand text-[15px] font-bold leading-tight tracking-tight text-white lg:text-base">
+              <p className="font-brand text-base font-bold leading-tight tracking-tight text-white lg:text-[17px]">
                 Al Qibla Air Services
               </p>
-              <p className="text-[11px] font-medium tracking-[0.14em] text-gold-light/90 uppercase">
+              <p className="text-xs font-medium tracking-[0.12em] text-gold-light/90 uppercase">
                 Travel Smart · Travel Safe
               </p>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-0.5 lg:flex">
+          <nav className="hidden items-center gap-1 lg:flex">
             {MAIN_NAV.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative rounded-lg px-3 py-2 text-[13px] font-medium tracking-wide transition-colors",
-                  isActive(link.href) ? "text-gold" : "text-white/70 hover:text-white"
+                  "relative rounded-lg px-3.5 py-2 text-base font-semibold tracking-wide transition-colors lg:text-[17px]",
+                  isActive(link.href) ? "text-gold" : "text-white/85 hover:text-white"
                 )}
               >
                 {link.label}
                 {isActive(link.href) && (
-                  <span className="absolute inset-x-3 -bottom-0.5 h-px bg-gradient-to-r from-transparent via-gold to-transparent" />
+                  <span className="absolute inset-x-3 -bottom-0.5 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent" />
                 )}
               </Link>
             ))}
@@ -142,7 +142,7 @@ export function Header() {
                       href={link.href}
                       onClick={() => setOpen(false)}
                       className={cn(
-                        "rounded-xl px-4 py-3 text-base font-medium transition-colors hover:bg-white/10",
+                        "rounded-xl px-4 py-3 text-lg font-semibold transition-colors hover:bg-white/10",
                         isActive(link.href) ? "bg-white/5 text-gold" : "text-white/85"
                       )}
                     >

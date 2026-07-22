@@ -291,7 +291,7 @@ export function BookRequestSheet({
         ) : !signedIn ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-gold/30 bg-gold/10 p-5 text-sm leading-6 text-muted-foreground">
-              Create an account or sign in before booking. Your passenger details, requests, and status updates will be saved in My Trips.
+              Create an account or sign in before booking. Your passenger details, requests, and status updates will be saved in your agent portal.
             </div>
             <Link
               href={`/account/signup/?next=${encodeURIComponent(nextPath)}`}
@@ -312,7 +312,7 @@ export function BookRequestSheet({
               {getApprovalMessage(approvalStatus || "pending")}
             </div>
             <Link href="/account/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
-              Open My Trips
+              Open agent portal
             </Link>
             <a
               href={SITE.whatsapp}

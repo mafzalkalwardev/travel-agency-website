@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ const badgeStyles: Record<CustomerProfile["approval_status"], string> = {
 export default function AdminCustomersPage() {
   const [profiles, setProfiles] = useState<CustomerProfile[]>([]);
   const [filter, setFilter] = useState<CustomerProfile["approval_status"] | "all">("pending");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -37,6 +39,25 @@ export default function AdminCustomersPage() {
     load();
   }, [load]);
 
+  const visibleProfiles = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return profiles;
+    return profiles.filter((profile) => {
+      const haystack = [
+        profile.company_name,
+        profile.full_name,
+        profile.email,
+        profile.phone,
+        profile.city,
+        profile.address,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [profiles, search]);
+
   async function updateStatus(id: string, approvalStatus: CustomerProfile["approval_status"]) {
     const res = await fetch(`/api/admin/customers/${id}/`, {
       method: "PATCH",
@@ -51,8 +72,8 @@ export default function AdminCustomersPage() {
     const emailed = Boolean((json as { emailSent?: boolean }).emailSent);
     toast.success(
       emailed
-        ? `Customer ${approvalStatus} — email sent`
-        : `Customer ${approvalStatus}`
+        ? `Agent ${approvalStatus} — email sent`
+        : `Agent ${approvalStatus}`
     );
     load();
   }
@@ -61,7 +82,7 @@ export default function AdminCustomersPage() {
     return (
       <Card>
         <CardContent className="p-8 text-center text-muted-foreground">
-          Configure Supabase to manage customer approvals.
+          Configure Supabase to manage agent approvals.
         </CardContent>
       </Card>
     );
@@ -77,28 +98,38 @@ export default function AdminCustomersPage() {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {(["pending", "approved", "rejected", "all"] as const).map((item) => (
-          <Button
-            key={item}
-            size="sm"
-            variant={filter === item ? "navy" : "outline"}
-            onClick={() => setFilter(item)}
-          >
-            {item}
-          </Button>
-        ))}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {(["pending", "approved", "rejected", "all"] as const).map((item) => (
+            <Button
+              key={item}
+              size="sm"
+              variant={filter === item ? "navy" : "outline"}
+              onClick={() => setFilter(item)}
+            >
+              {item}
+            </Button>
+          ))}
+        </div>
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search company, email, phone, city…"
+          className="max-w-sm"
+        />
       </div>
 
       {loading ? (
         <p className="text-muted-foreground">Loading...</p>
-      ) : profiles.length === 0 ? (
+      ) : visibleProfiles.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">No agent profiles found.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            {profiles.length === 0 ? "No agent profiles found." : "No agents match your search."}
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {profiles.map((profile) => (
+          {visibleProfiles.map((profile) => (
             <Card key={profile.id}>
               <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
                 <div>

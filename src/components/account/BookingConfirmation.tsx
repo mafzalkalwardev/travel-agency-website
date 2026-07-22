@@ -115,7 +115,7 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
             )}
           </div>
           <Link href="/account/" className={cn(buttonVariants({ variant: "outline" }), "shrink-0")}>
-            Back to My Trips
+            Back to agent portal
           </Link>
         </div>
 

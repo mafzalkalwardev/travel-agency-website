@@ -1,22 +1,22 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Plane, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, BadgeCheck, Briefcase, Plane, ShieldCheck, Sparkles } from "lucide-react";
 import { AnimatedFlightPath } from "@/components/motion/AnimatedFlightPath";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
   title: "Portal Access",
-  description: "Secure customer and travel agent access for Al Qibla Air Services.",
+  description: "Secure sub-agent access and live group inventory for Al Qibla Air Services.",
   path: "/portal/",
 });
 
 const entries = [
   {
-    icon: Users,
-    eyebrow: "Customers & agents",
-    title: "Travel Account",
-    text: "Manage booking requests, passenger details and trip progress through one secure profile.",
+    icon: Briefcase,
+    eyebrow: "Sub-agents",
+    title: "Sub-agent account",
+    text: "Sign in to manage your company profile, approval status, and booking requests in one workspace.",
     href: "/account/login/",
-    action: "Enter travel portal",
+    action: "Enter agent portal",
     accent: "bg-[#dcebe5] text-[#31715f]",
   },
   {
@@ -43,13 +43,13 @@ export default function PortalPage() {
           <AnimatedFlightPath variant="section" className="bottom-0 top-auto h-28 opacity-70" />
           <div className="relative max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-gold/10 px-4 py-2 text-xs font-bold uppercase tracking-[.2em] text-gold-light">
-              <Sparkles className="h-4 w-4" /> Secure digital access
+              <Sparkles className="h-4 w-4" /> Secure B2B access
             </span>
             <h1 className="mt-6 font-heading text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Your travel workspace, ready when you are.
+              Your agency workspace, ready when you are.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-white/65">
-              Sign in to manage bookings, or browse live group inventory — built for customers and travel agents.
+              Sign in to manage company bookings, or browse live group inventory built for travel agents.
             </p>
           </div>
         </section>
@@ -79,10 +79,10 @@ export default function PortalPage() {
 
         <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-[#d8c7ad] bg-[#eee1ce]/70 px-6 py-5 text-center sm:flex-row sm:text-left">
           <p className="flex items-center gap-2 font-semibold text-navy">
-            <ShieldCheck className="h-5 w-5 text-[#8c6636]" /> New to Al Qibla? Create a customer or sub-agent profile.
+            <ShieldCheck className="h-5 w-5 text-[#8c6636]" /> New agency? Register with your full company details.
           </p>
           <Link href="/account/signup/" className="inline-flex items-center gap-2 font-bold text-[#8c5d28]">
-            Create account <BadgeCheck className="h-4 w-4" />
+            Become a sub-agent <BadgeCheck className="h-4 w-4" />
           </Link>
         </div>
       </div>
