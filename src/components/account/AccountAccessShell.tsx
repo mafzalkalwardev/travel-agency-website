@@ -19,10 +19,11 @@ const copy = {
     formText: "Access booking requests, passenger details and live status updates.",
   },
   signup: {
-    eyebrow: "Partner & customer access",
-    title: "Start a smarter way to manage travel.",
-    formTitle: "Create your Al Qibla account",
-    formText: "Set up your secure profile for faster quotations, bookings and follow-up.",
+    eyebrow: "B2B partner access",
+    title: "Register your agency for group inventory.",
+    formTitle: "Become an Al Qibla sub-agent",
+    formText:
+      "Share your full company details — the same information Travel Line collects — so our team can verify and unlock booking access.",
   },
   forgot: {
     eyebrow: "Account recovery",

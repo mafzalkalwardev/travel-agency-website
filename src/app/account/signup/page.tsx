@@ -6,8 +6,8 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
-  title: "Create Customer or Sub-Agent Account",
-  description: "Create an Al Qibla customer or sub-agent profile for administrator-approved booking access.",
+  title: "Create Sub-Agent Account",
+  description: "Register your travel agency with full company details for administrator-approved B2B booking access.",
   path: "/account/signup/",
 });
 

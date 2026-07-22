@@ -1,6 +1,7 @@
 import type { NormalizedTicket } from "@/lib/tickets/providers/types";
 import type { TravelLineRawFlight, TravelLineRawPackage, TravelLineRawPromo } from "./types";
 import type { TicketStatus } from "@/types";
+import { resolveAirlineCode, resolveAirlineName } from "@/data/airlines";
 import { resolveAirport, isOutboundGroupTicket } from "@/lib/airport-codes";
 import { FALLBACK_IMAGES, normalizeImageUrl } from "@/lib/image-utils";
 
@@ -70,21 +71,8 @@ function slugify(text: string): string {
     .slice(0, 80);
 }
 
-function airlineToCode(airline?: string, flightNo?: string): string {
-  if (flightNo) {
-    const m = flightNo.match(/^([A-Z0-9]{2})/i);
-    if (m) return m[1].toUpperCase();
-  }
-  const map: Record<string, string> = {
-    "fly jinnah": "9P",
-    pia: "PK",
-    saudia: "SV",
-    emirates: "EK",
-    airblue: "PA",
-    airsial: "PF",
-    "qatar airways": "QR",
-  };
-  return map[(airline || "").toLowerCase()] || "XX";
+function airlineToCode(airline?: string, flightNo?: string, code?: string): string {
+  return resolveAirlineCode({ code, name: airline, flightNumber: flightNo });
 }
 
 export function mapFlightToTicket(
@@ -100,11 +88,17 @@ export function mapFlightToTicket(
   const toCity = String(raw.toCity ?? raw.destinationCity ?? toResolved.city);
   const seats = Number(raw.seatsLeft ?? raw.availableSeats ?? raw.seats ?? 0);
   const price = applyMarkup(Number(raw.price ?? raw.fare ?? 0), markupPercent);
+  const airlineCode = airlineToCode(
+    String(raw.airlineName ?? raw.airline ?? ""),
+    String(raw.flightNumber ?? raw.flightNo ?? ""),
+    String(raw.airlineCode ?? "")
+  );
+  const airline = resolveAirlineName(airlineCode, String(raw.airlineName ?? raw.airline ?? ""));
 
   return {
     externalId: id || `${fromCode}-${toCode}-${raw.departureDate ?? raw.date}`,
-    airline: String(raw.airlineName ?? raw.airline ?? "Unknown"),
-    airlineCode: String(raw.airlineCode ?? (fromCode.slice(0, 2) || "XX")),
+    airline,
+    airlineCode,
     flightNumber: String(raw.flightNumber ?? raw.flightNo ?? ""),
     from: fromCode,
     fromCity,
@@ -308,18 +302,28 @@ export function ticketsFromGroupFlights(
     const arr = segmentAirport(segments[segments.length - 1].arrival);
 
     const seats = Number(group.availableSeats ?? 0);
-    const airline = first.airline?.carrierName || "Unknown";
     const flightNumber = (first.flightNumber || "").replace(/\s+/g, " ").trim();
+    const airlineCode = airlineToCode(
+      first.airline?.carrierName,
+      flightNumber,
+      first.airline?.carrierCode
+    );
+    const airline = resolveAirlineName(airlineCode, first.airline?.carrierName);
     const price = applyMarkup(Number(group.fares?.salePrice ?? 0), markupPercent);
     const baggage = group.fares?.baggage?.maxWeight;
     const meal = first.meal || (segments.some((s) => s.meal === "Yes") ? "Yes" : undefined);
     const detailedSegments = segments.map((segment) => {
       const segmentDep = segmentAirport(segment.departure);
       const segmentArr = segmentAirport(segment.arrival);
+      const segmentCode = airlineToCode(
+        segment.airline?.carrierName,
+        segment.flightNumber,
+        segment.airline?.carrierCode
+      );
       return {
         flightNumber: (segment.flightNumber || "").replace(/\s+/g, " ").trim(),
-        airline: segment.airline?.carrierName || airline,
-        airlineCode: segment.airline?.carrierCode || airlineToCode(segment.airline?.carrierName, segment.flightNumber),
+        airline: resolveAirlineName(segmentCode, segment.airline?.carrierName || airline),
+        airlineCode: segmentCode,
         departureAirport: segment.departure?.airport?.name || segmentDep.code,
         departureCode: segmentDep.code,
         departureCity: segmentDep.city,
@@ -343,7 +347,7 @@ export function ticketsFromGroupFlights(
         {
           id: group._id,
           airlineName: airline,
-          airlineCode: first.airline?.carrierCode || airlineToCode(airline, flightNumber),
+          airlineCode,
           flightNumber,
           from: dep.code,
           fromCity: dep.city,

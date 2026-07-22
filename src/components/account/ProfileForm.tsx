@@ -16,8 +16,10 @@ interface ProfileFormProps {
 export function ProfileForm({ profile }: ProfileFormProps) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
+    company_name: profile.company_name || "",
     full_name: profile.full_name || "",
     phone: profile.phone || "",
+    city: profile.city || "",
     nationality: profile.nationality || "",
     passport_number: profile.passport_number || "",
     date_of_birth: profile.date_of_birth || "",
@@ -46,13 +48,25 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
   return (
     <form onSubmit={save} className="grid gap-4 md:grid-cols-2">
+      <div className="space-y-2 md:col-span-2">
+        <Label htmlFor="profile-company">Company / agency name</Label>
+        <Input
+          id="profile-company"
+          value={form.company_name}
+          onChange={(event) => setForm({ ...form, company_name: event.target.value })}
+        />
+      </div>
       <div className="space-y-2">
-        <Label htmlFor="profile-name">Full name</Label>
+        <Label htmlFor="profile-name">Contact person full name</Label>
         <Input id="profile-name" value={form.full_name} onChange={(event) => setForm({ ...form, full_name: event.target.value })} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="profile-phone">Phone / WhatsApp</Label>
         <Input id="profile-phone" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="profile-city">City</Label>
+        <Input id="profile-city" value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} />
       </div>
       <div className="space-y-2">
         <Label htmlFor="profile-nationality">Nationality</Label>
@@ -79,7 +93,7 @@ export function ProfileForm({ profile }: ProfileFormProps) {
         <Input id="profile-emergency-phone" value={form.emergency_contact_phone} onChange={(event) => setForm({ ...form, emergency_contact_phone: event.target.value })} />
       </div>
       <div className="space-y-2 md:col-span-2">
-        <Label htmlFor="profile-address">Address</Label>
+        <Label htmlFor="profile-address">Company address</Label>
         <Textarea id="profile-address" value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
       </div>
       <div className="md:col-span-2">

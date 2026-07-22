@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Briefcase, CalendarDays, CheckCircle2, Clock3, Plane, ShieldCheck, Users } from "lucide-react";
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
+import { resolveAirlineName } from "@/data/airlines";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -287,10 +288,11 @@ export function BookRequestSheet({
 
 function TicketBookingDetails({ ticket }: { ticket: Ticket }) {
   const segments = ticket.segments?.length ? ticket.segments : [];
+  const airlineName = resolveAirlineName(ticket.airlineCode, ticket.airline);
   return (
     <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
       <div className="flex flex-col gap-5 bg-gradient-to-r from-navy to-navy-light p-5 text-white sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4"><AirlineLogo code={ticket.airlineCode} name={ticket.airline} size="md" /><div><p className="text-xs font-bold uppercase tracking-[.16em] text-gold-light">Operated by</p><h3 className="mt-1 text-xl font-bold">{ticket.airline}</h3><p className="text-sm text-white/60">{ticket.flightNumber} · {ticket.sector}</p></div></div>
+        <div className="flex items-center gap-4"><AirlineLogo code={ticket.airlineCode} name={airlineName} size="md" /><div><p className="text-xs font-bold uppercase tracking-[.16em] text-gold-light">Operated by</p><h3 className="mt-1 text-xl font-bold">{airlineName}</h3><p className="text-sm text-white/60">{ticket.flightNumber} · {ticket.sector}</p></div></div>
         <div className="sm:text-right"><p className="text-xs uppercase tracking-[.14em] text-white/50">Fare per traveler</p><p className="mt-1 text-2xl font-bold text-gold">{ticket.currency} {ticket.price.toLocaleString("en-PK")}</p><p className="text-xs text-white/50">Live fare · subject to supplier confirmation</p></div>
       </div>
       <div className="grid gap-5 p-5 lg:grid-cols-[1fr_230px]">

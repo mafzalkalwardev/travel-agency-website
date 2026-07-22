@@ -166,6 +166,9 @@ export interface CustomerProfile {
   email: string;
   full_name?: string | null;
   phone?: string | null;
+  company_name?: string | null;
+  city?: string | null;
+  role?: "customer" | "agent";
   approval_status: "pending" | "approved" | "rejected";
   approved_at?: string | null;
   approved_by?: string | null;

@@ -70,9 +70,10 @@ export default function AdminCustomersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-navy">Customer Approvals</h1>
+        <h1 className="font-heading text-2xl font-bold text-navy">Agent Approvals</h1>
         <p className="text-sm text-muted-foreground">
-          New customers can sign in immediately, but bookings stay blocked until an admin approves the profile.
+          New agencies can sign in after email verification, but bookings stay blocked until an admin
+          approves the company profile.
         </p>
       </div>
 
@@ -93,7 +94,7 @@ export default function AdminCustomersPage() {
         <p className="text-muted-foreground">Loading...</p>
       ) : profiles.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">No customer profiles found.</CardContent>
+          <CardContent className="p-8 text-center text-muted-foreground">No agent profiles found.</CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
@@ -102,9 +103,10 @@ export default function AdminCustomersPage() {
               <CardHeader className="flex flex-row items-start justify-between gap-4 pb-2">
                 <div>
                   <CardTitle className="text-base font-semibold text-navy">
-                    {profile.full_name || "Unnamed Customer"}
+                    {profile.company_name || profile.full_name || "Unnamed Agency"}
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
+                    {profile.full_name ? `${profile.full_name} · ` : ""}
                     {profile.email} · {new Date(profile.created_at).toLocaleString()}
                   </p>
                 </div>
@@ -113,12 +115,19 @@ export default function AdminCustomersPage() {
                 </Badge>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <p><strong>Company:</strong> {profile.company_name || "-"}</p>
+                  <p><strong>Contact:</strong> {profile.full_name || "-"}</p>
                   <p><strong>Phone:</strong> {profile.phone || "-"}</p>
-                  <p><strong>Nationality:</strong> {profile.nationality || "-"}</p>
-                  <p><strong>Passport/CNIC:</strong> {profile.passport_number || "-"}</p>
+                  <p><strong>City:</strong> {profile.city || "-"}</p>
+                  <p><strong>Role:</strong> {profile.role || "customer"}</p>
                   <p><strong>Preferred Airport:</strong> {profile.preferred_airport || "-"}</p>
                 </div>
+                {profile.address && (
+                  <p>
+                    <strong>Address:</strong> {profile.address}
+                  </p>
+                )}
                 {profile.approval_notes && (
                   <p className="text-muted-foreground">
                     <strong>Notes:</strong> {profile.approval_notes}

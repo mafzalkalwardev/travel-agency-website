@@ -9,9 +9,12 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 export const dynamic = "force-dynamic";
 
 const signupSchema = z.object({
+  companyName: z.string().trim().min(2).max(160),
   fullName: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(7).max(40),
   email: z.string().trim().email().max(200),
+  city: z.string().trim().min(2).max(80),
+  address: z.string().trim().min(8).max(400),
   password: z.string().min(8).max(200),
   nextPath: z.string().trim().max(300).optional(),
 });
@@ -48,10 +51,16 @@ export async function POST(request: Request) {
 
   const parsed = signupSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Please check your name, phone, email and password." }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          "Please provide company name, contact person, phone, email, city, full address and password.",
+      },
+      { status: 400 }
+    );
   }
 
-  const { fullName, phone, email, password, nextPath } = parsed.data;
+  const { companyName, fullName, phone, email, city, address, password, nextPath } = parsed.data;
   const redirectTo = `${siteOrigin()}/account/login/?next=${encodeURIComponent(safeNextPath(nextPath))}`;
   const admin = createAdminClient();
 
@@ -63,6 +72,10 @@ export async function POST(request: Request) {
       data: {
         full_name: fullName,
         phone,
+        company_name: companyName,
+        city,
+        address,
+        role: "agent",
       },
       redirectTo,
     },
@@ -95,6 +108,10 @@ export async function POST(request: Request) {
       email,
       full_name: fullName,
       phone,
+      company_name: companyName,
+      city,
+      address,
+      role: "agent",
       approval_status: "pending",
     });
   }
@@ -103,7 +120,7 @@ export async function POST(request: Request) {
     to: email,
     from: getAuthFromEmail(),
     replyTo: SITE.email,
-    subject: `Confirm your ${SITE.name} account`,
+    subject: `Confirm your ${SITE.name} agent account`,
     html: accountVerificationCustomerHtml({ fullName, confirmUrl }),
   });
 
@@ -121,7 +138,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     message:
-      "Account created. Check your email for a verification message from Al Qibla Air Services, then sign in. An admin must approve your account before bookings.",
+      "Agent application submitted. Check your email for a verification message from Al Qibla Air Services, then sign in. An admin must approve your company before bookings.",
     from: getAuthFromEmail(),
   });
 }

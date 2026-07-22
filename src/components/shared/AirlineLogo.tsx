@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Plane } from "lucide-react";
+import { airlineLogoPath, resolveAirlineCode, resolveAirlineName } from "@/data/airlines";
 import { assetPath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 
 interface AirlineLogoProps {
   code: string;
   name: string;
+  /** Ignored for known IATA codes — always use local curated PNGs. */
   logo?: string;
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -22,8 +24,11 @@ const sizes = {
 
 export function AirlineLogo({ code, name, logo, size = "md", className }: AirlineLogoProps) {
   const [failed, setFailed] = useState(false);
-  const lower = code.toLowerCase();
-  const logoPath = logo || `/assets/airlines/${lower}.png`;
+  const resolvedCode = resolveAirlineCode({ code, name });
+  const displayName = resolveAirlineName(resolvedCode, name);
+  // Prefer local curated assets so stale CDN marks (Primera Air, etc.) never surface.
+  const logoPath =
+    resolvedCode !== "XX" ? airlineLogoPath(resolvedCode) : logo || airlineLogoPath(code);
   const s = sizes[size];
 
   return (
@@ -33,12 +38,12 @@ export function AirlineLogo({ code, name, logo, size = "md", className }: Airlin
         s.box,
         className
       )}
-      title={name}
+      title={displayName}
     >
       {!failed ? (
         <Image
           src={assetPath(logoPath)}
-          alt={`${name} logo`}
+          alt={`${displayName} logo`}
           width={s.img}
           height={s.img}
           className={cn("h-full w-full object-contain", s.pad)}
@@ -48,7 +53,7 @@ export function AirlineLogo({ code, name, logo, size = "md", className }: Airlin
       ) : (
         <div className="flex flex-col items-center justify-center bg-gradient-to-br from-navy/5 to-royal/10 p-1">
           <Plane className="h-4 w-4 text-royal/50" />
-          <span className="text-[10px] font-bold text-navy/80">{code}</span>
+          <span className="text-[10px] font-bold text-navy/80">{resolvedCode}</span>
         </div>
       )}
     </div>

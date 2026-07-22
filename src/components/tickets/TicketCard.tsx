@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
 import { BookRequestSheet } from "@/components/booking/BookRequestSheet";
+import { resolveAirlineName } from "@/data/airlines";
 import { formatTicketDate } from "@/lib/ticket-filters";
 import { cn } from "@/lib/utils";
 import type { Ticket } from "@/types";
@@ -52,6 +53,7 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
   const soldOut = isSoldOut || isCancelled;
   const productTitle = `${ticket.airline} ${ticket.flightNumber} — ${ticket.fromCity} → ${ticket.toCity} (${ticket.date})`;
   const dateLabel = formatTicketDate(ticket.date);
+  const airlineName = resolveAirlineName(ticket.airlineCode, ticket.airline);
   const stops = stopsLabel(ticket);
 
   return (
@@ -77,14 +79,14 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
           {/* Airline + route */}
           <div className={cn("flex items-start justify-between gap-4", !compact && "lg:w-56 lg:justify-start")}>
             <div className="flex items-start gap-3">
-              <AirlineLogo code={ticket.airlineCode} name={ticket.airline} size={compact ? "sm" : "md"} />
+              <AirlineLogo code={ticket.airlineCode} name={airlineName} size={compact ? "sm" : "md"} />
               <div>
                 <h3 className="font-semibold text-gray-900">
                   {ticket.fromCity} to {ticket.toCity}
                 </h3>
                 <p className="text-xs text-gray-500">{ticket.sector}</p>
                 <p className="text-xs text-gray-500">
-                  {ticket.airline} · {ticket.flightNumber}
+                  {airlineName} · {ticket.flightNumber}
                 </p>
               </div>
             </div>
