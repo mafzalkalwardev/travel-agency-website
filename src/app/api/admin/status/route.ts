@@ -4,6 +4,7 @@ import {
   isResendSandboxMode,
   getBookingAdminEmail,
   getBookingFromEmail,
+  getAuthFromEmail,
 } from "@/lib/email/resend";
 import { isTravelLineConfigured, isTravelLineSyncEnabled } from "@/lib/travelline/env";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -66,6 +67,7 @@ export async function GET() {
     travellineSync: isTravelLineSyncEnabled(),
     email: isEmailConfigured(),
     emailFrom: isEmailConfigured() ? getBookingFromEmail() : null,
+    authFrom: isEmailConfigured() ? getAuthFromEmail() : null,
     emailAdmin: getBookingAdminEmail(),
     emailSandbox: isEmailConfigured() && isResendSandboxMode(),
     lastSync,

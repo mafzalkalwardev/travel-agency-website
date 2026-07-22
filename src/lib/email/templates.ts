@@ -116,3 +116,27 @@ export function stuckBookingReminderAdminHtml(bookings: BookingEmailData[]) {
     <p><a href="${SITE.url}/admin/bookings/">Review in admin panel</a></p>`
   );
 }
+
+export function accountVerificationCustomerHtml(params: {
+  fullName: string;
+  confirmUrl: string;
+}) {
+  const name = params.fullName.trim() || "there";
+  return layout(
+    "Confirm your Al Qibla account",
+    `<h2 style="color:#1a2744">Confirm your email</h2>
+    <p>Hello ${name},</p>
+    <p>Welcome to <strong>${SITE.name}</strong>. Please confirm your email to finish creating your customer / sub-agent account.</p>
+    <p style="margin:28px 0">
+      <a href="${params.confirmUrl}" style="display:inline-block;background:#071b3a;color:#ffffff;padding:12px 22px;text-decoration:none;border-radius:8px;font-weight:bold">
+        Verify email address
+      </a>
+    </p>
+    <p style="font-size:13px;color:#666">If the button does not work, copy and paste this link into your browser:<br>
+      <a href="${params.confirmUrl}" style="color:#0b5da8;word-break:break-all">${params.confirmUrl}</a>
+    </p>
+    <p style="font-size:13px;color:#666">Questions? Reply to this email or WhatsApp us at ${SITE.whatsappNumber}.</p>
+    <p style="font-size:12px;color:#888">This message was sent by ${SITE.name} · ${SITE.email}</p>`
+  );
+}
+

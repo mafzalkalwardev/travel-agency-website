@@ -27,7 +27,8 @@ function loadEnv() {
 
 const env = loadEnv();
 const resendKey = env.RESEND_API_KEY;
-const fromEmail = env.BOOKING_FROM_EMAIL || "onboarding@resend.dev";
+const fromEmail = env.BOOKING_FROM_EMAIL || "noreply@alqiblaairservices.com";
+const authFromEmail = env.AUTH_FROM_EMAIL || fromEmail;
 const adminEmail = env.BOOKING_ADMIN_EMAIL || env.ADMIN_EMAIL || "salesalqibla@gmail.com";
 const sandboxMode = env.RESEND_SANDBOX_MODE ?? "true";
 
@@ -35,11 +36,13 @@ if (!resendKey) {
   console.error(
     "RESEND_API_KEY not found in .env or .env.local.\n" +
       "1. Create a key at https://resend.com/api-keys\n" +
-      "2. Verify your sender domain in Resend\n" +
+      "2. Verify alqiblaairservices.com in Resend (DNS)\n" +
       "3. Add to .env:\n" +
       "   RESEND_API_KEY=re_...\n" +
+      `   AUTH_FROM_EMAIL=${authFromEmail}\n` +
       `   BOOKING_FROM_EMAIL=${fromEmail}\n` +
       `   BOOKING_ADMIN_EMAIL=${adminEmail}\n` +
+      "   RESEND_SANDBOX_MODE=false\n" +
       "4. Re-run: node scripts/setup-resend-env.js"
   );
   process.exit(1);
@@ -47,6 +50,7 @@ if (!resendKey) {
 
 const vars = {
   RESEND_API_KEY: resendKey,
+  AUTH_FROM_EMAIL: authFromEmail,
   BOOKING_FROM_EMAIL: fromEmail,
   BOOKING_ADMIN_EMAIL: adminEmail,
   RESEND_SANDBOX_MODE: sandboxMode,

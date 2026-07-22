@@ -1,13 +1,31 @@
 import { Resend } from "resend";
+import { SITE } from "@/lib/constants";
 
 let resendClient: Resend | null = null;
 
 export function isEmailConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.BOOKING_FROM_EMAIL);
+  return Boolean(process.env.RESEND_API_KEY && (process.env.BOOKING_FROM_EMAIL || process.env.AUTH_FROM_EMAIL));
 }
 
+/** Booking / transactional From address (with display name). */
 export function getBookingFromEmail(): string {
-  return process.env.BOOKING_FROM_EMAIL || "bookings@alqiblaairservices.com";
+  const addr =
+    process.env.BOOKING_FROM_EMAIL ||
+    process.env.AUTH_FROM_EMAIL ||
+    "noreply@alqiblaairservices.com";
+  return withDisplayName(addr);
+}
+
+/**
+ * Auth verification / account emails — prefer noreply so customers see
+ * Al Qibla branding instead of Supabase's default mailer.
+ */
+export function getAuthFromEmail(): string {
+  const addr =
+    process.env.AUTH_FROM_EMAIL ||
+    process.env.BOOKING_FROM_EMAIL ||
+    "noreply@alqiblaairservices.com";
+  return withDisplayName(addr);
 }
 
 export function getBookingAdminEmail(): string {
@@ -18,11 +36,19 @@ export function getBookingAdminEmail(): string {
   );
 }
 
+function withDisplayName(address: string): string {
+  const trimmed = address.trim();
+  if (!trimmed) return `Al Qibla Air Services <noreply@alqiblaairservices.com>`;
+  if (trimmed.includes("<") && trimmed.includes(">")) return trimmed;
+  return `${SITE.name} <${trimmed}>`;
+}
+
 /** True when using Resend test sender or explicit sandbox flag (Vercel pre-domain testing). */
 export function isResendSandboxMode(): boolean {
   if (process.env.RESEND_SANDBOX_MODE === "true") return true;
   if (process.env.RESEND_SANDBOX_MODE === "false") return false;
-  return getBookingFromEmail().endsWith("@resend.dev");
+  const raw = (process.env.AUTH_FROM_EMAIL || process.env.BOOKING_FROM_EMAIL || "").toLowerCase();
+  return raw.includes("@resend.dev");
 }
 
 function applySandboxRouting(to: string, subject: string, html: string) {
@@ -50,6 +76,8 @@ export async function sendEmail(params: {
   to: string;
   subject: string;
   html: string;
+  from?: string;
+  replyTo?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const client = getResendClient();
   if (!client) return { ok: false, error: "Email not configured" };
@@ -57,10 +85,11 @@ export async function sendEmail(params: {
   const routed = applySandboxRouting(params.to, params.subject, params.html);
 
   const { error } = await client.emails.send({
-    from: getBookingFromEmail(),
+    from: params.from || getBookingFromEmail(),
     to: routed.to,
     subject: routed.subject,
     html: routed.html,
+    replyTo: params.replyTo || SITE.email,
   });
 
   if (error) return { ok: false, error: error.message };

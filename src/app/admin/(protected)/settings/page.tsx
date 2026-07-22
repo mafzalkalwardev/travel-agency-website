@@ -15,6 +15,7 @@ interface AdminStatus {
   travellineSync: boolean;
   email: boolean;
   emailFrom: string | null;
+  authFrom?: string | null;
   emailAdmin: string;
   emailSandbox?: boolean;
   lastSync: { completed_at: string | null; status: string | null; message: string | null } | null;
@@ -135,13 +136,13 @@ export default function AdminSettingsPage() {
             />
             <StatusRow
               ok={status.email}
-              label="Booking emails (Resend)"
+              label="Company email (Resend)"
               detail={
                 status.email
                   ? status.emailSandbox
-                    ? `Sandbox: ${status.emailFrom} → ${status.emailAdmin} (customer mail routed to admin)`
-                    : `From ${status.emailFrom} → ${status.emailAdmin}`
-                  : "Set RESEND_API_KEY and BOOKING_FROM_EMAIL in Vercel env"
+                    ? `Sandbox: auth ${status.authFrom || status.emailFrom} · booking ${status.emailFrom} → ${status.emailAdmin}`
+                    : `Auth from ${status.authFrom || status.emailFrom} · Booking from ${status.emailFrom}`
+                  : "Set RESEND_API_KEY and AUTH_FROM_EMAIL=noreply@alqiblaairservices.com (verified domain in Resend)"
               }
             />
             <Card>
