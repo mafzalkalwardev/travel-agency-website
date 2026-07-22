@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Check, Loader2, Mail, MessageCircle } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, Loader2, Mail, MessageCircle, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +17,14 @@ import {
   formatDuration,
   validatePassengerDetails,
 } from "@/lib/flight-booking";
-import { SITE } from "@/lib/constants";
+import { PAYMENT } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { BookingAddOn, PassengerDetails, Seat } from "@/types/flight-booking";
 
-const steps = ["Review", "Passenger", "Seat", "Add-ons", "Submit", "Confirm"];
+const steps = ["Review", "Passenger", "Seat", "Add-ons", "Book", "Confirm"];
+const WHATSAPP_REDIRECT_SECONDS = 8;
 
 interface BookingFlowClientProps {
   flightId?: string;
@@ -37,7 +38,11 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
   const [selectedAddOns, setSelectedAddOns] = useState<BookingAddOn[]>([]);
   const [processing, setProcessing] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
+  const [supplierHeld, setSupplierHeld] = useState(false);
+  const [countdown, setCountdown] = useState(WHATSAPP_REDIRECT_SECONDS);
   const [submitError, setSubmitError] = useState("");
+  const redirectTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof PassengerDetails, string>>>({});
   const [passenger, setPassenger] = useState<PassengerDetails>({
     firstName: "",
@@ -53,6 +58,33 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
     () => flight.price + (selectedSeat?.price || 0) + selectedAddOns.reduce((sum, addOn) => sum + addOn.price, 0),
     [flight.price, selectedAddOns, selectedSeat]
   );
+
+  function clearRedirectTimer() {
+    if (redirectTimerRef.current) {
+      clearInterval(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+  }
+
+  function goToWhatsApp(url: string) {
+    clearRedirectTimer();
+    window.location.href = url;
+  }
+
+  function startWhatsAppCountdown(url: string) {
+    clearRedirectTimer();
+    setCountdown(WHATSAPP_REDIRECT_SECONDS);
+    redirectTimerRef.current = setInterval(() => {
+      setCountdown((seconds) => {
+        if (seconds <= 1) {
+          clearRedirectTimer();
+          window.location.href = url;
+          return 0;
+        }
+        return seconds - 1;
+      });
+    }, 1000);
+  }
 
   useEffect(() => {
     let active = true;
@@ -77,6 +109,7 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
 
     return () => {
       active = false;
+      clearRedirectTimer();
     };
   }, []);
 
@@ -131,7 +164,10 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
           source_page: "/flight-booking/book/",
           passenger_details: {
             names: `${passenger.firstName} ${passenger.lastName}`.trim(),
+            passportNo: passenger.documentNumber,
             passport: passenger.documentNumber,
+            dob: passenger.dateOfBirth,
+            nationality: "PK",
             notes: [
               `Gender: ${passenger.gender}`,
               `Date of birth: ${passenger.dateOfBirth}`,
@@ -171,8 +207,11 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
           `Add-ons: ${addOnSummary}`,
         ].join("; "),
       });
-      window.location.href = whatsappLink(waMsg);
-      return;
+      const url = whatsappLink(waMsg);
+      setWhatsappUrl(url);
+      setSupplierHeld(Boolean(json.supplierHeld));
+      setStep(5);
+      startWhatsAppCountdown(url);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Could not submit booking request");
     } finally {
@@ -322,10 +361,10 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
 
                 {step === 4 && (
                   <div>
-                    <h2 className="font-heading text-2xl font-bold text-navy">Submit request</h2>
+                    <h2 className="font-heading text-2xl font-bold text-navy">Confirm booking</h2>
                     <div className="mt-5 rounded-2xl border border-slate-200 p-5">
                       <div className="mb-4 flex items-center gap-2 text-navy">
-                        <Mail className="h-5 w-5" /> Review before sending to Al Qibla
+                        <Mail className="h-5 w-5" /> Review before booking
                       </div>
                       <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-2">
                         <p><strong className="text-slate-900">Passenger:</strong> {passenger.firstName} {passenger.lastName}</p>
@@ -334,7 +373,7 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
                         <p><strong className="text-slate-900">Add-ons:</strong> {selectedAddOns.length || "None"}</p>
                       </div>
                       <p className="mt-4 text-sm text-slate-500">
-                        No card is charged online. The request is saved for the team to confirm availability and payment on WhatsApp.
+                        After you book, we will show the next payment steps and open WhatsApp with your booking details.
                       </p>
                       {submitError && (
                         <p className="mt-4 flex items-center gap-2 rounded-lg border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
@@ -346,33 +385,64 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
                 )}
 
                 {step === 5 && (
-                  <div className="text-center">
+                  <div className="mx-auto max-w-xl text-center">
                     <motion.div
                       initial={{ scale: 0.6, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+                      className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/60 text-emerald-700"
                     >
-                      <Check className="h-10 w-10" />
+                      <CheckCircle2 className="h-12 w-12" />
                     </motion.div>
-                    <h2 className="mt-5 font-heading text-3xl font-bold text-navy">Request received</h2>
-                    <p className="mt-2 text-slate-500">Reference {bookingRef.slice(0, 8).toUpperCase()}</p>
-                    <div className="mx-auto mt-6 max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left">
+                    <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-[#a66d2f]">Request received</p>
+                    <h2 className="mt-2 font-heading text-3xl font-bold text-navy">Booking submitted successfully</h2>
+                    <p className="mt-2 text-sm text-slate-500">
+                      Reference {bookingRef.slice(0, 8).toUpperCase()}. Complete payment on WhatsApp so our team can confirm your seats.
+                    </p>
+                    <div className="mx-auto mt-6 max-w-md rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left text-sm">
                       <p className="font-semibold text-navy">{passenger.firstName} {passenger.lastName}</p>
-                      <p className="text-sm text-slate-500">{flight.from} to {flight.to} / {flight.flightNumber}</p>
-                      <p className="mt-2 flex items-center gap-2 text-sm text-emerald-700">
-                        <Mail className="h-4 w-4" /> Our team will confirm availability and payment.
-                      </p>
+                      <p className="text-slate-500">{flight.from} to {flight.to} / {flight.flightNumber}</p>
+                      <p className="mt-1 font-bold text-gold">{formatCurrency(total, flight.currency)}</p>
+                      <ul className="mt-4 space-y-3 text-slate-600">
+                        <li className="flex gap-2">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                          {supplierHeld
+                            ? "Seats are held with the supplier while you complete payment."
+                            : "Our team will secure seats and confirm availability after payment."}
+                        </li>
+                        <li className="flex gap-2">
+                          <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#25D366]" />
+                          Continue on WhatsApp with your booking details pre-filled.
+                        </li>
+                        <li className="flex gap-2">
+                          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                          {PAYMENT.instructions}
+                        </li>
+                      </ul>
                     </div>
-                    <div className="mt-6 flex flex-wrap justify-center gap-3">
-                      <a
-                        href={whatsappLink(`Hello ${SITE.name}, I submitted flight booking request #${bookingRef.slice(0, 8)} for ${flight.airline} ${flight.flightNumber}.`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={cn(buttonVariants({ variant: "navy" }))}
+                    <div className="mx-auto mt-6 max-w-md space-y-3">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full bg-navy transition-[width] duration-1000 ease-linear"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              Math.max(0, ((WHATSAPP_REDIRECT_SECONDS - countdown) / WHATSAPP_REDIRECT_SECONDS) * 100)
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-sm text-slate-500">
+                        Opening WhatsApp in <span className="font-semibold text-navy">{countdown}s</span>…
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={() => goToWhatsApp(whatsappUrl)}
+                        className="h-12 w-full bg-[#25D366] text-base font-semibold text-white hover:bg-[#1ebe57]"
                       >
-                        <MessageCircle className="mr-2 h-4 w-4" /> Continue on WhatsApp
-                      </a>
-                      <Link href="/flight-booking/results/" className={cn(buttonVariants({ variant: "outline" }))}>
+                        <MessageCircle className="mr-2 h-5 w-5" />
+                        Move to WhatsApp
+                      </Button>
+                      <Link href="/flight-booking/results/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
                         Search another flight
                       </Link>
                     </div>
@@ -388,7 +458,7 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
                 </Button>
                 <Button variant="navy" onClick={next} disabled={processing}>
                   {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {step === 4 ? "Submit Request" : "Continue"}
+                  {step === 4 ? (processing ? "Confirming booking..." : "Book Now") : "Continue"}
                 </Button>
               </div>
             )}
