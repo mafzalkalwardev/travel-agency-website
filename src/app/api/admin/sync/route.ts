@@ -34,12 +34,35 @@ export async function POST() {
   try {
     const ticketProvider = new TravelLineTicketProvider();
     const ticketResult = await ticketProvider.sync();
-    const packageResult = await syncTravelLinePackages();
+
+    // Packages are best-effort: ticket inventory must still succeed even if
+    // the umrah scrape fails (common on Vercel without Playwright).
+    let packageResult: Awaited<ReturnType<typeof syncTravelLinePackages>>;
+    try {
+      packageResult = await syncTravelLinePackages();
+    } catch (e) {
+      packageResult = {
+        provider: "travelline",
+        status: "failed",
+        umrahProcessed: 0,
+        toursProcessed: 0,
+        promosProcessed: 0,
+        changes: [],
+        message: e instanceof Error ? e.message : "Package sync failed",
+      };
+    }
+
+    const overallStatus =
+      ticketResult.status === "failed"
+        ? "failed"
+        : packageResult.status === "failed"
+          ? "partial"
+          : ticketResult.status;
 
     if (isSupabaseConfigured()) {
       await writeSyncLog({
         provider: "supplier-manual",
-        status: ticketResult.status,
+        status: overallStatus,
         processed: ticketResult.ticketsProcessed,
         created: ticketResult.ticketsCreated,
         updated: ticketResult.ticketsUpdated,
@@ -49,7 +72,11 @@ export async function POST() {
       });
     }
 
-    return NextResponse.json({ tickets: ticketResult, packages: packageResult });
+    return NextResponse.json({
+      tickets: ticketResult,
+      packages: packageResult,
+      status: overallStatus,
+    });
   } finally {
     if (locksEnabled) {
       await releaseSyncLock(TICKET_SYNC_LOCK_NAME);

@@ -88,9 +88,14 @@ export class TravelLineClient {
       next: { revalidate: 0 },
     });
     if (!res.ok) throw new Error(`Supplier package API returned ${res.status}`);
-    const data = (await res.json()) as TravelLineUmrahApiItem[];
-    this.umrahCache = data;
-    return data;
+    const data = await res.json();
+    const { extractUmrahItemsFromJsonText } = await import("./extractors");
+    const items = Array.isArray(data)
+      ? (data as TravelLineUmrahApiItem[])
+      : extractUmrahItemsFromJsonText(JSON.stringify(data));
+    if (!items.length) throw new Error("Supplier package API returned no usable inventory");
+    this.umrahCache = items;
+    return items;
   }
 
   async fetchTickets(): Promise<TravelLineFetchResult> {

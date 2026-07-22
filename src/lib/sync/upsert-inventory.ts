@@ -312,16 +312,17 @@ async function upsertPackageRows(
     const externalId = String(row.external_id);
     seenIds.add(externalId);
     const existing = existingByExternalId.get(externalId);
+    const withId = { ...row, id: existing?.id ?? randomUUID() };
 
     if (existing) {
-      const fieldChanges = diffFields(existing, row, packageDiffFields);
+      const fieldChanges = diffFields(existing, withId, packageDiffFields);
       if (Object.keys(fieldChanges).length) {
         updated++;
-        rowsToUpsert.push({ ...row, id: existing.id });
+        rowsToUpsert.push(withId);
         changes.push({
           provider,
           entityType,
-          entityId: existing.id,
+          entityId: String(existing.id),
           externalId,
           changeType: "updated",
           fieldChanges,
@@ -329,13 +330,14 @@ async function upsertPackageRows(
       }
     } else {
       created++;
-      rowsToUpsert.push(row);
+      rowsToUpsert.push(withId);
       changes.push({
         provider,
         entityType,
+        entityId: String(withId.id),
         externalId,
         changeType: "created",
-        newValue: row,
+        newValue: withId,
       });
     }
   }
@@ -381,7 +383,15 @@ async function batchUpsert(
 ) {
   if (!rows.length) return;
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE);
+    const batch = rows.slice(i, i + BATCH_SIZE).map((row) => {
+      // Never send an explicit null id — Postgres rejects it even when the
+      // column has a default. New rows must carry a generated UUID.
+      if (row.id == null) {
+        const { id: _omit, ...rest } = row;
+        return { ...rest, id: randomUUID() };
+      }
+      return row;
+    });
     const { error } = await supabase.from(table).upsert(batch);
     if (error) throw error;
   }
@@ -413,7 +423,9 @@ const ticketDiffFields = [
   "aircraft",
   "image_url",
   "active",
-  "raw_payload",
+  // Intentionally omit raw_payload — TravelLine refreshes supplierUpdatedAt
+  // on every scrape, which previously marked ALL tickets as "changed" every
+  // sync, flooded sync_changes, and made Admin "Sync Now" hang/timeout.
 ];
 
 const packageDiffFields = [
