@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BedDouble } from "lucide-react";
-import { assetPath } from "@/lib/base-path";
 import { GsapParallax } from "@/components/motion/GsapParallax";
 import { GsapReveal } from "@/components/motion/GsapReveal";
 import { GsapStagger, GsapStaggerItem } from "@/components/motion/GsapStagger";
@@ -14,7 +13,12 @@ interface DestinationGridProps {
 
 export function DestinationGrid({ destinations }: DestinationGridProps) {
   const exploreCards = destinations
-    .filter((d) => d.slug && ["umrah-packages", "umrah-groups", "uae-oneway", "oman-oneway", "ksa-oneway"].includes(d.slug))
+    .filter((d) =>
+      d.slug &&
+      ["umrah-packages", "umrah-groups", "uae-oneway", "oman-oneway", "ksa-oneway", "bahrain-oneway"].includes(
+        d.slug
+      )
+    )
     .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
 
   return (
@@ -33,19 +37,18 @@ export function DestinationGrid({ destinations }: DestinationGridProps) {
           </div>
         </GsapReveal>
         <GsapParallax>
-          <GsapStagger className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <GsapStagger className="grid items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6">
             {exploreCards.map((dest) => (
               <GsapStaggerItem key={dest.id} className="h-full">
                 <Link href={dest.href} className="destination-card group block h-full">
                   <div data-parallax-frame className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl">
                     <Image
                       data-parallax-img
-                      src={assetPath(dest.image)}
+                      src={dest.image}
                       alt={dest.label}
                       fill
-                      sizes="(max-width: 640px) 50vw, 20vw"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 16vw"
                       className="scale-110 object-cover transition-transform duration-700 group-hover:scale-[1.15]"
-                      unoptimized
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-navy/95 via-navy/40 to-navy/10" />
                     {dest.slug === "umrah-packages" && (

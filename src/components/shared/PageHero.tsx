@@ -32,12 +32,12 @@ export function PageHero({
     <section className="relative min-h-[42vh] overflow-hidden bg-navy md:min-h-[48vh]">
       <div className="absolute inset-0">
         <Image
-          src={assetPath(backgroundImage)}
+          src={backgroundImage}
           alt=""
           fill
+          sizes="100vw"
           className="object-cover"
           priority
-          unoptimized
         />
         <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/80 to-navy/60" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-transparent to-navy/40" />

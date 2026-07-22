@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { assetPath } from "@/lib/base-path";
 import type { MirrorExploreCard } from "@/lib/travelline-mirror/types";
 
 interface MirrorExploreGridProps {
@@ -30,11 +29,11 @@ export function MirrorExploreGrid({ cards }: MirrorExploreGridProps) {
           >
             <div className="relative aspect-[4/5]">
               <Image
-                src={assetPath(card.image)}
+                src={card.image}
                 alt={card.label}
                 fill
+                sizes="(max-width: 640px) 50vw, 20vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
-                unoptimized
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               {card.slug === "umrah-packages" && (

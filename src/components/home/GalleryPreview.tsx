@@ -3,7 +3,6 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { assetPath } from "@/lib/base-path";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 
 import type { GalleryItem } from "@/types";
@@ -24,11 +23,11 @@ export function GalleryPreview({ images }: GalleryPreviewProps) {
               className="group relative aspect-square overflow-hidden rounded-xl"
             >
               <Image
-                src={assetPath(img.src)}
+                src={img.src}
                 alt={img.alt}
                 fill
+                sizes="(max-width: 768px) 50vw, 33vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
-                unoptimized
               />
               <div className="absolute inset-0 bg-navy/0 transition-colors group-hover:bg-navy/30" />
             </div>

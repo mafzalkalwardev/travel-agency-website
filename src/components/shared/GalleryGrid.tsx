@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { assetPath } from "@/lib/base-path";
 import { cn } from "@/lib/utils";
 import type { GalleryCategory, GalleryItem } from "@/types";
 
@@ -55,7 +54,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
             onClick={() => setSelected(img)}
             className="group relative aspect-[4/3] overflow-hidden rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold"
           >
-            <Image src={assetPath(img.src)} alt={img.alt} fill className="object-cover transition-transform group-hover:scale-110" unoptimized />
+            <Image src={img.src} alt={img.alt} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover transition-transform group-hover:scale-110" />
           </motion.button>
         ))}
         </AnimatePresence>
@@ -66,7 +65,7 @@ export function GalleryGrid({ images }: GalleryGridProps) {
             <X className="h-6 w-6" />
           </button>
           <div className="relative max-h-[85vh] max-w-4xl w-full aspect-[3/4] md:aspect-[4/3]" onClick={(e) => e.stopPropagation()}>
-            <Image src={assetPath(selected.src)} alt={selected.alt} fill className="object-contain" unoptimized />
+            <Image src={selected.src} alt={selected.alt} fill sizes="100vw" className="object-contain" />
           </div>
         </div>
       )}

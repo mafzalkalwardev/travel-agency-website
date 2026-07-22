@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -10,7 +11,6 @@ import { AnimatedFlightPath } from "@/components/motion/AnimatedFlightPath";
 import { FloatingAircraftLayer } from "@/components/motion/FloatingAircraftLayer";
 import { HeroPosterCarousel } from "@/components/home/HeroPosterCarousel";
 import { cn } from "@/lib/utils";
-import { assetPath } from "@/lib/base-path";
 import { ASSETS } from "@/lib/assets";
 import { SITE } from "@/lib/constants";
 
@@ -45,9 +45,13 @@ export function HeroSection() {
   return (
     <section ref={sectionRef} className="relative min-h-[85vh] overflow-hidden bg-navy">
       <div className="absolute inset-0">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${assetPath(ASSETS.heroPoster)})` }}
+        <Image
+          src={ASSETS.heroPoster}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-navy/95 via-navy/80 to-royal/40" />
         <FloatingAircraftLayer density="medium" />

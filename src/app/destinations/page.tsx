@@ -5,7 +5,6 @@ import { createPageMetadata } from "@/lib/metadata";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
-import { assetPath } from "@/lib/base-path";
 import { formatPrice } from "@/lib/ticket-filters";
 import { dataProvider } from "@/lib/data-provider";
 import { SITE } from "@/lib/constants";
@@ -32,12 +31,11 @@ export default async function DestinationsPage() {
               <Link key={dest.id} href={dest.href} className="destination-card group">
                 <div className="relative aspect-[16/10] overflow-hidden">
                   <Image
-                    src={assetPath(dest.image)}
+                    src={dest.image}
                     alt={dest.label}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    unoptimized
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/20 to-transparent" />
                 </div>
