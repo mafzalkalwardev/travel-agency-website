@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Booking } from "@/types";
 
 export default async function AdminDashboardPage() {
-  const [inquiries, allTickets, umrah, blog, flyers, pendingBookings, failedHolds, pendingCustomers, lastSync, recentBookings] =
+  const [inquiries, allTickets, umrah, blog, flyers, pendingBookings, failedHolds, expiringHolds, pendingCustomers, lastSync, recentBookings] =
     await Promise.all([
       getInquiryCount(),
       dataProvider.getTickets(),
@@ -15,6 +15,7 @@ export default async function AdminDashboardPage() {
       dataProvider.getFlyers(),
       getPendingBookingsCount(),
       getFailedHoldsCount(),
+      getExpiringHoldsCount(),
       getPendingCustomersCount(),
       getLastSync(),
       getRecentBookings(),
@@ -24,6 +25,7 @@ export default async function AdminDashboardPage() {
 
   const stats = [
     { label: "Pending Payment", value: pendingBookings, href: "/admin/bookings/", urgent: pendingBookings > 0 },
+    { label: "Holds Expiring Soon", value: expiringHolds, href: "/admin/bookings/", urgent: expiringHolds > 0 },
     { label: "Failed Supplier Holds", value: failedHolds, href: "/admin/bookings/", urgent: failedHolds > 0 },
     { label: "Customers to Approve", value: pendingCustomers, href: "/admin/customers/", urgent: pendingCustomers > 0 },
     { label: "Live Group Tickets", value: liveTickets.length, href: "/admin/tickets/" },
@@ -165,6 +167,23 @@ async function getFailedHoldsCount() {
       .eq("status", "pending_payment")
       .eq("supplier_hold_status", "failed");
     return count || 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function getExpiringHoldsCount() {
+  if (!isSupabaseConfigured()) return 0;
+  try {
+    const { isHoldExpiringSoon } = await import("@/lib/booking/hold-expiry");
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("bookings")
+      .select("*")
+      .eq("status", "pending_payment")
+      .eq("supplier_hold_status", "held")
+      .limit(50);
+    return (data || []).filter((b) => isHoldExpiringSoon(b)).length;
   } catch {
     return 0;
   }

@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { Download, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
@@ -37,6 +38,9 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
   );
   const canPay =
     booking.status === "pending_payment" || booking.status === "payment_confirmed";
+  const isConfirmed =
+    booking.status === "confirmed" || booking.travelline_status === "CONFIRMED";
+  const ticketUrl = `/account/bookings/${booking.id}/`;
 
   const payUrl = canPay
     ? whatsappLink(
@@ -50,7 +54,7 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
           passengerNames: passengers?.names || undefined,
           quotedPrice: Number(booking.quoted_price),
           currency: booking.currency,
-          supplierRef: booking.travelline_booking_ref || undefined,
+          supplierRef: booking.travelline_order_id || booking.travelline_booking_ref || undefined,
           supplierHeld: booking.supplier_hold_status === "held",
           notes: passengers?.notes || undefined,
         })
@@ -72,6 +76,9 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
           <Badge className={statusColors[booking.status]}>
             {booking.status.replace(/_/g, " ")}
           </Badge>
+          {booking.travelline_status && (
+            <Badge className="bg-slate-100 text-slate-800">TL: {booking.travelline_status}</Badge>
+          )}
           {booking.supplier_hold_status && (
             <Badge className={holdColors[booking.supplier_hold_status] || "bg-gray-100"}>
               hold: {booking.supplier_hold_status}
@@ -96,9 +103,10 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
         </p>
       </div>
 
-      {booking.travelline_booking_ref && (
+      {(booking.travelline_order_id || booking.travelline_booking_ref) && (
         <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-          <strong>Travel Line ref:</strong> {booking.travelline_booking_ref}
+          <strong>Travel Line ref:</strong>{" "}
+          {booking.travelline_order_id || booking.travelline_booking_ref}
         </p>
       )}
 
@@ -123,8 +131,18 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
         </p>
       )}
 
-      {payUrl && (
-        <div className="mt-4 border-t border-border/60 pt-4">
+      <div className="mt-4 flex flex-col gap-2 border-t border-border/60 pt-4 sm:flex-row sm:flex-wrap">
+        <Link
+          href={ticketUrl}
+          className={cn(
+            buttonVariants({ variant: isConfirmed ? "primaryGold" : "outline", size: "default" }),
+            "w-full sm:w-auto"
+          )}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          {isConfirmed ? "View / print voucher" : "View booking"}
+        </Link>
+        {payUrl && (
           <a
             href={payUrl}
             target="_blank"
@@ -139,8 +157,8 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
               ? "Complete payment on WhatsApp"
               : "Message us on WhatsApp"}
           </a>
-        </div>
-      )}
+        )}
+      </div>
     </article>
   );
 }

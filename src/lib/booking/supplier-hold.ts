@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { extractHoldExpiresAtIso } from "@/lib/booking/hold-expiry";
 import { getTravelLineClient } from "@/lib/travelline/client";
 import { isTravelLineConfigured } from "@/lib/travelline/env";
 import { resolveTravelLinePackageId } from "@/lib/travelline/resolve-package-id";
@@ -53,22 +54,37 @@ export async function attemptSupplierHold(
   });
 
   if (supplier.success) {
-    await supabase
+    const successPatch = {
+      status: "pending_payment",
+      supplier_hold_status: "held",
+      supplier_hold_error: null,
+      supplier_hold_attempts: attempts,
+      travelline_booking_ref: supplier.bookingRef,
+      travelline_order_id: supplier.bookingRef,
+      travelline_status: "RESERVED",
+      travelline_status_checked_at: new Date().toISOString(),
+      hold_expires_at: extractHoldExpiresAtIso(supplier.raw),
+      travelline_response: supplier.raw ?? null,
+      error_message: null,
+      updated_at: new Date().toISOString(),
+    };
+
+    let { error: holdWriteError } = await supabase
       .from("bookings")
-      .update({
-        status: "pending_payment",
-        supplier_hold_status: "held",
-        supplier_hold_error: null,
-        supplier_hold_attempts: attempts,
-        travelline_booking_ref: supplier.bookingRef,
-        travelline_order_id: supplier.bookingRef,
-        travelline_status: "RESERVED",
-        travelline_status_checked_at: new Date().toISOString(),
-        travelline_response: supplier.raw ?? null,
-        error_message: null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(successPatch)
       .eq("id", bookingId);
+
+    // Column may not exist until migration 008 is applied — retry without it.
+    if (holdWriteError?.message?.includes("hold_expires_at")) {
+      const { hold_expires_at: _omit, ...withoutExpiry } = successPatch;
+      ({ error: holdWriteError } = await supabase
+        .from("bookings")
+        .update(withoutExpiry)
+        .eq("id", bookingId));
+    }
+    if (holdWriteError) {
+      return { held: false, error: holdWriteError.message, bookingRef: supplier.bookingRef };
+    }
 
     try {
       const ticketProvider = new TravelLineTicketProvider();

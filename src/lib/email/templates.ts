@@ -117,6 +117,27 @@ export function stuckBookingReminderAdminHtml(bookings: BookingEmailData[]) {
   );
 }
 
+export function holdExpiryWarningAdminHtml(
+  bookings: Array<BookingEmailData & { minutesLeft: number; orderRef?: string }>
+) {
+  const rows = bookings
+    .map((b) => {
+      const urgency =
+        b.minutesLeft <= 0
+          ? `<span style="color:#c0392b"><strong>EXPIRED / at risk</strong></span>`
+          : `<span style="color:#b45309"><strong>~${b.minutesLeft} min left</strong></span>`;
+      return `<li>${b.id.slice(0, 8).toUpperCase()} — ${b.customerName} — ${b.productTitle} — ${formatPrice(b.quotedPrice, b.currency)} — ${urgency}${b.orderRef ? ` — TL ${b.orderRef}` : ""}</li>`;
+    })
+    .join("");
+  return layout(
+    "Travel Line holds expiring",
+    `<h2 style="color:#c0392b">Seat holds need payment soon</h2>
+    <p>Travel Line reserved seats typically expire in about an hour. Contact these customers on WhatsApp or confirm/cancel in Admin.</p>
+    <ul>${rows}</ul>
+    <p><a href="${SITE.url}/admin/bookings/" style="display:inline-block;background:#1a2744;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px">Open Admin Bookings</a></p>`
+  );
+}
+
 export function accountVerificationCustomerHtml(params: {
   fullName: string;
   confirmUrl: string;

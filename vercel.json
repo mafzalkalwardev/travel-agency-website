@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/retry-booking-holds",
       "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/api/cron/watch-booking-holds",
+      "schedule": "0 * * * *"
     }
   ]
 }

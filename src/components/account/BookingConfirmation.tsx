@@ -48,8 +48,16 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
   // prioritizes orderId over the airline PNR when storing this field. This
   // is deliberately the *same* identifier a sub-agent would see on
   // TravelLine's own confirmation, per docs/REDESIGN.md §8.2/§3.7.
-  const orderId = booking.travelline_booking_ref;
-  const canPay = booking.status === "pending_payment" || booking.status === "payment_confirmed";
+  const orderId = booking.travelline_order_id || booking.travelline_booking_ref;
+  const isConfirmed = booking.status === "confirmed" || booking.travelline_status === "CONFIRMED";
+  const canPay =
+    booking.status === "pending_payment" || booking.status === "payment_confirmed";
+  const passengerNames =
+    booking.passenger_details &&
+    typeof booking.passenger_details === "object" &&
+    "names" in booking.passenger_details
+      ? String((booking.passenger_details as { names?: unknown }).names || "")
+      : "";
 
   const waMessage = buildBookingWhatsAppMessage({
     bookingRef: booking.id,
@@ -58,12 +66,7 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
     customerPhone: booking.customer_phone,
     customerEmail: booking.customer_email || undefined,
     passengers: booking.passengers,
-    passengerNames:
-      booking.passenger_details &&
-      typeof booking.passenger_details === "object" &&
-      "names" in booking.passenger_details
-        ? String((booking.passenger_details as { names?: unknown }).names || "")
-        : undefined,
+    passengerNames: passengerNames || undefined,
     quotedPrice: Number(booking.quoted_price),
     currency: booking.currency,
     supplierRef: orderId || undefined,
@@ -99,10 +102,17 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
       <div className="container-wide max-w-4xl">
         <div className="mb-6 flex flex-col gap-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[.14em] text-royal">Booking confirmation</p>
+            <p className="text-sm font-semibold uppercase tracking-[.14em] text-royal">
+              {isConfirmed ? "E-ticket / voucher" : "Booking confirmation"}
+            </p>
             <h1 className="mt-1 font-heading text-2xl font-bold text-navy sm:text-3xl">
               {booking.product_title || "Your booking"}
             </h1>
+            {isConfirmed && (
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                Your booking is confirmed. Save or print this page as your travel voucher — quote the order ID below to our team.
+              </p>
+            )}
           </div>
           <Link href="/account/" className={cn(buttonVariants({ variant: "outline" }), "shrink-0")}>
             Back to My Trips
@@ -209,7 +219,7 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
             </div>
           )}
 
-          <div className="border-t bg-slate-50/60 p-6 print:hidden">
+          <div className="border-t bg-slate-50/60 p-6">
             <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
               <p>
                 <strong className="text-slate-900">Booked by:</strong> {booking.customer_name}
@@ -217,25 +227,45 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
               <p>
                 <strong className="text-slate-900">Phone:</strong> {booking.customer_phone}
               </p>
+              {booking.customer_email && (
+                <p>
+                  <strong className="text-slate-900">Email:</strong> {booking.customer_email}
+                </p>
+              )}
+              {passengerNames && (
+                <p className="sm:col-span-2">
+                  <strong className="text-slate-900">Passengers:</strong> {passengerNames}
+                </p>
+              )}
               <p>
                 <strong className="text-slate-900">Submitted:</strong>{" "}
                 {new Date(booking.created_at).toLocaleString("en-PK", { dateStyle: "medium", timeStyle: "short" })}
               </p>
-              {booking.travelline_confirmed_at && (
+              {(booking.travelline_confirmed_at || isConfirmed) && (
                 <p>
                   <strong className="text-slate-900">Confirmed:</strong>{" "}
-                  {new Date(booking.travelline_confirmed_at).toLocaleString("en-PK", { dateStyle: "medium", timeStyle: "short" })}
+                  {booking.travelline_confirmed_at
+                    ? new Date(booking.travelline_confirmed_at).toLocaleString("en-PK", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "Yes"}
+                </p>
+              )}
+              {booking.travelline_status && (
+                <p>
+                  <strong className="text-slate-900">Travel Line:</strong> {booking.travelline_status}
                 </p>
               )}
             </div>
 
             {(booking.supplier_hold_error || booking.error_message) && (
-              <p className="mt-4 rounded-md bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
+              <p className="mt-4 rounded-md bg-red-accent/10 px-3 py-2 text-sm text-red-accent print:hidden">
                 {booking.supplier_hold_error || booking.error_message}
               </p>
             )}
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-5 flex flex-col gap-3 print:hidden sm:flex-row">
               {canPay && (
                 <a
                   href={whatsappLink(waMessage)}
@@ -250,17 +280,21 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
               <button
                 type="button"
                 onClick={() => window.print()}
-                className={cn(buttonVariants({ variant: "outline" }), "flex-1")}
+                className={cn(
+                  buttonVariants({ variant: isConfirmed ? "primaryGold" : "outline" }),
+                  "flex-1"
+                )}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download / print
+                {isConfirmed ? "Print / save voucher" : "Download / print"}
               </button>
             </div>
 
-            <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
+            <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground print:hidden">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-              Our team confirms every booking two ways: once your payment is received, and once the seat hold shows
-              as confirmed on the supplier&apos;s own system — you&apos;ll see the status above update automatically.
+              {isConfirmed
+                ? "This voucher mirrors your Travel Line order. Bring a copy when traveling and keep the order ID handy."
+                : "Seats are held on Travel Line after you book. Once payment is confirmed, this page becomes your printable voucher."}
             </p>
           </div>
         </div>

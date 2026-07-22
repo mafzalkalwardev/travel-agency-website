@@ -1,0 +1,32 @@
+name: Watch booking holds (expiry alerts)
+
+# Travel Line RESERVED seats expire in ~1 hour. Ping production every
+# 15 minutes so unpaid holds get an admin email before seats drop.
+# Primary inventory sync remains separate (travelline-sync.yml / pg_cron).
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: watch-booking-holds
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Trigger hold expiry watch
+        run: |
+          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
+            --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://flywithalqibla.com/api/cron/watch-booking-holds/)
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 400 ]; then
+            echo "Hold watch failed"
+            exit 1
+          fi

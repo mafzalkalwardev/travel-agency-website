@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { formatHoldCountdown, isHoldExpiringSoon } from "@/lib/booking/hold-expiry";
 import { SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus } from "@/types";
@@ -85,6 +86,12 @@ export default function AdminBookingsPage() {
       pending: bookings.filter((b) => b.status === "pending_payment").length,
       held: bookings.filter((b) => b.supplier_hold_status === "held").length,
       failedHold: bookings.filter((b) => b.supplier_hold_status === "failed").length,
+      expiringSoon: bookings.filter(
+        (b) =>
+          b.status === "pending_payment" &&
+          b.supplier_hold_status === "held" &&
+          isHoldExpiringSoon(b)
+      ).length,
     }),
     [bookings]
   );
@@ -179,13 +186,22 @@ export default function AdminBookingsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <Clock className="h-8 w-8 text-amber-600" />
             <div>
               <p className="text-xs text-muted-foreground">Awaiting payment</p>
               <p className="text-2xl font-bold text-navy">{stats.pending}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className={stats.expiringSoon > 0 ? "border-brand-red/40" : undefined}>
+          <CardContent className="flex items-center gap-3 p-4">
+            <Clock className="h-8 w-8 text-brand-red" />
+            <div>
+              <p className="text-xs text-muted-foreground">Holds expiring soon</p>
+              <p className="text-2xl font-bold text-navy">{stats.expiringSoon}</p>
             </div>
           </CardContent>
         </Card>
@@ -239,6 +255,11 @@ export default function AdminBookingsPage() {
             const passengerText = formatPassengerDetails(
               b.passenger_details as Record<string, unknown> | undefined
             );
+            const holdCountdown =
+              b.status === "pending_payment" && b.supplier_hold_status === "held"
+                ? formatHoldCountdown(b)
+                : null;
+            const holdUrgent = holdCountdown ? isHoldExpiringSoon(b) : false;
 
             return (
               <Card key={b.id} className="overflow-hidden border-border/70">
@@ -254,6 +275,16 @@ export default function AdminBookingsPage() {
                       <p className="text-xs text-muted-foreground">
                         {new Date(b.created_at).toLocaleString()}
                       </p>
+                      {holdCountdown && (
+                        <p
+                          className={cn(
+                            "mt-1 text-xs font-semibold",
+                            holdUrgent ? "text-brand-red" : "text-amber-700"
+                          )}
+                        >
+                          {holdCountdown}
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Badge className={statusColors[b.status]}>{b.status.replace(/_/g, " ")}</Badge>
