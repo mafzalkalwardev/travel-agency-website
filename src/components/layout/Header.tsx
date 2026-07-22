@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, MessageSquareText, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AccountNav } from "@/components/account/AccountNav";
@@ -48,11 +48,6 @@ export function Header() {
       : pathname?.startsWith(href.replace(/\/$/, ""));
 
   const transparent = isHome && !scrolled;
-
-  function openSupportChat() {
-    window.dispatchEvent(new CustomEvent("alqibla:open-support-chat"));
-    setOpen(false);
-  }
 
   return (
     <header
@@ -99,9 +94,7 @@ export function Header() {
                 href={link.href}
                 className={cn(
                   "relative rounded-lg px-3 py-2 text-[13px] font-medium tracking-wide transition-colors",
-                  isActive(link.href)
-                    ? "text-gold"
-                    : "text-white/70 hover:text-white"
+                  isActive(link.href) ? "text-gold" : "text-white/70 hover:text-white"
                 )}
               >
                 {link.label}
@@ -114,17 +107,6 @@ export function Header() {
 
           <div className="flex items-center gap-2">
             <AccountNav />
-            <button
-              type="button"
-              onClick={openSupportChat}
-              className={cn(
-                buttonVariants({ variant: "outline", size: "default" }),
-                "hidden h-10 border-white/20 bg-white/5 px-3.5 text-white hover:border-gold/50 hover:bg-gold/10 hover:text-gold md:inline-flex"
-              )}
-            >
-              <MessageSquareText className="mr-2 h-4 w-4" />
-              Ask Al Qibla
-            </button>
 
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger
@@ -136,7 +118,10 @@ export function Header() {
                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 <span className="sr-only">Open menu</span>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[min(100vw-1.5rem,360px)] overflow-y-auto border-l border-white/10 bg-navy text-white">
+              <SheetContent
+                side="right"
+                className="w-[min(100vw-1.5rem,360px)] overflow-y-auto border-l border-white/10 bg-navy text-white"
+              >
                 <SheetHeader>
                   <SheetTitle className="flex items-center gap-3 text-left font-heading text-lg text-white">
                     <Image
@@ -164,14 +149,6 @@ export function Header() {
                       {link.label}
                     </Link>
                   ))}
-                  <button
-                    type="button"
-                    onClick={openSupportChat}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-left font-semibold text-gold"
-                  >
-                    <MessageSquareText className="h-4 w-4" />
-                    Ask Al Qibla — AI support
-                  </button>
                 </nav>
               </SheetContent>
             </Sheet>

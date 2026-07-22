@@ -2,11 +2,39 @@ import { SITE, OFFICES } from "@/lib/constants";
 import { dataProvider } from "@/lib/data-provider";
 
 export function isGrokConfigured(): boolean {
-  return Boolean(process.env.XAI_API_KEY || process.env.GROK_API_KEY);
+  return Boolean(process.env.XAI_API_KEY || process.env.GROK_API_KEY || process.env.GROQ_API_KEY);
 }
 
 function getGrokApiKey(): string | null {
-  return process.env.XAI_API_KEY || process.env.GROK_API_KEY || null;
+  return (
+    process.env.XAI_API_KEY ||
+    process.env.GROK_API_KEY ||
+    process.env.GROQ_API_KEY ||
+    null
+  );
+}
+
+/**
+ * `gsk_…` keys are Groq. xAI keys typically start with `xai-`.
+ * Allow override via GROK_API_BASE.
+ */
+function resolveApiBase(apiKey: string): string {
+  if (process.env.GROK_API_BASE) return process.env.GROK_API_BASE.replace(/\/$/, "");
+  if (apiKey.startsWith("gsk_")) return "https://api.groq.com/openai/v1";
+  return "https://api.x.ai/v1";
+}
+
+function resolveModel(apiKey: string): string {
+  const configured = process.env.GROK_MODEL || process.env.XAI_MODEL || "";
+  const isGroq = apiKey.startsWith("gsk_");
+
+  // Groq does not host xAI "grok-*" models — ignore incompatible overrides.
+  if (isGroq) {
+    if (configured && !configured.toLowerCase().startsWith("grok")) return configured;
+    return "llama-3.3-70b-versatile";
+  }
+
+  return configured || "grok-4.5";
 }
 
 async function buildInventoryBrief(): Promise<string> {
@@ -65,9 +93,10 @@ export async function chatWithGrok(messages: Array<{ role: "user" | "assistant" 
   }
 
   const system = await buildSupportSystemPrompt();
-  const model = process.env.GROK_MODEL || process.env.XAI_MODEL || "grok-4.5";
+  const model = resolveModel(apiKey);
+  const base = resolveApiBase(apiKey);
 
-  const res = await fetch("https://api.x.ai/v1/chat/completions", {
+  const res = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -83,14 +112,15 @@ export async function chatWithGrok(messages: Array<{ role: "user" | "assistant" 
 
   const data = (await res.json().catch(() => ({}))) as {
     choices?: Array<{ message?: { content?: string } }>;
-    error?: { message?: string };
+    error?: { message?: string } | string;
   };
 
   if (!res.ok) {
-    return {
-      ok: false as const,
-      error: data.error?.message || `Support chat unavailable (${res.status}). Try WhatsApp.`,
-    };
+    const errMsg =
+      typeof data.error === "string"
+        ? data.error
+        : data.error?.message || `Support chat unavailable (${res.status}). Try WhatsApp.`;
+    return { ok: false as const, error: errMsg };
   }
 
   const content = data.choices?.[0]?.message?.content?.trim();
