@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Briefcase, CalendarDays, CheckCircle2, Clock3, Plane, ShieldCheck, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Briefcase,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  MessageCircle,
+  Plane,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
 import { resolveAirlineName } from "@/data/airlines";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -17,11 +26,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { getApprovalMessage } from "@/lib/customer-approval";
-import { SITE } from "@/lib/constants";
+import { PAYMENT, SITE } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import type { BookingProductType, Ticket } from "@/types";
+
+const WHATSAPP_REDIRECT_SECONDS = 8;
 
 interface BookRequestSheetProps {
   open: boolean;
@@ -57,19 +68,62 @@ export function BookRequestSheet({
   const [signedIn, setSignedIn] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<"pending" | "approved" | "rejected" | null>(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState<{
+    bookingRef: string;
+    whatsappUrl: string;
+    supplierHeld: boolean;
+  } | null>(null);
+  const [countdown, setCountdown] = useState(WHATSAPP_REDIRECT_SECONDS);
+  const redirectTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [form, setForm] = useState({
     name: "",
     phone: "",
     email: "",
     passengers: "1",
     passengerNames: "",
+    passportNo: "",
+    dob: "",
+    nationality: "PK",
     notes: "",
   });
 
   const nextPath = sourcePage || "/account/";
 
+  function clearRedirectTimer() {
+    if (redirectTimerRef.current) {
+      clearInterval(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+  }
+
+  function goToWhatsApp(url: string) {
+    clearRedirectTimer();
+    window.location.href = url;
+  }
+
+  function startWhatsAppCountdown(url: string) {
+    clearRedirectTimer();
+    setCountdown(WHATSAPP_REDIRECT_SECONDS);
+    redirectTimerRef.current = setInterval(() => {
+      setCountdown((seconds) => {
+        if (seconds <= 1) {
+          clearRedirectTimer();
+          window.location.href = url;
+          return 0;
+        }
+        return seconds - 1;
+      });
+    }, 1000);
+  }
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      clearRedirectTimer();
+      setSuccess(null);
+      setCountdown(WHATSAPP_REDIRECT_SECONDS);
+      setError("");
+      return;
+    }
 
     let active = true;
     setAuthChecked(false);
@@ -104,6 +158,7 @@ export function BookRequestSheet({
 
     return () => {
       active = false;
+      clearRedirectTimer();
     };
   }, [open]);
 
@@ -131,6 +186,9 @@ export function BookRequestSheet({
           source_page: sourcePage,
           passenger_details: {
             names: form.passengerNames,
+            passportNo: form.passportNo,
+            dob: form.dob,
+            nationality: form.nationality || "PK",
             notes: form.notes,
           },
         }),
@@ -176,10 +234,13 @@ export function BookRequestSheet({
         notes: form.notes || undefined,
       });
 
-      // Hold is already on Travel Line + Admin Bookings; open WhatsApp
-      // immediately with ticket + customer details for payment.
-      window.location.href = whatsappLink(waMsg);
-      return;
+      const whatsappUrl = whatsappLink(waMsg);
+      setSuccess({
+        bookingRef: ref,
+        whatsappUrl,
+        supplierHeld: Boolean(json.supplierHeld),
+      });
+      startWhatsAppCountdown(whatsappUrl);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Could not submit booking request.");
     } finally {
@@ -191,15 +252,36 @@ export function BookRequestSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex !w-[min(96vw,64rem)] !max-w-none flex-col overflow-y-auto p-0 sm:!max-w-4xl">
         <SheetHeader className="border-b bg-navy px-6 py-5 text-white sm:px-8">
-          <SheetTitle className="font-heading text-2xl text-white">Review & book</SheetTitle>
+          <SheetTitle className="font-heading text-2xl text-white">
+            {success ? "Booking submitted" : "Review & book"}
+          </SheetTitle>
           <SheetDescription>
-            Confirmed accounts place a Travel Line seat hold instantly, then open WhatsApp with your ticket details to pay.
+            {success
+              ? "Your request is saved. Continue on WhatsApp to complete payment and confirmation."
+              : "Review the itinerary, enter traveler details, then confirm your booking."}
           </SheetDescription>
         </SheetHeader>
 
         <div className="px-5 pb-8 sm:px-8">
+          {success ? (
+            <BookingSuccessStep
+              bookingRef={success.bookingRef}
+              productTitle={productTitle}
+              quotedPrice={quotedPrice}
+              currency={currency}
+              supplierHeld={success.supplierHeld}
+              countdown={countdown}
+              onMoveToWhatsApp={() => goToWhatsApp(success.whatsappUrl)}
+            />
+          ) : (
+            <>
           {ticket ? <TicketBookingDetails ticket={ticket} /> : (
-            <div className="mt-6 rounded-2xl border bg-secondary/40 p-5"><p className="font-semibold text-navy">{productTitle}</p><p className="mt-1 text-xl font-bold text-gold">{quotedPrice.toLocaleString()} {currency}</p></div>
+            <div className="mt-4 rounded-xl border bg-secondary/40 p-4">
+              <p className="font-semibold text-navy">{productTitle}</p>
+              <p className="mt-1 text-xl font-bold text-gold">
+                {quotedPrice.toLocaleString()} {currency}
+              </p>
+            </div>
           )}
 
         {!authChecked ? (
@@ -242,30 +324,78 @@ export function BookRequestSheet({
             </a>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+            <div className="space-y-1.5">
               <Label htmlFor="br-name">Full name</Label>
               <Input id="br-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="br-phone">Phone / WhatsApp</Label>
-              <Input id="br-phone" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="br-phone">Phone / WhatsApp</Label>
+                <Input id="br-phone" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="br-email">Email</Label>
+                <Input id="br-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="br-email">Email</Label>
-              <Input id="br-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="br-passengers">Passengers</Label>
-              <Input id="br-passengers" type="number" min={1} value={form.passengers} onChange={(e) => setForm({ ...form, passengers: e.target.value })} />
+              <Input
+                id="br-passengers"
+                type="number"
+                min={1}
+                className="max-w-[8rem]"
+                value={form.passengers}
+                onChange={(e) => setForm({ ...form, passengers: e.target.value })}
+              />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor="br-names">Passenger names</Label>
-              <Textarea id="br-names" placeholder="One name per line" value={form.passengerNames} onChange={(e) => setForm({ ...form, passengerNames: e.target.value })} />
+              <Textarea
+                id="br-names"
+                required
+                rows={3}
+                placeholder="One name per line (as on passport)"
+                value={form.passengerNames}
+                onChange={(e) => setForm({ ...form, passengerNames: e.target.value })}
+              />
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5 sm:col-span-1">
+                <Label htmlFor="br-passport">Passport number</Label>
+                <Input
+                  id="br-passport"
+                  required
+                  value={form.passportNo}
+                  onChange={(e) => setForm({ ...form, passportNo: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="br-dob">Date of birth</Label>
+                <Input
+                  id="br-dob"
+                  type="date"
+                  required
+                  value={form.dob}
+                  onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="br-nationality">Nationality</Label>
+                <Input
+                  id="br-nationality"
+                  required
+                  maxLength={2}
+                  placeholder="PK"
+                  value={form.nationality}
+                  onChange={(e) => setForm({ ...form, nationality: e.target.value.toUpperCase() })}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="br-notes">Notes (optional)</Label>
-              <Textarea id="br-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              <Textarea id="br-notes" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </div>
             {error && (
               <p className="rounded-md border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">
@@ -273,16 +403,106 @@ export function BookRequestSheet({
               </p>
             )}
             <Button type="submit" disabled={loading} className="w-full bg-navy text-white hover:bg-navy-light">
-              {loading ? "Placing hold..." : "Hold Seats & Pay via WhatsApp"}
+              {loading ? "Confirming booking..." : "Book Now"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Seats are held at the supplier when available. Complete bank transfer and share your screenshot on WhatsApp.
+              After you confirm, we will show the next payment steps and open WhatsApp with your booking details.
             </p>
           </form>
         )}
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function BookingSuccessStep({
+  bookingRef,
+  productTitle,
+  quotedPrice,
+  currency,
+  supplierHeld,
+  countdown,
+  onMoveToWhatsApp,
+}: {
+  bookingRef: string;
+  productTitle: string;
+  quotedPrice: number;
+  currency: string;
+  supplierHeld: boolean;
+  countdown: number;
+  onMoveToWhatsApp: () => void;
+}) {
+  const progress = ((WHATSAPP_REDIRECT_SECONDS - countdown) / WHATSAPP_REDIRECT_SECONDS) * 100;
+
+  return (
+    <div className="mx-auto mt-8 max-w-xl space-y-6 text-center">
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/60">
+        <CheckCircle2 className="h-12 w-12 text-emerald-600" aria-hidden />
+      </div>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#a66d2f]">Request received</p>
+        <h3 className="mt-2 font-heading text-3xl font-bold text-navy">Booking submitted successfully</h3>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          Your booking is saved
+          {bookingRef ? (
+            <>
+              {" "}
+              with reference <span className="font-semibold text-navy">{bookingRef.slice(0, 8).toUpperCase()}</span>
+            </>
+          ) : null}
+          . Complete payment on WhatsApp so our team can confirm your seats.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-secondary/30 p-5 text-left text-sm">
+        <p className="font-semibold text-navy">{productTitle}</p>
+        <p className="mt-1 text-lg font-bold text-gold">
+          {currency} {quotedPrice.toLocaleString("en-PK")}
+        </p>
+        <ul className="mt-4 space-y-3 text-muted-foreground">
+          <li className="flex gap-2">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            {supplierHeld
+              ? "Seats are held with the supplier while you complete payment."
+              : "Our team will secure seats and confirm availability after payment."}
+          </li>
+          <li className="flex gap-2">
+            <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#25D366]" />
+            Continue on WhatsApp with your booking details pre-filled for payment confirmation.
+          </li>
+          <li className="flex gap-2">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+            {PAYMENT.instructions}
+          </li>
+        </ul>
+      </div>
+
+      <div className="space-y-3">
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+          <div
+            className="h-full rounded-full bg-navy transition-[width] duration-1000 ease-linear"
+            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+          />
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Opening WhatsApp in <span className="font-semibold text-navy">{countdown}s</span>…
+        </p>
+        <Button
+          type="button"
+          onClick={onMoveToWhatsApp}
+          className="h-12 w-full bg-[#25D366] text-base font-semibold text-white hover:bg-[#1ebe57]"
+        >
+          <MessageCircle className="mr-2 h-5 w-5" />
+          Move to WhatsApp
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Prefer not to wait? Tap the button above to continue immediately.
+        </p>
+      </div>
+    </div>
   );
 }
 
