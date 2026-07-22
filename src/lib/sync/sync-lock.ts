@@ -1,6 +1,13 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const STALE_LOCK_MS = 5 * 60 * 1000; // a run that's held the lock this long is assumed crashed
+// Vercel hard-kills the sync function at maxDuration=120s, and a kill
+// like that skips the `finally` block that would otherwise release the
+// lock (confirmed live 2026-07-21: a single 504 timeout left the lock
+// held, so every call for the next 5 minutes returned "already in
+// progress" instead of retrying — see docs/REDESIGN.md §7). 140s gives a
+// small buffer past the hard kill while recovering far faster than the
+// old 5-minute window.
+const STALE_LOCK_MS = 140 * 1000;
 
 /**
  * Best-effort lock to stop overlapping sync runs once the 1-minute

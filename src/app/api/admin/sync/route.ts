@@ -9,7 +9,7 @@ import { TICKET_SYNC_LOCK_NAME } from "@/lib/sync/run-ticket-sync";
 import { isTravelLineConfigured } from "@/lib/travelline/env";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 export async function POST() {
   const admin = await requireAdmin();

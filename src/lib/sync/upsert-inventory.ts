@@ -167,7 +167,11 @@ export async function upsertTickets(
 async function deactivateDepartedTickets(
   supabase: ReturnType<typeof createAdminClient>
 ): Promise<number> {
-  const today = new Date().toISOString().slice(0, 10);
+  // Pakistan time (UTC+5), not raw UTC — flights are PKT-scheduled, and
+  // comparing against UTC's date could flag/miss departures near
+  // midnight depending on which side of the UTC/PKT day boundary the
+  // sync happens to run in.
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
   const { data: departedRows } = await supabase
     .from("tickets")
     .select("id")

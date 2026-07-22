@@ -90,24 +90,33 @@ function buildCategoryImageMap(categories: TravelLineLiveCategory[]): Record<str
   return map;
 }
 
+/**
+ * Fetches every known category in parallel rather than sequentially — with
+ * 5 categories (KSA alone has 250+ flights), the sequential loop this
+ * replaced was a major contributor to sync runs exceeding Vercel's 120s
+ * function timeout once inventory grew. See docs/REDESIGN.md §7.
+ */
 export async function fetchTravelLineGroupFlights(cookie: string): Promise<TravelLineGroupFlight[]> {
   const { baseUrl } = getTravelLineConfig();
-  const flights: TravelLineGroupFlight[] = [];
 
-  for (const category of TRAVELLINE_GROUP_CATEGORIES) {
-    const res = await fetch(`${baseUrl}/api/groups?category=${encodeURIComponent(category)}`, {
-      headers: { Accept: "application/json", Cookie: cookie },
-    });
-    if (!res.ok) continue;
-    const data = (await res.json()) as { flights?: TravelLineGroupFlight[] };
-    for (const flight of data.flights || []) {
-      if ((flight.availableSeats ?? 0) > 0) {
-        flights.push({ ...flight, groupCategory: flight.groupCategory || category });
+  const perCategory = await Promise.all(
+    TRAVELLINE_GROUP_CATEGORIES.map(async (category) => {
+      try {
+        const res = await fetch(`${baseUrl}/api/groups?category=${encodeURIComponent(category)}`, {
+          headers: { Accept: "application/json", Cookie: cookie },
+        });
+        if (!res.ok) return [];
+        const data = (await res.json()) as { flights?: TravelLineGroupFlight[] };
+        return (data.flights || [])
+          .filter((flight) => (flight.availableSeats ?? 0) > 0)
+          .map((flight) => ({ ...flight, groupCategory: flight.groupCategory || category }));
+      } catch {
+        return [];
       }
-    }
-  }
+    })
+  );
 
-  return flights;
+  return perCategory.flat();
 }
 
 async function tryPortalLogin(page: Page) {
