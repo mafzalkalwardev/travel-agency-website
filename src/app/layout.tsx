@@ -20,6 +20,8 @@ const jsonLd = {
   name: SITE.name,
   description: SITE.description,
   url: SITE.url,
+  logo: `${SITE.url}/icon-512.png`,
+  image: `${SITE.url}/icon-512.png`,
   telephone: SITE.whatsappNumber,
   address: OFFICE_DISPLAY_ORDER.map((office) => ({
     "@type": "PostalAddress",
