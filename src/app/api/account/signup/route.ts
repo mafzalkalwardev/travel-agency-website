@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Company email is not configured. Set RESEND_API_KEY and AUTH_FROM_EMAIL (or BOOKING_FROM_EMAIL) to a verified Al Qibla address such as noreply@alqiblaairservices.com.",
+          "Company email is not configured. Set RESEND_API_KEY and AUTH_FROM_EMAIL (or BOOKING_FROM_EMAIL) to a verified Al Qibla address such as noreply@flywithalqibla.com.",
       },
       { status: 503 }
     );
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
       {
         error:
           mailed.error ||
-          "Could not send the verification email. Verify your Resend domain and AUTH_FROM_EMAIL (e.g. noreply@alqiblaairservices.com).",
+          "Could not send the verification email. Verify your Resend domain and AUTH_FROM_EMAIL (e.g. noreply@flywithalqibla.com).",
       },
       { status: 502 }
     );

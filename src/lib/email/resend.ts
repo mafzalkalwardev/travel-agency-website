@@ -12,7 +12,7 @@ export function getBookingFromEmail(): string {
   const addr =
     process.env.BOOKING_FROM_EMAIL ||
     process.env.AUTH_FROM_EMAIL ||
-    "noreply@alqiblaairservices.com";
+    "noreply@flywithalqibla.com";
   return withDisplayName(addr);
 }
 
@@ -24,7 +24,7 @@ export function getAuthFromEmail(): string {
   const addr =
     process.env.AUTH_FROM_EMAIL ||
     process.env.BOOKING_FROM_EMAIL ||
-    "noreply@alqiblaairservices.com";
+    "noreply@flywithalqibla.com";
   return withDisplayName(addr);
 }
 
@@ -38,7 +38,7 @@ export function getBookingAdminEmail(): string {
 
 function withDisplayName(address: string): string {
   const trimmed = address.trim();
-  if (!trimmed) return `Al Qibla Air Services <noreply@alqiblaairservices.com>`;
+  if (!trimmed) return `Al Qibla Air Services <noreply@flywithalqibla.com>`;
   if (trimmed.includes("<") && trimmed.includes(">")) return trimmed;
   return `${SITE.name} <${trimmed}>`;
 }

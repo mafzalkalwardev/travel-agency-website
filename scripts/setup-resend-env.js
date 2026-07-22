@@ -27,7 +27,7 @@ function loadEnv() {
 
 const env = loadEnv();
 const resendKey = env.RESEND_API_KEY;
-const fromEmail = env.BOOKING_FROM_EMAIL || "noreply@alqiblaairservices.com";
+const fromEmail = env.BOOKING_FROM_EMAIL || "noreply@flywithalqibla.com";
 const authFromEmail = env.AUTH_FROM_EMAIL || fromEmail;
 const adminEmail = env.BOOKING_ADMIN_EMAIL || env.ADMIN_EMAIL || "salesalqibla@gmail.com";
 const sandboxMode = env.RESEND_SANDBOX_MODE ?? "true";
@@ -36,7 +36,7 @@ if (!resendKey) {
   console.error(
     "RESEND_API_KEY not found in .env or .env.local.\n" +
       "1. Create a key at https://resend.com/api-keys\n" +
-      "2. Verify alqiblaairservices.com in Resend (DNS)\n" +
+      "2. Verify flywithalqibla.com in Resend (DNS)\n" +
       "3. Add to .env:\n" +
       "   RESEND_API_KEY=re_...\n" +
       `   AUTH_FROM_EMAIL=${authFromEmail}\n` +

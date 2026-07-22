@@ -81,6 +81,39 @@ Authorization: Bearer YOUR_CRON_SECRET
 
 This logs results to `sync_logs` and uses approved providers only (no scraping).
 
-## 8. Local development without Supabase
+## 9. Production Auth (live site)
 
-If env vars are missing, the site uses **fallback seed data** from `src/data/*` and shows setup notices in admin. Reviews and inquiries return success messages in dev mode but are not persisted until Supabase is configured.
+Project: `gjatvtyzncpusgkpzldz` · Site: `https://flywithalqibla.com`
+
+### Auth URLs
+
+Dashboard → Authentication → URL Configuration:
+
+- **Site URL:** `https://flywithalqibla.com`
+- **Redirect URLs:**
+  - `https://flywithalqibla.com/**`
+  - `https://flywithalqibla.com/account/**`
+  - `http://localhost:3000/**` (local only)
+
+### Custom SMTP (Resend)
+
+Dashboard → Authentication → SMTP:
+
+| Field | Value |
+|-------|--------|
+| Enable custom SMTP | ON |
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | your `RESEND_API_KEY` |
+| Sender email | `noreply@flywithalqibla.com` |
+| Sender name | `Al Qibla Air Services` |
+
+Or apply via Management API (needs [access token](https://supabase.com/dashboard/account/tokens)):
+
+```bash
+# Add to .env: SUPABASE_ACCESS_TOKEN=sbp_...
+node scripts/configure-supabase-auth-live.js
+```
+
+After enabling Custom SMTP, raise the Auth email rate limit (default 30/hour) under Authentication → Rate Limits if needed.
