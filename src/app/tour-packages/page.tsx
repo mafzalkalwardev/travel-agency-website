@@ -8,6 +8,8 @@ import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
 import { SITE } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = createPageMetadata({
   title: "Tour Packages",
   description: `Holiday and tour packages by ${SITE.name} — Dubai, Turkey, Malaysia and domestic destinations.`,

@@ -5,6 +5,8 @@ import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
 import { SITE } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = createPageMetadata({
   title: "Gallery",
   description: `Photo gallery from ${SITE.name} — Umrah journeys, travel experiences and destinations.`,
