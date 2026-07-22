@@ -1,5 +1,5 @@
-import { AdminCrudPlaceholder } from "@/components/admin/AdminCrudPlaceholder";
+import { AdminCrudManager } from "@/components/admin/AdminCrudManager";
 
 export default function AdminFlyersPage() {
-  return <AdminCrudPlaceholder title="Flyers" description="Upload and manage promotional flyers and posters." table="flyers" />;
+  return <AdminCrudManager title="Flyers" description="Upload and manage promotional flyers and posters." table="flyers" />;
 }

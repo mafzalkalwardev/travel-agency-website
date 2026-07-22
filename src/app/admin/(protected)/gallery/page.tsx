@@ -1,5 +1,5 @@
-import { AdminCrudPlaceholder } from "@/components/admin/AdminCrudPlaceholder";
+import { AdminCrudManager } from "@/components/admin/AdminCrudManager";
 
 export default function AdminGalleryPage() {
-  return <AdminCrudPlaceholder title="Gallery" description="Upload and organize gallery images." table="gallery_items" />;
+  return <AdminCrudManager title="Gallery" description="Upload and organize gallery images." table="gallery_items" />;
 }

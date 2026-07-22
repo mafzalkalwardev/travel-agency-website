@@ -1,5 +1,5 @@
-import { AdminCrudPlaceholder } from "@/components/admin/AdminCrudPlaceholder";
+import { AdminCrudManager } from "@/components/admin/AdminCrudManager";
 
 export default function AdminTourPackagesPage() {
-  return <AdminCrudPlaceholder title="Tour Packages" description="Manage holiday and tour packages worldwide." table="tour_packages" />;
+  return <AdminCrudManager title="Tour Packages" description="Manage holiday and tour packages worldwide." table="tour_packages" />;
 }

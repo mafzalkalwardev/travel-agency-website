@@ -1,5 +1,5 @@
-import { AdminCrudPlaceholder } from "@/components/admin/AdminCrudPlaceholder";
+import { AdminCrudManager } from "@/components/admin/AdminCrudManager";
 
 export default function AdminAirlinesPage() {
-  return <AdminCrudPlaceholder title="Airlines" description="Manage airline logos and partner listings." table="airlines" />;
+  return <AdminCrudManager title="Airlines" description="Manage airline logos and partner listings." table="airlines" />;
 }

@@ -1,5 +1,5 @@
-import { AdminCrudPlaceholder } from "@/components/admin/AdminCrudPlaceholder";
+import { AdminCrudManager } from "@/components/admin/AdminCrudManager";
 
 export default function AdminAnnouncementsPage() {
-  return <AdminCrudPlaceholder title="Announcements" description="Manage homepage ticker announcements." table="announcements" />;
+  return <AdminCrudManager title="Announcements" description="Manage homepage ticker announcements." table="announcements" />;
 }
