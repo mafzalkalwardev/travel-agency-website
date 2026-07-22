@@ -56,8 +56,10 @@ export async function upsertTickets(
   const rowsToInsert: Record<string, unknown>[] = [];
   const rowsToUpdate: Record<string, unknown>[] = [];
 
+  const todayPkt = pakistanToday();
   for (const t of validTickets) {
     seenIds.add(t.externalId);
+    const isDeparted = Boolean(t.date && t.date < todayPkt);
     const row = {
       external_id: t.externalId,
       source_provider: provider,
@@ -77,7 +79,7 @@ export async function upsertTickets(
       price: t.price,
       currency: t.currency,
       seats_left: t.seatsLeft,
-      status: t.status,
+      status: isDeparted ? "sold_out" : t.status,
       baggage: t.baggage ?? null,
       meal: t.meal ?? null,
       trip_type: t.tripType ?? "oneway",
@@ -85,7 +87,8 @@ export async function upsertTickets(
       group_category: t.groupCategory ?? null,
       aircraft: t.aircraft ?? null,
       image_url: t.imageUrl ?? null,
-      active: t.status !== "sold_out" && t.status !== "cancelled",
+      // Never keep a past-departure flight bookable, even if TravelLine still lists seats.
+      active: !isDeparted && t.status !== "sold_out" && t.status !== "cancelled",
       last_updated: new Date().toISOString(),
       raw_payload: t,
     };
@@ -171,18 +174,34 @@ async function deactivateDepartedTickets(
   // comparing against UTC's date could flag/miss departures near
   // midnight depending on which side of the UTC/PKT day boundary the
   // sync happens to run in.
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
-  const { data: departedRows } = await supabase
+  const today = pakistanToday();
+  const { data: departedRows, error } = await supabase
     .from("tickets")
     .select("id")
     .eq("active", true)
     .lt("departure_date", today);
 
+  if (error) {
+    console.error("[sync] deactivateDepartedTickets query failed:", error.message);
+    return 0;
+  }
+
   const ids = (departedRows ?? []).map((r) => r.id);
   if (!ids.length) return 0;
 
-  await supabase.from("tickets").update({ active: false }).in("id", ids);
+  await supabase
+    .from("tickets")
+    .update({
+      active: false,
+      status: "sold_out",
+      last_updated: new Date().toISOString(),
+    })
+    .in("id", ids);
   return ids.length;
+}
+
+function pakistanToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
 }
 
 export async function upsertUmrahPackages(

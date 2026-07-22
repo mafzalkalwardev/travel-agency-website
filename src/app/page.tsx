@@ -7,6 +7,9 @@ import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { FlightPathStory } from "@/components/motion/FlightPathStory";
 import { dataProvider } from "@/lib/data-provider";
 
+// Home embeds live ticket inventory — keep it dynamic so sync updates show.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [announcements, destinations, tickets] = await Promise.all([
     dataProvider.getAnnouncements(),
