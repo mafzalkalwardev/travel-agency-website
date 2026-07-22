@@ -1,4 +1,4 @@
-export type FieldType = "text" | "textarea" | "number" | "boolean" | "select";
+export type FieldType = "text" | "textarea" | "number" | "boolean" | "select" | "image";
 
 export interface FieldConfig {
   key: string;
@@ -7,6 +7,8 @@ export interface FieldConfig {
   required?: boolean;
   options?: string[];
   hint?: string;
+  /** Supabase storage bucket for file uploads when type is image */
+  bucket?: string;
 }
 
 export interface TableConfig {
@@ -56,7 +58,14 @@ export const adminCrudConfigs: Record<AdminCrudTable, TableConfig> = {
     fields: [
       { key: "title", label: "Title", required: true },
       { key: "category", label: "Category" },
-      { key: "image_url", label: "Image URL", required: true },
+      {
+        key: "image_url",
+        label: "Image",
+        type: "image",
+        required: true,
+        bucket: "flyers",
+        hint: "Choose a file to upload, or paste an image link.",
+      },
       { key: "link", label: "Link" },
       { key: "display_order", label: "Display order", type: "number" },
       { key: "active", label: "Active", type: "boolean" },
@@ -80,7 +89,13 @@ export const adminCrudConfigs: Record<AdminCrudTable, TableConfig> = {
       { key: "airline", label: "Airline" },
       { key: "hotel_makkah", label: "Makkah hotel" },
       { key: "hotel_madinah", label: "Madinah hotel" },
-      { key: "image_url", label: "Image URL" },
+      {
+        key: "image_url",
+        label: "Image",
+        type: "image",
+        bucket: "packages",
+        hint: "Choose a file to upload, or paste an image link.",
+      },
       { key: "featured", label: "Featured", type: "boolean" },
       {
         key: "status",
@@ -104,7 +119,13 @@ export const adminCrudConfigs: Record<AdminCrudTable, TableConfig> = {
       { key: "price", label: "Price", type: "number" },
       { key: "currency", label: "Currency" },
       { key: "duration", label: "Duration", required: true },
-      { key: "image_url", label: "Image URL" },
+      {
+        key: "image_url",
+        label: "Image",
+        type: "image",
+        bucket: "packages",
+        hint: "Choose a file to upload, or paste an image link.",
+      },
       { key: "featured", label: "Featured", type: "boolean" },
       {
         key: "status",
@@ -125,7 +146,13 @@ export const adminCrudConfigs: Record<AdminCrudTable, TableConfig> = {
       { key: "slug", label: "Slug", required: true },
       { key: "excerpt", label: "Excerpt", type: "textarea" },
       { key: "content", label: "Content", type: "textarea", required: true },
-      { key: "cover_image_url", label: "Cover image URL" },
+      {
+        key: "cover_image_url",
+        label: "Cover image",
+        type: "image",
+        bucket: "blog",
+        hint: "Choose a file to upload, or paste an image link.",
+      },
       { key: "category", label: "Category" },
       { key: "author", label: "Author" },
       { key: "published", label: "Published", type: "boolean" },
@@ -138,7 +165,14 @@ export const adminCrudConfigs: Record<AdminCrudTable, TableConfig> = {
     ascending: true,
     fields: [
       { key: "title", label: "Title" },
-      { key: "image_url", label: "Image URL", required: true },
+      {
+        key: "image_url",
+        label: "Image",
+        type: "image",
+        required: true,
+        bucket: "gallery",
+        hint: "Choose a file to upload, or paste an image link.",
+      },
       { key: "alt", label: "Alt text" },
       { key: "category", label: "Category" },
       { key: "display_order", label: "Display order", type: "number" },
@@ -153,7 +187,13 @@ export const adminCrudConfigs: Record<AdminCrudTable, TableConfig> = {
     fields: [
       { key: "code", label: "Code", required: true },
       { key: "name", label: "Name", required: true },
-      { key: "logo_url", label: "Logo URL" },
+      {
+        key: "logo_url",
+        label: "Logo",
+        type: "image",
+        bucket: "airlines",
+        hint: "Choose a file to upload, or paste an image link.",
+      },
       { key: "active", label: "Active", type: "boolean" },
     ],
   },

@@ -17,6 +17,7 @@ import {
   type FieldConfig,
   type TableConfig,
 } from "@/lib/admin/crud-tables";
+import { AdminImageField } from "@/components/admin/AdminImageField";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 interface AdminCrudManagerProps {
@@ -155,8 +156,23 @@ export function AdminCrudManager({ title, description, table }: AdminCrudManager
     loadRows();
   }
 
+  function imageFieldKey(cfg: TableConfig) {
+    return cfg.fields.find((field) => field.type === "image")?.key;
+  }
+
   function renderField(field: FieldConfig) {
     const id = `${table}-${field.key}`;
+    if (field.type === "image") {
+      return (
+        <AdminImageField
+          id={id}
+          value={String(form[field.key] ?? "")}
+          required={field.required}
+          bucket={field.bucket || "uploads"}
+          onChange={(url) => setForm({ ...form, [field.key]: url })}
+        />
+      );
+    }
     if (field.type === "textarea") {
       return (
         <Textarea
@@ -272,12 +288,22 @@ export function AdminCrudManager({ title, description, table }: AdminCrudManager
               <p className="p-6 text-muted-foreground">Loading...</p>
             ) : filtered.length ? (
               <div className="divide-y">
-                {filtered.map((row) => (
+                {filtered.map((row) => {
+                  const thumbKey = imageFieldKey(config);
+                  const thumb = thumbKey ? String(row[thumbKey] || "") : "";
+                  return (
                   <div
                     key={row.id}
                     className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="min-w-0 space-y-1">
+                    <div className="flex min-w-0 items-start gap-3">
+                      {thumb ? (
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border bg-slate-50">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={thumb} alt="" className="h-full w-full object-cover" />
+                        </div>
+                      ) : null}
+                      <div className="min-w-0 space-y-1">
                       <p className="truncate font-medium text-navy">
                         {String(row[config.titleKey] || row.id)}
                       </p>
@@ -292,6 +318,7 @@ export function AdminCrudManager({ title, description, table }: AdminCrudManager
                           <span className="rounded bg-gold/15 px-2 py-0.5 text-[#8a6a20]">featured</span>
                         ) : null}
                       </div>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outlineDark" onClick={() => startEdit(row)}>
@@ -302,7 +329,8 @@ export function AdminCrudManager({ title, description, table }: AdminCrudManager
                       </Button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="p-6 text-muted-foreground">
