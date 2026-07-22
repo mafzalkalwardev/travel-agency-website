@@ -272,8 +272,10 @@ export interface Booking {
   quoted_price: number;
   currency: string;
   travelline_booking_ref?: string;
+  travelline_order_id?: string | null;
   travelline_status?: "RESERVED" | "CONFIRMED" | "CANCELLED" | null;
   travelline_confirmed_at?: string | null;
+  travelline_status_checked_at?: string | null;
   supplier_hold_status?: SupplierHoldStatus | null;
   supplier_hold_error?: string;
   supplier_hold_attempts?: number;

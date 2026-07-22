@@ -358,6 +358,145 @@ export class TravelLineClient {
       `Supplier returned ${res.status}`;
     return { success: false, error: String(errMsg), raw: json };
   }
+
+  /**
+   * List agency bookings from Travel Line (admin or public booking APIs).
+   * Used to sync RESERVED/CONFIRMED/CANCELLED and to PUT status updates.
+   */
+  async listBookings(): Promise<Record<string, unknown>[]> {
+    const session = await this.ensureSession();
+    if (!session) return [];
+
+    const cookie = sessionToCookieHeader(session);
+    const endpoints = [
+      `${this.config.adminUrl}/api/bookings`,
+      `${this.config.baseUrl}/api/booking?limit=200`,
+      `${this.config.baseUrl}/api/bookings`,
+    ];
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          headers: { Accept: "application/json", Cookie: cookie },
+        });
+        if (!res.ok) continue;
+        const data = (await res.json()) as
+          | { bookings?: Record<string, unknown>[] }
+          | Record<string, unknown>[];
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data.bookings)
+            ? data.bookings
+            : [];
+        if (list.length) return list;
+      } catch {
+        /* try next */
+      }
+    }
+    return [];
+  }
+
+  async findBooking(orderRef: string): Promise<Record<string, unknown> | null> {
+    const needle = orderRef.trim().toLowerCase();
+    if (!needle) return null;
+    const bookings = await this.listBookings();
+    return (
+      bookings.find((b) => {
+        const candidates = [b.orderId, b.bookingRef, b._id, b.id]
+          .filter(Boolean)
+          .map((v) => String(v).toLowerCase());
+        return candidates.includes(needle);
+      }) || null
+    );
+  }
+
+  /**
+   * Confirm or cancel a Travel Line hold (PUT /api/bookings with status).
+   * Same mechanism used by scripts/cancel-test-holds.ts for CANCELLED.
+   */
+  async updateBookingStatus(
+    orderRef: string,
+    status: "CONFIRMED" | "CANCELLED"
+  ): Promise<{ ok: boolean; booking?: Record<string, unknown>; error?: string; raw?: unknown }> {
+    const session = await this.ensureSession();
+    if (!session) {
+      return { ok: false, error: "Supplier login unavailable" };
+    }
+
+    const existing = await this.findBooking(orderRef);
+    if (!existing) {
+      return { ok: false, error: `Travel Line booking not found for ${orderRef}` };
+    }
+
+    const current = String(existing.status || "").toUpperCase();
+    if (current === status) {
+      return { ok: true, booking: existing };
+    }
+    if (current === "CANCELLED" && status === "CONFIRMED") {
+      return { ok: false, error: "Travel Line booking is already cancelled", booking: existing };
+    }
+
+    const cookie = sessionToCookieHeader(session);
+    const payload = { ...existing, status };
+    const endpoints = [
+      `${this.config.adminUrl}/api/bookings`,
+      `${this.config.baseUrl}/api/bookings`,
+      `${this.config.baseUrl}/api/booking`,
+    ];
+
+    let lastError = "Supplier status update failed";
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Cookie: cookie,
+          },
+          body: JSON.stringify(payload),
+        });
+        const text = await res.text();
+        let json: Record<string, unknown> = {};
+        try {
+          json = JSON.parse(text) as Record<string, unknown>;
+        } catch {
+          /* ignore */
+        }
+
+        if (!res.ok) {
+          lastError =
+            String(json.message || json.error || text.slice(0, 160) || `HTTP ${res.status}`);
+          continue;
+        }
+
+        const refreshed = (await this.findBooking(orderRef)) || {
+          ...existing,
+          status,
+        };
+        const next = String(refreshed.status || status).toUpperCase();
+        if (next === status || next.includes(status)) {
+          return { ok: true, booking: refreshed, raw: json };
+        }
+
+        // Some APIs wrap OK in body.status / message without updating list immediately
+        const inner = (json.body as Record<string, unknown> | undefined) || json;
+        if (
+          Number(inner.status) === 200 ||
+          String(inner.message || "").toLowerCase().includes("success") ||
+          String(inner.status || "").toUpperCase() === status
+        ) {
+          return { ok: true, booking: { ...existing, status }, raw: json };
+        }
+
+        lastError = `Travel Line still reports ${next || "unknown"} after update`;
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : "Supplier request failed";
+      }
+    }
+
+    return { ok: false, error: lastError, booking: existing || undefined };
+  }
 }
 
 let clientInstance: TravelLineClient | null = null;

@@ -35,6 +35,12 @@ const holdBadge: Record<string, string> = {
   pending: "bg-purple-100 text-purple-800",
 };
 
+const tlStatusBadge: Record<string, string> = {
+  RESERVED: "bg-amber-100 text-amber-900",
+  CONFIRMED: "bg-emerald-100 text-emerald-900",
+  CANCELLED: "bg-gray-200 text-gray-700",
+};
+
 function formatPassengerDetails(details: Record<string, unknown> | null | undefined) {
   if (!details) return null;
   const names = details.names ? String(details.names) : null;
@@ -83,20 +89,25 @@ export default function AdminBookingsPage() {
     [bookings]
   );
 
-  async function updateStatus(id: string, status: BookingStatus) {
+  async function updateStatus(id: string, status: BookingStatus, forceLocal = false) {
     const res = await fetch(`/api/admin/bookings/${id}/`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, force_local: forceLocal || undefined }),
     });
+    const json = await res.json().catch(() => ({}));
     if (!res.ok) {
-      toast.error("Failed to update booking");
+      toast.error(
+        (json as { error?: string }).error ||
+          "Travel Line confirm failed — open Travel Line or retry"
+      );
+      load();
       return;
     }
-    const json = await res.json();
+    const tl = (json as { travellineStatus?: string }).travellineStatus;
     toast.success(
-      json.status === "confirmed"
-        ? "Payment confirmed — booking complete"
+      (json as { status?: string }).status === "confirmed"
+        ? `Confirmed on Travel Line${tl ? ` (${tl})` : ""}`
         : "Booking updated"
     );
     load();
@@ -109,6 +120,17 @@ export default function AdminBookingsPage() {
       toast.error(json.error || "Supplier hold retry failed");
     } else {
       toast.success(`Hold active: ${json.bookingRef || "OK"}`);
+    }
+    load();
+  }
+
+  async function syncTravelLine(id: string) {
+    const res = await fetch(`/api/admin/bookings/${id}/sync-supplier/`, { method: "POST" });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error((json as { error?: string }).error || "Could not sync Travel Line status");
+    } else {
+      toast.success(`Travel Line: ${(json as { travellineStatus?: string }).travellineStatus || "synced"}`);
     }
     load();
   }
@@ -148,7 +170,7 @@ export default function AdminBookingsPage() {
         <div>
           <h1 className="font-heading text-2xl font-bold text-navy">Bookings</h1>
           <p className="text-sm text-muted-foreground">
-            Travel Line holds on submit · confirm payment after WhatsApp · mark complete here
+            Hold seats on Travel Line at book → WhatsApp payment → Confirm payment confirms the real ticket on Travel Line
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
@@ -188,7 +210,7 @@ export default function AdminBookingsPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {(["all", "pending_payment", "payment_confirmed", "confirmed", "failed", "cancelled"] as const).map(
+        {(["all", "pending_payment", "booking_in_progress", "payment_confirmed", "confirmed", "failed", "cancelled"] as const).map(
           (s) => (
             <Button
               key={s}
@@ -235,6 +257,11 @@ export default function AdminBookingsPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Badge className={statusColors[b.status]}>{b.status.replace(/_/g, " ")}</Badge>
+                      {b.travelline_status && (
+                        <Badge className={tlStatusBadge[b.travelline_status] || "bg-gray-100"}>
+                          TL: {b.travelline_status}
+                        </Badge>
+                      )}
                       {b.supplier_hold_status && (
                         <Badge className={holdBadge[b.supplier_hold_status] || "bg-gray-100"}>
                           hold: {b.supplier_hold_status}
@@ -271,18 +298,25 @@ export default function AdminBookingsPage() {
                     </p>
                   </div>
 
-                  {b.travelline_booking_ref && (
+                  {(b.travelline_booking_ref || b.travelline_order_id) && (
                     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
                       <span className="font-medium text-emerald-900">Travel Line ref:</span>
-                      <code className="text-emerald-800">{b.travelline_booking_ref}</code>
+                      <code className="text-emerald-800">
+                        {b.travelline_order_id || b.travelline_booking_ref}
+                      </code>
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-7 text-xs"
-                        onClick={() => copyRef(b.travelline_booking_ref!)}
+                        onClick={() => copyRef((b.travelline_order_id || b.travelline_booking_ref)!)}
                       >
                         Copy
                       </Button>
+                      {b.travelline_confirmed_at && (
+                        <span className="text-xs text-emerald-800">
+                          confirmed {new Date(b.travelline_confirmed_at).toLocaleString()}
+                        </span>
+                      )}
                     </div>
                   )}
 
@@ -328,8 +362,22 @@ export default function AdminBookingsPage() {
                     </a>
                     {b.status === "pending_payment" && (
                       <Button size="sm" variant="navy" onClick={() => updateStatus(b.id, "payment_confirmed")}>
-                        Mark payment confirmed
+                        Confirm payment on Travel Line
                       </Button>
+                    )}
+                    {b.status === "booking_in_progress" && (
+                      <>
+                        <Button size="sm" variant="navy" onClick={() => updateStatus(b.id, "payment_confirmed")}>
+                          Retry Travel Line confirm
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateStatus(b.id, "payment_confirmed", true)}
+                        >
+                          Mark paid locally only
+                        </Button>
+                      </>
                     )}
                     {b.supplier_hold_status === "failed" && b.status !== "cancelled" && (
                       <Button
@@ -340,7 +388,14 @@ export default function AdminBookingsPage() {
                         Retry supplier hold
                       </Button>
                     )}
-                    {(b.status === "pending_payment" || b.status === "payment_confirmed") && (
+                    {(b.travelline_booking_ref || b.travelline_order_id) && (
+                      <Button size="sm" variant="outline" onClick={() => syncTravelLine(b.id)}>
+                        Sync Travel Line status
+                      </Button>
+                    )}
+                    {(b.status === "pending_payment" ||
+                      b.status === "payment_confirmed" ||
+                      b.status === "booking_in_progress") && (
                       <Button size="sm" variant="outline" onClick={() => updateStatus(b.id, "cancelled")}>
                         Cancel
                       </Button>
