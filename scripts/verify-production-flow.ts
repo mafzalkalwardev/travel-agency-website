@@ -16,14 +16,22 @@ import { isTravelLineConfigured } from "@/lib/travelline/env";
 
 loadEnv();
 
-const PRODUCTION_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://al-qibla-air-services.vercel.app";
+const PRODUCTION_URL = (
+  process.env.VERIFY_SITE_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://flywithalqibla.com"
+).replace(/\/$/, "");
+// Prefer the public production host for this check when local .env points at localhost.
+const SITE_CHECK_URL = PRODUCTION_URL.includes("localhost")
+  ? "https://flywithalqibla.com"
+  : PRODUCTION_URL;
 
 async function checkProductionSite() {
   try {
-    const res = await fetch(`${PRODUCTION_URL}/available-tickets/`, { redirect: "follow" });
+    const res = await fetch(`${SITE_CHECK_URL}/available-tickets/`, { redirect: "follow" });
     const html = await res.text();
-    const hasTickets = /group tickets|Available Tickets|Book Request/i.test(html);
-    return { ok: res.ok, status: res.status, hasTickets, url: PRODUCTION_URL };
+    const hasTickets = /group tickets|Available Tickets|Book Request|Book Now/i.test(html);
+    return { ok: res.ok, status: res.status, hasTickets, url: SITE_CHECK_URL };
   } catch (error) {
     return {
       ok: false,
@@ -70,7 +78,7 @@ async function testSupplierHold(externalId: string, price: number) {
       customer_name: "Production Verify Test",
       customer_phone: "03359945722",
       customer_email: "verify@alqibla.test",
-      passenger_details: { names: "VERIFY TEST" },
+      passenger_details: { names: "VERIFY TEST", passportNo: "AB1234567", nationality: "PK", dob: "1990-01-01" },
       passengers: 1,
       quoted_price: price,
       currency: "PKR",
@@ -87,7 +95,7 @@ async function testSupplierHold(externalId: string, price: number) {
     externalProductId: externalId,
     productType: "ticket",
     passengers: 1,
-    passengerDetails: { names: "VERIFY TEST", nationality: "PK" },
+    passengerDetails: { names: "VERIFY TEST", passportNo: "AB1234567", nationality: "PK", dob: "1990-01-01" },
     quotedPrice: price,
     currency: "PKR",
   });

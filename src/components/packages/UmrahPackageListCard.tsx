@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Building2, Clock, Hotel, Star, Users } from "lucide-react";
+import { Building2, Clock, Hotel, Plane, Star, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,16 +34,21 @@ function airlineCode(name?: string): string {
 
 function formatDeparture(pkg: TravelPackage): string {
   if (pkg.departureDate && pkg.departureTime) {
-    const date = new Date(`${pkg.departureDate}T${pkg.departureTime}`);
+    // Supplier wall times are Asia/Karachi — pin offset so SSR (UTC host) and
+    // the browser never parse the same stamp as different local times.
+    const time =
+      pkg.departureTime.length === 5 ? `${pkg.departureTime}:00` : pkg.departureTime;
+    const date = new Date(`${pkg.departureDate}T${time}+05:00`);
     if (!Number.isNaN(date.getTime())) {
-      return date.toLocaleString("en-PK", {
+      return new Intl.DateTimeFormat("en-GB", {
         day: "2-digit",
         month: "short",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: true,
         timeZone: "Asia/Karachi",
-      });
+      }).format(date);
     }
   }
   if (pkg.departureDate) return formatTicketDate(pkg.departureDate);
@@ -57,11 +62,17 @@ function durationLabel(pkg: TravelPackage): string {
   return pkg.duration;
 }
 
+function detailHighlights(pkg: TravelPackage): string[] {
+  return pkg.highlights.filter((h) => !/^makkah:\s*/i.test(h) && !/^madinah:\s*/i.test(h));
+}
+
 export function UmrahPackageListCard({ pkg }: UmrahPackageListCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const code = airlineCode(pkg.airline);
   const soldOut = pkg.status === "sold_out" || pkg.seatsLeft === 0;
+  const inclusions = detailHighlights(pkg);
+  const toCity = "JED";
 
   return (
     <>
@@ -79,7 +90,7 @@ export function UmrahPackageListCard({ pkg }: UmrahPackageListCardProps) {
                     <h3 className="font-heading text-lg font-bold text-navy">
                       {pkg.departureCity ? `${pkg.departureCity.slice(0, 3).toUpperCase()}` : "PKG"}
                       <span className="mx-2 text-muted-foreground">→</span>
-                      JED
+                      {toCity}
                     </h3>
                     {pkg.flightNumber && (
                       <Badge variant="outline" className="font-mono text-xs">
@@ -112,13 +123,17 @@ export function UmrahPackageListCard({ pkg }: UmrahPackageListCardProps) {
                         <span>
                           <span className="font-medium text-navy">{pkg.hotelMakkah}</span>
                           {pkg.distanceFromHaram ? ` · ${pkg.distanceFromHaram}` : ""}
+                          {pkg.makkahNights != null ? ` · ${pkg.makkahNights}N` : ""}
                         </span>
                       </p>
                     )}
                     {pkg.hotelMadinah && (
                       <p className="flex items-start gap-2">
                         <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
-                        <span className="font-medium text-navy">{pkg.hotelMadinah}</span>
+                        <span className="font-medium text-navy">
+                          {pkg.hotelMadinah}
+                          {pkg.madinahNights != null ? ` · ${pkg.madinahNights}N` : ""}
+                        </span>
                       </p>
                     )}
                   </div>
@@ -168,14 +183,58 @@ export function UmrahPackageListCard({ pkg }: UmrahPackageListCardProps) {
 
             {expanded && (
               <div className="border-t border-border/40 bg-secondary/20 p-4 text-sm">
-                <p className="font-medium text-navy">{pkg.title}</p>
-                {pkg.highlights.length > 0 && (
-                  <ul className="mt-2 list-inside list-disc text-muted-foreground">
-                    {pkg.highlights.map((h) => (
-                      <li key={h}>{h}</li>
-                    ))}
-                  </ul>
-                )}
+                <div className="flex flex-wrap gap-2">
+                  {pkg.visa ? (
+                    <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                      Visa processing
+                    </Badge>
+                  ) : null}
+                  {pkg.transport ? (
+                    <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-800">
+                      Transport
+                    </Badge>
+                  ) : null}
+                  {pkg.ziyarat ? (
+                    <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+                      Ziyarat
+                    </Badge>
+                  ) : null}
+                </div>
+
+                <ul className="mt-3 space-y-1.5 text-muted-foreground">
+                  {(pkg.returnFlightNumber || pkg.returnDate) && (
+                    <li className="flex items-start gap-2">
+                      <Plane className="mt-0.5 h-3.5 w-3.5 shrink-0 text-navy" />
+                      <span>
+                        Return
+                        {pkg.returnFlightNumber ? ` ${pkg.returnFlightNumber}` : ""}
+                        {pkg.returnDate ? ` · ${formatTicketDate(pkg.returnDate)}` : ""}
+                      </span>
+                    </li>
+                  )}
+                  {pkg.departureBaggage && (
+                    <li>Baggage: {pkg.departureBaggage}</li>
+                  )}
+                  {pkg.makkahNights != null && pkg.madinahNights != null && (
+                    <li>
+                      Nights: {pkg.makkahNights} Makkah · {pkg.madinahNights} Madinah
+                    </li>
+                  )}
+                  {pkg.shortDescription && <li>{pkg.shortDescription}</li>}
+                  {inclusions.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
+
+                {!pkg.returnFlightNumber &&
+                  !pkg.departureBaggage &&
+                  !pkg.shortDescription &&
+                  inclusions.length === 0 &&
+                  !pkg.visa &&
+                  !pkg.transport &&
+                  !pkg.ziyarat && (
+                    <p className="mt-2 text-muted-foreground">Package details sync with the next inventory refresh.</p>
+                  )}
               </div>
             )}
           </CardContent>
