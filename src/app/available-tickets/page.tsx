@@ -7,6 +7,10 @@ import { PAGE_HEROES } from "@/lib/page-heroes";
 import { SITE } from "@/lib/constants";
 import { dataProvider } from "@/lib/data-provider";
 
+// Live inventory — must not be frozen at build time (previously served Jul-17
+// tickets on Jul-22 because the page was statically prerendered).
+export const dynamic = "force-dynamic";
+
 export const metadata = createPageMetadata({
   title: "Available Tickets",
   description: `Browse group flight tickets and fares from ${SITE.name} — PIA, Saudia, Emirates, Airblue and more.`,

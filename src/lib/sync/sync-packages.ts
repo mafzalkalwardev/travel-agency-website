@@ -48,7 +48,18 @@ export async function syncTravelLinePackages(): Promise<PackageSyncResult> {
 
   try {
     const { markupPercent } = getTravelLineConfig();
-    const items = await scrapeTravelLineUmrahItems();
+    // Prefer the authenticated HTTP client path first — same source TravelLine
+    // uses for package inventory — then fall back to the scraper.
+    let items: Awaited<ReturnType<typeof scrapeTravelLineUmrahItems>> = [];
+    try {
+      const { TravelLineClient } = await import("@/lib/travelline/client");
+      items = await new TravelLineClient().fetchUmrahApiItems();
+    } catch {
+      items = await scrapeTravelLineUmrahItems();
+    }
+    if (!items.length) {
+      items = await scrapeTravelLineUmrahItems();
+    }
     const umrah = items.map((item) => mapTravelLineUmrahApiItem(item, markupPercent));
     const tours: Record<string, unknown>[] = [];
     const promos = announcementsFromUmrahItems(items).map((a) => ({
@@ -89,6 +100,12 @@ export async function syncTravelLinePackages(): Promise<PackageSyncResult> {
       message: `Synced ${umrah.length} umrah, ${tours.length} tours, ${promos.length} promos (${umrahResult.created + tourResult.created} new, ${umrahResult.updated + tourResult.updated} changed, ${umrahResult.deactivated + tourResult.deactivated} sold out, ${(umrahResult.skipped || 0) + (tourResult.skipped || 0)} incomplete skipped)`,
     };
   } catch (e) {
+    const message =
+      e && typeof e === "object" && "message" in e && typeof (e as { message: unknown }).message === "string"
+        ? (e as { message: string }).message
+        : e instanceof Error
+          ? e.message
+          : "Package sync failed";
     return {
       provider: "travelline",
       status: "failed",
@@ -96,7 +113,7 @@ export async function syncTravelLinePackages(): Promise<PackageSyncResult> {
       toursProcessed: 0,
       promosProcessed: 0,
       changes: [],
-      message: e instanceof Error ? e.message : "Package sync failed",
+      message,
     };
   }
 }

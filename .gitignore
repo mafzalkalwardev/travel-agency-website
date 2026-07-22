@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local automation scratch
+.tmp-supabase-auth/
+.tmp-edge-supabase-profile/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

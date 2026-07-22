@@ -56,8 +56,10 @@ export async function upsertTickets(
   const rowsToInsert: Record<string, unknown>[] = [];
   const rowsToUpdate: Record<string, unknown>[] = [];
 
+  const todayPkt = pakistanToday();
   for (const t of validTickets) {
     seenIds.add(t.externalId);
+    const isDeparted = Boolean(t.date && t.date < todayPkt);
     const row = {
       external_id: t.externalId,
       source_provider: provider,
@@ -77,7 +79,7 @@ export async function upsertTickets(
       price: t.price,
       currency: t.currency,
       seats_left: t.seatsLeft,
-      status: t.status,
+      status: isDeparted ? "sold_out" : t.status,
       baggage: t.baggage ?? null,
       meal: t.meal ?? null,
       trip_type: t.tripType ?? "oneway",
@@ -85,7 +87,8 @@ export async function upsertTickets(
       group_category: t.groupCategory ?? null,
       aircraft: t.aircraft ?? null,
       image_url: t.imageUrl ?? null,
-      active: t.status !== "sold_out" && t.status !== "cancelled",
+      // Never keep a past-departure flight bookable, even if TravelLine still lists seats.
+      active: !isDeparted && t.status !== "sold_out" && t.status !== "cancelled",
       last_updated: new Date().toISOString(),
       raw_payload: t,
     };
@@ -167,18 +170,38 @@ export async function upsertTickets(
 async function deactivateDepartedTickets(
   supabase: ReturnType<typeof createAdminClient>
 ): Promise<number> {
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: departedRows } = await supabase
+  // Pakistan time (UTC+5), not raw UTC — flights are PKT-scheduled, and
+  // comparing against UTC's date could flag/miss departures near
+  // midnight depending on which side of the UTC/PKT day boundary the
+  // sync happens to run in.
+  const today = pakistanToday();
+  const { data: departedRows, error } = await supabase
     .from("tickets")
     .select("id")
     .eq("active", true)
     .lt("departure_date", today);
 
+  if (error) {
+    console.error("[sync] deactivateDepartedTickets query failed:", error.message);
+    return 0;
+  }
+
   const ids = (departedRows ?? []).map((r) => r.id);
   if (!ids.length) return 0;
 
-  await supabase.from("tickets").update({ active: false }).in("id", ids);
+  await supabase
+    .from("tickets")
+    .update({
+      active: false,
+      status: "sold_out",
+      last_updated: new Date().toISOString(),
+    })
+    .in("id", ids);
   return ids.length;
+}
+
+function pakistanToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
 }
 
 export async function upsertUmrahPackages(
@@ -289,16 +312,17 @@ async function upsertPackageRows(
     const externalId = String(row.external_id);
     seenIds.add(externalId);
     const existing = existingByExternalId.get(externalId);
+    const withId = { ...row, id: existing?.id ?? randomUUID() };
 
     if (existing) {
-      const fieldChanges = diffFields(existing, row, packageDiffFields);
+      const fieldChanges = diffFields(existing, withId, packageDiffFields);
       if (Object.keys(fieldChanges).length) {
         updated++;
-        rowsToUpsert.push({ ...row, id: existing.id });
+        rowsToUpsert.push(withId);
         changes.push({
           provider,
           entityType,
-          entityId: existing.id,
+          entityId: String(existing.id),
           externalId,
           changeType: "updated",
           fieldChanges,
@@ -306,13 +330,14 @@ async function upsertPackageRows(
       }
     } else {
       created++;
-      rowsToUpsert.push(row);
+      rowsToUpsert.push(withId);
       changes.push({
         provider,
         entityType,
+        entityId: String(withId.id),
         externalId,
         changeType: "created",
-        newValue: row,
+        newValue: withId,
       });
     }
   }
@@ -358,7 +383,15 @@ async function batchUpsert(
 ) {
   if (!rows.length) return;
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE);
+    const batch = rows.slice(i, i + BATCH_SIZE).map((row) => {
+      // Never send an explicit null id — Postgres rejects it even when the
+      // column has a default. New rows must carry a generated UUID.
+      if (row.id == null) {
+        const { id: _omit, ...rest } = row;
+        return { ...rest, id: randomUUID() };
+      }
+      return row;
+    });
     const { error } = await supabase.from(table).upsert(batch);
     if (error) throw error;
   }
@@ -390,7 +423,9 @@ const ticketDiffFields = [
   "aircraft",
   "image_url",
   "active",
-  "raw_payload",
+  // Intentionally omit raw_payload — TravelLine refreshes supplierUpdatedAt
+  // on every scrape, which previously marked ALL tickets as "changed" every
+  // sync, flooded sync_changes, and made Admin "Sync Now" hang/timeout.
 ];
 
 const packageDiffFields = [

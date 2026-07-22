@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { runTicketSync } from "@/lib/sync/run-ticket-sync";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+// Bumped from 120s: sync duration was regularly hitting that ceiling as
+// inventory grew, causing FUNCTION_INVOCATION_TIMEOUT — which hard-kills
+// the process before the lock-release `finally` block can run. See
+// docs/REDESIGN.md §7 and the fetchTravelLineGroupFlights parallelization
+// in this same fix, which should keep real runs well under this ceiling.
+export const maxDuration = 180;
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");

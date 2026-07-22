@@ -28,7 +28,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
       - name: Trigger ticket sync
         run: |
@@ -36,13 +36,21 @@ jobs:
           # 308-redirects — hit the trailing-slash URL directly rather
           # than relying on curl -L (which previously wasn't set here,
           # so the sync silently never ran despite a "successful" 3xx).
+          # --max-time 200 matches the route's maxDuration=180 with buffer.
           status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
-            --max-time 150 \
+            --max-time 200 \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             https://flywithalqibla.com/api/cron/sync-tickets/)
           echo "HTTP status: $status"
           cat /tmp/response.json
+          # Treat "already in progress" as success (overlap lock working).
+          # Fail only on real HTTP errors / timeouts.
           if [ "$status" -ge 400 ]; then
             echo "Sync request failed"
             exit 1
+          fi
+          # Surface skipped runs clearly in the Actions UI so a stuck lock
+          # is visible instead of looking like a healthy sync.
+          if grep -q '"status":"skipped"' /tmp/response.json; then
+            echo "::warning::Sync skipped — another run holds the lock. If this persists across consecutive schedules, the lock is likely stuck after a timeout."
           fi

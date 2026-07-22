@@ -10,6 +10,8 @@ import { formatPrice } from "@/lib/ticket-filters";
 import { dataProvider } from "@/lib/data-provider";
 import { SITE } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = createPageMetadata({
   title: "Explore by Destination",
   description: `Explore Umrah, group tickets, visas and tours by destination with ${SITE.name}.`,

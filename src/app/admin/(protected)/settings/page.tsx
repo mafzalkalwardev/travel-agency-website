@@ -15,6 +15,7 @@ interface AdminStatus {
   travellineSync: boolean;
   email: boolean;
   emailFrom: string | null;
+  authFrom?: string | null;
   emailAdmin: string;
   emailSandbox?: boolean;
   lastSync: { completed_at: string | null; status: string | null; message: string | null } | null;
@@ -135,13 +136,13 @@ export default function AdminSettingsPage() {
             />
             <StatusRow
               ok={status.email}
-              label="Booking emails (Resend)"
+              label="Company email (Resend)"
               detail={
                 status.email
                   ? status.emailSandbox
-                    ? `Sandbox: ${status.emailFrom} → ${status.emailAdmin} (customer mail routed to admin)`
-                    : `From ${status.emailFrom} → ${status.emailAdmin}`
-                  : "Set RESEND_API_KEY and BOOKING_FROM_EMAIL in Vercel env"
+                    ? `Sandbox: auth ${status.authFrom || status.emailFrom} · booking ${status.emailFrom} → ${status.emailAdmin}`
+                    : `Auth from ${status.authFrom || status.emailFrom} · Booking from ${status.emailFrom}`
+                  : "Set RESEND_API_KEY and AUTH_FROM_EMAIL=noreply@flywithalqibla.com (verified domain in Resend)"
               }
             />
             <Card>
@@ -227,16 +228,14 @@ export default function AdminSettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>Add these to Vercel production environment:</p>
+              <p>Live email (production):</p>
               <ul className="list-inside list-disc space-y-1 font-mono text-xs text-navy">
                 <li>RESEND_API_KEY</li>
-                <li>BOOKING_FROM_EMAIL (onboarding@resend.dev for test; custom domain when live)</li>
-                <li>BOOKING_ADMIN_EMAIL (must match your Resend account email in sandbox)</li>
-                <li>RESEND_SANDBOX_MODE=true until domain verified</li>
+                <li>AUTH_FROM_EMAIL=noreply@flywithalqibla.com</li>
+                <li>BOOKING_FROM_EMAIL=noreply@flywithalqibla.com</li>
+                <li>BOOKING_ADMIN_EMAIL (your inbox for booking alerts)</li>
+                <li>RESEND_SANDBOX_MODE=false</li>
               </ul>
-              <p className="pt-2 text-xs">
-                Live domain checklist: <code>docs/RESEND-LIVE-DOMAIN.md</code>
-              </p>
               <p className="pt-2">
                 Without Resend, bookings still work — customers receive WhatsApp redirect and admin sees bookings here.
               </p>

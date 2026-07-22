@@ -8,6 +8,9 @@ import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
 import { SITE } from "@/lib/constants";
 
+// Live Travel Line inventory — must not be frozen at build time.
+export const dynamic = "force-dynamic";
+
 export const metadata = createPageMetadata({
   title: "Umrah Packages",
   description: `Book Umrah packages with ${SITE.name} — live flights, hotels, and seat availability synced from Travel Line.`,

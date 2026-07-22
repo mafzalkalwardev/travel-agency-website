@@ -2,19 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Phone, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 
 interface SignupFormProps {
   nextPath: string;
 }
 
 export function SignupForm({ nextPath }: SignupFormProps) {
-  const router = useRouter();
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
@@ -32,41 +29,38 @@ export function SignupForm({ nextPath }: SignupFormProps) {
     setStatus("idle");
     setMessage("");
 
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: {
-          full_name: form.fullName,
+    try {
+      const res = await fetch("/api/account/signup/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: form.fullName,
           phone: form.phone,
-        },
-      },
-    });
-
-    if (error) {
-      setStatus("error");
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    if (data.user && data.session) {
-      await supabase.from("customer_profiles").upsert({
-        id: data.user.id,
-        email: form.email,
-        full_name: form.fullName,
-        phone: form.phone,
-        approval_status: "pending",
+          email: form.email,
+          password: form.password,
+          nextPath,
+        }),
       });
-      router.push(nextPath || "/account/");
-      router.refresh();
-      return;
-    }
+      const json = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
 
-    setStatus("success");
-    setMessage("Account created. Check your email to confirm your account, then sign in. An admin must approve your account before you can place bookings.");
-    setLoading(false);
+      if (!res.ok) {
+        setStatus("error");
+        setMessage(json.error || "Could not create your account.");
+        setLoading(false);
+        return;
+      }
+
+      setStatus("success");
+      setMessage(
+        json.message ||
+          "Account created. Check your email from Al Qibla Air Services to confirm your account, then sign in."
+      );
+    } catch {
+      setStatus("error");
+      setMessage("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -98,7 +92,7 @@ export function SignupForm({ nextPath }: SignupFormProps) {
         </p>
       )}
       <p className="flex items-start gap-2 rounded-xl border border-[#d8c7ad] bg-[#f5eee2] px-4 py-3 text-xs leading-5 text-[#725637]">
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /> Your details stay in one secure profile. Booking activates after administrator review.
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /> You will receive a verification email from Al Qibla Air Services. Booking activates after administrator review.
       </p>
       <Button type="submit" variant="primaryGold" className="h-13 w-full rounded-xl text-base shadow-lg shadow-gold/20" disabled={loading || status === "success"}>
         {loading ? "Creating your account..." : <>Create secure account <ArrowRight className="ml-2 h-4 w-4" /></>}

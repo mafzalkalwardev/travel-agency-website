@@ -8,6 +8,8 @@ import { SITE, TRUST_TEXT } from "@/lib/constants";
 import { CheckCircle } from "lucide-react";
 import { Plane, Sparkles, FileText, Hotel, Shield, Car, Building2, Palmtree, Users, Globe, type LucideIcon } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = createPageMetadata({
   title: "Services",
   description: `Travel services by ${SITE.name} — ticketing, Umrah, visas, hotels, insurance and corporate travel.`,

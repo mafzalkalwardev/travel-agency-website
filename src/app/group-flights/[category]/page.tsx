@@ -8,6 +8,8 @@ import { SITE } from "@/lib/constants";
 import { dataProvider } from "@/lib/data-provider";
 import { getExploreCategory } from "@/lib/travelline/categories";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ category: string }>;
 }

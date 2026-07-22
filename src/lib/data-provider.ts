@@ -423,7 +423,13 @@ function isDisplayableTicket(row: { from_code?: string; to_code?: string; extern
 }
 
 function filterDisplayableTickets<T extends Ticket>(tickets: T[]): T[] {
-  return tickets.filter((t) => isOutboundGroupTicket(t.from, t.to));
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi" }).format(new Date());
+  return tickets.filter((t) => {
+    if (!isOutboundGroupTicket(t.from, t.to)) return false;
+    // Hide already-departed flights even if a sync race left them active.
+    const date = String(t.date || "").slice(0, 10);
+    return !date || date >= today;
+  });
 }
 
 function mapTicket(row: Record<string, unknown>): Ticket {
