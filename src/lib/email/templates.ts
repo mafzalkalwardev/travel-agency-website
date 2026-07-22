@@ -163,3 +163,34 @@ export function accountPasswordResetCustomerHtml(params: {
   );
 }
 
+export function customerApprovedHtml(params: { fullName?: string }) {
+  const name = params.fullName?.trim() || "there";
+  return layout(
+    "Account approved",
+    `<h2 style="color:#1a2744">You're approved to book</h2>
+    <p>Hello ${name},</p>
+    <p>Good news — your <strong>${SITE.name}</strong> account is approved. You can now request group tickets, Umrah packages, and tours online.</p>
+    <p style="margin:28px 0">
+      <a href="${SITE.url}/available-tickets/" style="display:inline-block;background:#071b3a;color:#ffffff;padding:12px 22px;text-decoration:none;border-radius:8px;font-weight:bold">
+        Browse available tickets
+      </a>
+    </p>
+    <p style="font-size:13px;color:#666">Need help? WhatsApp us at ${SITE.whatsappNumber}.</p>`
+  );
+}
+
+export function customerRejectedHtml(params: { fullName?: string; notes?: string | null }) {
+  const name = params.fullName?.trim() || "there";
+  const notes = params.notes?.trim()
+    ? `<p><strong>Note from our team:</strong> ${params.notes.trim()}</p>`
+    : "";
+  return layout(
+    "Account update",
+    `<h2 style="color:#1a2744">Account review update</h2>
+    <p>Hello ${name},</p>
+    <p>We reviewed your <strong>${SITE.name}</strong> account and are unable to approve booking access at this time.</p>
+    ${notes}
+    <p>Please contact us on WhatsApp at ${SITE.whatsappNumber} if you have questions or want to resubmit details.</p>`
+  );
+}
+

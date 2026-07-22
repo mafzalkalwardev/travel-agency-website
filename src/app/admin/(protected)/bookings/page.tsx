@@ -113,6 +113,21 @@ export default function AdminBookingsPage() {
     load();
   }
 
+  async function resendEmails(id: string) {
+    const res = await fetch(`/api/admin/bookings/${id}/notify/`, { method: "POST" });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error((json as { error?: string }).error || "Failed to resend emails");
+      return;
+    }
+    toast.success(
+      (json as { template?: string }).template === "payment_confirmed"
+        ? "Payment confirmation emails resent"
+        : "Booking request emails resent"
+    );
+    load();
+  }
+
   function copyRef(ref: string) {
     navigator.clipboard.writeText(ref).then(() => toast.success("Copied to clipboard"));
   }
@@ -330,6 +345,10 @@ export default function AdminBookingsPage() {
                         Cancel
                       </Button>
                     )}
+                    <Button size="sm" variant="outline" onClick={() => resendEmails(b.id)}>
+                      <Mail className="mr-1.5 h-3.5 w-3.5" />
+                      Resend emails
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

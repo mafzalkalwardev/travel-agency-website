@@ -48,7 +48,12 @@ export default function AdminCustomersPage() {
       toast.error((json as { error?: string }).error || "Failed to update customer");
       return;
     }
-    toast.success(`Customer ${approvalStatus}`);
+    const emailed = Boolean((json as { emailSent?: boolean }).emailSent);
+    toast.success(
+      emailed
+        ? `Customer ${approvalStatus} — email sent`
+        : `Customer ${approvalStatus}`
+    );
     load();
   }
 

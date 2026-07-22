@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendCustomerApprovalEmail } from "@/lib/email/send-customer-approval";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/supabase/require-admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -25,6 +26,16 @@ export async function PATCH(
   }
 
   const supabase = createAdminClient();
+  const { data: existing } = await supabase
+    .from("customer_profiles")
+    .select("id, email, full_name, approval_status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!existing) {
+    return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+  }
+
   const patch = {
     approval_status: approvalStatus,
     approval_notes: approvalNotes ?? null,
@@ -36,5 +47,21 @@ export async function PATCH(
   const { error } = await supabase.from("customer_profiles").update(patch).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ success: true, approval_status: approvalStatus });
+  const statusChanged = existing.approval_status !== approvalStatus;
+  let emailSent = false;
+  if (statusChanged && (approvalStatus === "approved" || approvalStatus === "rejected") && existing.email) {
+    const result = await sendCustomerApprovalEmail({
+      email: existing.email,
+      fullName: existing.full_name,
+      status: approvalStatus,
+      notes: approvalNotes ?? null,
+    });
+    emailSent = result.ok;
+  }
+
+  return NextResponse.json({
+    success: true,
+    approval_status: approvalStatus,
+    emailSent,
+  });
 }
