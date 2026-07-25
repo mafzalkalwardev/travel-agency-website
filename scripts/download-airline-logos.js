@@ -26,6 +26,9 @@ const CURATED_OVERRIDES = {
   "9P": "https://storage.googleapis.com/sub-agents-logo/airline-logos/9p.png",
   // Keep flydubai mark consistent with inventory partner CDN.
   FZ: "https://storage.googleapis.com/sub-agents-logo/airline-logos/fz.png",
+  // OV was Estonian Air (defunct 2015); SalamAir now operates under OV.
+  // pics.avs.io still returns the old Estonian Air mark for this code.
+  OV: "https://storage.googleapis.com/sub-agents-logo/airline-logos/ov.png",
 };
 
 const EXPECTED_CARRIERS = {
@@ -34,6 +37,7 @@ const EXPECTED_CARRIERS = {
   FZ: "flydubai",
   G9: "Air Arabia",
   PA: "Airblue",
+  OV: "SalamAir",
 };
 
 const OUT = path.join(__dirname, "..", "public", "assets", "airlines");
