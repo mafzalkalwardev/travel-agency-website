@@ -8,17 +8,16 @@ import { Menu, X } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AccountNav } from "@/components/account/AccountNav";
-import { LOGO_NAV_PATH, SITE } from "@/lib/constants";
+import { LOGO_NAV_PATH, LOGO_PATH, SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { assetPath } from "@/lib/base-path";
 
 const MAIN_NAV = [
   { href: "/", label: "Home" },
-  { href: "/about/", label: "About" },
-  { href: "/available-tickets/", label: "Tickets" },
   { href: "/umrah-packages/", label: "Umrah" },
-  { href: "/destinations/", label: "Destinations" },
-  { href: "/gallery/", label: "Gallery" },
+  { href: "/destinations/", label: "Group Travels" },
+  { href: "/tours/", label: "Tours" },
+  { href: "/about/", label: "About" },
   { href: "/contact/", label: "Contact" },
 ] as const;
 
@@ -33,8 +32,6 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const isHome = pathname === "/" || pathname === "";
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -47,59 +44,42 @@ export function Header() {
       ? pathname === "/" || pathname === ""
       : pathname?.startsWith(href.replace(/\/$/, ""));
 
-  const transparent = isHome && !scrolled;
-
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-all duration-500",
-        transparent
-          ? "border-b border-transparent bg-transparent"
-          : "border-b border-white/10 bg-navy/85 shadow-[0_12px_40px_rgba(0,0,0,.28)] backdrop-blur-2xl"
+        "fixed inset-x-0 top-0 z-50 border-b bg-white transition-shadow duration-300",
+        scrolled
+          ? "border-slate-200 shadow-[0_6px_24px_rgba(15,32,66,.08)]"
+          : "border-slate-100"
       )}
     >
       <div className="container-wide">
-        <div
-          className={cn(
-            "mt-3 flex h-[64px] items-center justify-between gap-4 rounded-2xl px-3 transition-all duration-500 sm:px-4 lg:h-[68px]",
-            transparent
-              ? "border border-white/15 bg-white/8 shadow-[0_8px_32px_rgba(0,0,0,.12)] backdrop-blur-xl"
-              : "border border-white/10 bg-white/[0.04]"
-          )}
-        >
-          <Link href="/" className="group flex shrink-0 items-center gap-3">
+        <div className="flex h-[74px] items-center justify-between gap-4 lg:h-[86px]">
+          <Link href="/" className="group flex shrink-0 items-center" aria-label={SITE.name}>
             <Image
-              src={assetPath(LOGO_NAV_PATH)}
+              src={assetPath(LOGO_PATH)}
               alt={SITE.name}
-              width={56}
-              height={56}
-              className="h-11 w-11 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,.35)] transition group-hover:scale-[1.03] sm:h-12 sm:w-12"
+              width={248}
+              height={193}
+              className="h-12 w-auto object-contain transition group-hover:scale-[1.02] sm:h-14 lg:h-[64px]"
               unoptimized
               priority
             />
-            <div className="hidden min-w-0 md:block">
-              <p className="font-brand text-base font-bold leading-tight tracking-tight text-white lg:text-[17px]">
-                Al Qibla Air Services
-              </p>
-              <p className="text-xs font-medium tracking-[0.12em] text-gold-light/90 uppercase">
-                Travel Smart · Travel Safe
-              </p>
-            </div>
           </Link>
 
-          <nav className="hidden items-center gap-1 lg:flex">
+          <nav className="hidden items-center gap-0.5 lg:flex">
             {MAIN_NAV.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "relative rounded-lg px-3.5 py-2 text-base font-semibold tracking-wide transition-colors lg:text-[17px]",
-                  isActive(link.href) ? "text-gold" : "text-white/85 hover:text-white"
+                  "relative rounded-lg px-3.5 py-2 text-[15px] font-semibold tracking-wide transition-colors lg:text-base",
+                  isActive(link.href) ? "text-royal" : "text-navy/70 hover:text-navy"
                 )}
               >
                 {link.label}
                 {isActive(link.href) && (
-                  <span className="absolute inset-x-3 -bottom-0.5 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent" />
+                  <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-gradient-to-r from-transparent via-gold to-transparent" />
                 )}
               </Link>
             ))}
@@ -112,7 +92,7 @@ export function Header() {
               <SheetTrigger
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "icon" }),
-                  "h-10 w-10 text-white hover:bg-white/10 lg:hidden"
+                  "h-10 w-10 text-navy hover:bg-navy/5 lg:hidden"
                 )}
               >
                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -129,7 +109,7 @@ export function Header() {
                       alt=""
                       width={40}
                       height={40}
-                      className="h-10 w-10 object-contain"
+                      className="h-10 w-10 rounded-lg bg-white object-contain p-0.5"
                       unoptimized
                     />
                     {SITE.name}

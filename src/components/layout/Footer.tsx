@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  ArrowUp,
   ArrowUpRight,
   BadgeCheck,
   Clock,
@@ -21,15 +20,15 @@ import { LOGO_PATH, OFFICES, SITE, SOCIAL, TRUST_BADGES } from "@/lib/constants"
 const exploreLinks = [
   ["Available Tickets", "/available-tickets/"],
   ["Umrah Packages", "/umrah-packages/"],
+  ["Group Travels", "/destinations/"],
+  ["Tours", "/tours/"],
   ["Tour Packages", "/tour-packages/"],
   ["Corporate Travel", "/corporate-travel/"],
-  ["Destinations", "/destinations/"],
 ] as const;
 
 const companyLinks = [
   ["About Al Qibla", "/about/"],
   ["Our Services", "/services/"],
-  ["Gallery", "/gallery/"],
   ["Contact Us", "/contact/"],
 ] as const;
 
@@ -52,14 +51,14 @@ export function Footer() {
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-royal/20 blur-3xl" />
         <GsapReveal
           y={16}
-          className="container-wide relative flex flex-col gap-6 py-10 lg:flex-row lg:items-center lg:justify-between lg:py-12"
+          className="container-wide relative flex flex-col gap-5 py-7 lg:flex-row lg:items-center lg:justify-between lg:py-8"
         >
           <div className="max-w-xl">
             <p className="text-xs font-bold uppercase tracking-[0.28em] text-gold">Your journey starts here</p>
-            <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="mt-2 font-heading text-2xl font-bold tracking-tight sm:text-3xl">
               Travel with a team that stays with you.
             </h2>
-            <p className="mt-3 text-sm leading-6 text-white/60">
+            <p className="mt-2 text-sm leading-6 text-white/60">
               Flights, Umrah, visas, hotels and group travel — handled by one accountable travel partner.
             </p>
           </div>
@@ -68,13 +67,13 @@ export function Footer() {
               href={SITE.whatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-110"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-110"
             >
               <WhatsAppIcon className="h-4 w-4" /> WhatsApp us
             </a>
             <Link
               href="/inquiry/"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 font-semibold transition hover:-translate-y-0.5 hover:border-gold/40 hover:bg-white/10"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 font-semibold transition hover:-translate-y-0.5 hover:border-gold/40 hover:bg-white/10"
             >
               Plan a journey <ArrowRight className="h-4 w-4" />
             </Link>
@@ -82,32 +81,32 @@ export function Footer() {
         </GsapReveal>
       </div>
 
-      <div className="container-wide py-14 lg:py-16">
-        <GsapStagger className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.75fr_0.75fr_1.1fr] lg:gap-10">
+      <div className="container-wide py-10 lg:py-12">
+        <GsapStagger className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.75fr_0.75fr_1.1fr] lg:gap-10">
           <GsapStaggerItem>
-            <Link href="/" className="inline-flex items-center gap-4">
+            <Link href="/" className="inline-flex items-center gap-3">
               <Image
                 src={assetPath(LOGO_PATH)}
                 alt={SITE.name}
                 width={64}
                 height={64}
-                className="h-14 w-14 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,.35)]"
+                className="h-12 w-12 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,.35)]"
                 unoptimized
               />
               <div>
                 <p className="font-brand text-xl font-bold leading-tight">Al Qibla Air Services</p>
-                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-light">
+                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-light">
                   Travel Smart. Travel Safe.
                 </p>
               </div>
             </Link>
 
-            <p className="mt-6 max-w-sm text-sm leading-7 text-white/55">
+            <p className="mt-5 max-w-sm text-sm leading-6 text-white/55">
               Professional travel services for pilgrims, families, groups, agents and organizations —
               across {regions}.
             </p>
 
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               {TRUST_BADGES.map((badge, index) => {
                 const Icon = trustIcons[index] ?? ShieldCheck;
                 return (
@@ -121,7 +120,7 @@ export function Footer() {
               })}
             </div>
 
-            <div className="mt-7 flex gap-2.5">
+            <div className="mt-5 flex gap-2.5">
               {socialLinks.map(({ href, label, Icon }) => (
                 <a
                   key={label}
@@ -131,8 +130,8 @@ export function Footer() {
                   aria-label={label}
                   className={
                     label === "WhatsApp"
-                      ? "flex h-11 w-11 items-center justify-center rounded-xl border border-[#25D366]/35 bg-[#25D366]/15 text-[#25D366] transition hover:-translate-y-0.5 hover:bg-[#25D366]/25"
-                      : "flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/10 hover:text-gold"
+                      ? "flex h-10 w-10 items-center justify-center rounded-xl border border-[#25D366]/35 bg-[#25D366]/15 text-[#25D366] transition hover:-translate-y-0.5 hover:bg-[#25D366]/25"
+                      : "flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/10 hover:text-gold"
                   }
                 >
                   <Icon className="h-4 w-4" />
@@ -151,7 +150,7 @@ export function Footer() {
 
           <GsapStaggerItem>
             <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-gold">Get in touch</h3>
-            <div className="mt-6 space-y-4 text-sm">
+            <div className="mt-5 space-y-3.5 text-sm">
               <a
                 href={`tel:${OFFICES.headOffice.phoneTel}`}
                 className="flex items-center gap-3 text-white/65 transition hover:text-white"
@@ -191,7 +190,7 @@ export function Footer() {
 
             <Link
               href="/portal/"
-              className="group mt-6 inline-flex items-center gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] px-4 py-2.5 text-sm font-semibold text-gold-light transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/10 hover:text-gold"
+              className="group mt-5 inline-flex items-center gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] px-4 py-2.5 text-sm font-semibold text-gold-light transition hover:-translate-y-0.5 hover:border-gold/50 hover:bg-gold/10 hover:text-gold"
             >
               Customer &amp; agent portal
               <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -201,12 +200,12 @@ export function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-wide flex flex-col gap-4 py-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
+        <div className="container-wide flex flex-col gap-4 py-5 text-xs text-white/55 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {SITE.name}. All rights reserved.
           </p>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <Link href="/privacy-policy/" className="transition hover:text-white/80">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            <Link href="/privacy-policy/" className="transition hover:text-white/90">
               Privacy Policy
             </Link>
             <span className="hidden h-3 w-px bg-white/15 sm:inline-block" aria-hidden />
@@ -214,24 +213,19 @@ export function Footer() {
               <ShieldCheck className="h-3.5 w-3.5 text-gold" /> Department of Tourist Services registered
             </span>
             <span className="hidden h-3 w-px bg-white/15 sm:inline-block" aria-hidden />
-            <a href="#" className="inline-flex items-center gap-1 transition hover:text-white/80">
-              Back to top <ArrowUp className="h-3.5 w-3.5" />
+            <a
+              href="https://www.induswebagency.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-light shadow-[0_0_20px_rgba(228,173,61,0.12)] transition hover:-translate-y-0.5 hover:border-gold/70 hover:bg-gold/20 hover:text-gold hover:shadow-[0_0_24px_rgba(228,173,61,0.22)]"
+            >
+              <span className="font-medium normal-case tracking-normal text-white/70 group-hover:text-white/90">
+                Made by
+              </span>
+              <span className="font-bold tracking-[0.12em]">INDUS WEB AGENCY</span>
+              <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </a>
           </div>
-        </div>
-      </div>
-
-      <div className="border-t border-white/5">
-        <div className="container-wide flex justify-center py-4 text-[11px] text-white/35 sm:justify-end">
-          <a
-            href="https://www.induswebagency.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-1.5 transition hover:text-gold-light"
-          >
-            Made by <span className="font-semibold text-white/55 group-hover:text-gold-light">INDUS WEB AGENCY</span>
-            <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
-          </a>
         </div>
       </div>
     </footer>
@@ -240,7 +234,7 @@ export function Footer() {
 
 function IconBubble({ children }: { children: ReactNode }) {
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-gold">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-gold">
       {children}
     </span>
   );
@@ -250,7 +244,7 @@ function FooterLinks({ title, links }: { title: string; links: ReadonlyArray<rea
   return (
     <div>
       <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-gold">{title}</h3>
-      <ul className="mt-6 space-y-3.5">
+      <ul className="mt-5 space-y-3">
         {links.map(([label, href]) => (
           <li key={href}>
             <Link

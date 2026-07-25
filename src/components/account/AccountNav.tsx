@@ -46,7 +46,7 @@ export function AccountNav() {
   return (
     <Link
       href={signedIn ? "/account/" : "/account/login/"}
-      className={cn(buttonVariants({ variant: "outlineLight", size: "default" }), "hidden h-10 px-4 md:inline-flex")}
+      className={cn(buttonVariants({ variant: "outlineDark", size: "default" }), "hidden h-10 px-4 md:inline-flex")}
     >
       <Icon className="mr-2 h-4 w-4" />
       {label}
