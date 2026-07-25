@@ -26,11 +26,11 @@ const portals = [
   { icon: Plane, title: "Live Flight Inventory", text: "Search the complete synchronized group inventory with routes, dates, seats and fares.", href: "/available-tickets/", cta: "View live inventory" },
 ];
 
-const leadership = [
-  { name: "Farman Ullah", role: "Founder & CEO", image: "/assets/team/muhammad-farman.jpg", bio: "Founded Al Qibla with a commitment to dependable travel services, transparent fares and long-term customer trust." },
-  { name: "Muhammad Ahmed", role: "Chief Executive Director", image: "/assets/team/muhammad-ahmed.jpg", bio: "Leads day-to-day operations and strategic direction so every booking, package and client request stays on track." },
-  { name: "Muhammad Khizr", role: "Ticket Booking Agent", image: "/assets/team/khizr.jpg", bio: "Handles flight reservations, group ticketing and seat coordination with clear fares and timely confirmations." },
-  { name: "Muhammad Afzal", role: "Intern Developer", image: "/assets/team/muhamad-afzal.jpg", bio: "Supports the digital platforms that power live inventory, portals and smoother booking experiences for our clients." },
+const founderHighlights = [
+  "Founder-led, relationship-first service",
+  "Head office in Peshawar, with Islamabad & Bannu branches",
+  "Umrah, group fares, visas & corporate travel",
+  "Transparent quotations with no hidden fees",
 ];
 
 export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; reviewStats: ReviewStats }) {
@@ -85,34 +85,58 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
       <section className="section-padding relative overflow-hidden bg-[#f4efe7] text-navy">
         <div className="absolute -right-24 top-12 h-72 w-72 rounded-full bg-[#7e9276]/15 blur-3xl" />
         <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-gold/15 blur-3xl" />
-        <div className="container-wide relative">
-          <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[.22em] text-[#a66d2f]">People behind your journey</p>
-            <h2 className="mt-3 text-3xl font-bold sm:text-4xl">Meet our leadership team</h2>
-            <p className="mt-4 leading-7 text-slate-600">Leadership, management, operations and technology work together to keep every journey organized from inquiry to arrival.</p>
+        <div className="container-wide relative grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr] lg:gap-16">
+          <motion.div {...reveal}>
+            <p className="text-sm font-bold uppercase tracking-[.22em] text-[#a66d2f]">Our founder</p>
+            <h2 className="mt-3 text-4xl font-bold sm:text-5xl">Farman Ullah</h2>
+            <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-navy px-4 py-1.5 text-xs font-bold uppercase tracking-[.16em] text-gold">
+              <BadgeCheck className="h-4 w-4" /> Founder &amp; CEO
+            </span>
+            <div className="mt-6 space-y-4 text-[15px] leading-7 text-slate-700">
+              <p>Farman Ullah founded {SITE.name} on a simple conviction: travel should be dependable, transparent and genuinely personal. What began as a promise of honest fares and reliable service has grown into a full-service travel company trusted by pilgrims, families, agents and organizations.</p>
+              <p>Under his leadership, Al Qibla pairs on-the-ground expertise with modern, live inventory — handling Umrah journeys, worldwide air ticketing, group fares, visas, hotels and managed corporate travel from offices in Peshawar, Islamabad and Bannu.</p>
+              <p>His approach is hands-on and relationship-first: clear quotations, documented requests, and a team that stays accountable from the first inquiry until every traveler is safely home.</p>
+            </div>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {founderHighlights.map((item) => (
+                <div key={item} className="flex items-start gap-2 text-sm font-medium text-navy">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                  {item}
+                </div>
+              ))}
+            </div>
+
+            <figure className="mt-8 border-l-4 border-gold pl-5">
+              <blockquote className="text-lg font-medium italic leading-8 text-navy">“We don’t just book journeys — we take responsibility for them.”</blockquote>
+              <figcaption className="mt-2 text-sm font-semibold text-slate-500">— Farman Ullah, Founder &amp; CEO</figcaption>
+            </figure>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/inquiry/" className="inline-flex h-12 items-center gap-2 rounded-xl bg-gold px-6 font-semibold text-navy transition hover:bg-gold-light">Plan your journey <ArrowRight className="h-4 w-4" /></Link>
+              <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 items-center gap-2 rounded-xl border border-navy/15 bg-white px-6 font-semibold text-navy transition hover:border-gold/50 hover:bg-gold/5">Message on WhatsApp</a>
+            </div>
           </motion.div>
-          <div className="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-12">
-            {leadership.map((member) => (
-              <motion.article
-                {...reveal}
-                key={member.name}
-                className="group w-full max-w-[215px] text-center"
-              >
-                <div key="portrait" className="relative mx-auto aspect-square w-44 rounded-full bg-gradient-to-br from-gold via-[#c48747] to-[#6f8979] p-[5px] shadow-[0_22px_55px_rgba(41,54,51,.2)] transition duration-500 group-hover:-translate-y-2 group-hover:rotate-1 sm:w-48">
-                  <div className="relative h-full w-full overflow-hidden rounded-full border-4 border-[#f4efe7] bg-navy-light">
-                    <Image src={member.image} alt={`Illustrative portrait for ${member.name}, ${member.role}`} fill sizes="192px" className="object-cover transition duration-700 group-hover:scale-105" />
-                    <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-navy/50 to-transparent" />
-                  </div>
+
+          <motion.div {...reveal} className="relative mx-auto w-full max-w-md">
+            <div aria-hidden className="absolute -right-5 -top-5 h-28 w-28 rounded-3xl border border-gold/30 bg-gold/10 backdrop-blur" />
+            <div aria-hidden className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full border border-navy/10 bg-[#7e9276]/15" />
+            <div className="relative overflow-hidden rounded-[2rem] border border-navy/10 bg-white p-3 shadow-[0_30px_80px_rgba(41,54,51,.22)]">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[1.4rem] bg-navy-light">
+                <Image
+                  src="/assets/team/farman-ullah.jpg"
+                  alt="Farman Ullah, Founder & CEO of Al Qibla Air Services"
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 460px"
+                  className="object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy/90 via-navy/30 to-transparent p-5 pt-20">
+                  <p className="text-lg font-bold text-white">Farman Ullah</p>
+                  <p className="text-xs font-semibold uppercase tracking-[.18em] text-gold-light">Founder &amp; CEO</p>
                 </div>
-                <div key="details" className="mt-6">
-                  <span className="inline-flex rounded-full bg-[#e8dcc8] px-3 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-[#8a5b27]">{member.role}</span>
-                  <h3 className="mt-3 text-xl font-bold text-navy">{member.name}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{member.bio}</p>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-          <p className="mx-auto mt-10 max-w-2xl text-center text-xs text-slate-400">Illustrative team portraits are displayed until official staff photography is provided.</p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
