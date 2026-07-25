@@ -15,11 +15,13 @@ import {
   Plane,
   Package,
   MapPin,
+  Compass,
   LogOut,
   Menu,
   ClipboardList,
   BarChart3,
   Users,
+  ArrowUpRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,7 @@ const links = [
   { href: "/admin/tickets/", label: "Tickets", icon: Ticket },
   { href: "/admin/umrah-packages/", label: "Umrah Packages", icon: Package },
   { href: "/admin/tour-packages/", label: "Tour Packages", icon: MapPin },
+  { href: "/admin/tours/", label: "Tours", icon: Compass },
   { href: "/admin/blog/", label: "Blog", icon: FileText },
   { href: "/admin/flyers/", label: "Flyers", icon: ImageIcon },
   { href: "/admin/announcements/", label: "Announcements", icon: Megaphone },
@@ -89,6 +92,23 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function AgencyCredit() {
+  return (
+    <a
+      href="https://www.induswebagency.com/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-gold-light transition hover:border-gold/70 hover:bg-gold/20 hover:text-gold"
+    >
+      <span className="font-medium normal-case tracking-normal text-white/70 group-hover:text-white/90">
+        Made by
+      </span>
+      <span className="font-bold tracking-[0.12em]">INDUS WEB AGENCY</span>
+      <ArrowUpRight className="h-3 w-3 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+    </a>
+  );
+}
+
 export function AdminSidebar() {
   const router = useRouter();
 
@@ -113,6 +133,7 @@ export function AdminSidebar() {
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>
+          <AgencyCredit />
         </div>
       </aside>
 
@@ -121,11 +142,24 @@ export function AdminSidebar() {
           <SheetTrigger className="text-white">
             <Menu className="h-5 w-5" />
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 bg-navy text-white">
+          <SheetContent side="left" className="flex w-72 flex-col bg-navy text-white">
             <div className="mb-5">
               <BrandBlock compact />
             </div>
-            <NavLinks />
+            <div className="flex-1 overflow-y-auto">
+              <NavLinks />
+            </div>
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-white/70"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
+              <AgencyCredit />
+            </div>
           </SheetContent>
         </Sheet>
         <div className="ml-3 flex items-center gap-2">
