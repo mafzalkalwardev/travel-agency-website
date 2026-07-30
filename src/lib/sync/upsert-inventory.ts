@@ -20,7 +20,10 @@ export async function upsertTickets(
   tickets: NormalizedTicket[],
   provider = PROVIDER
 ): Promise<UpsertTicketsResult> {
-  const validTickets = tickets.filter(
+  // Travel Line can return the same group flight twice across categories.
+  // One upsert/insert batch cannot touch the same conflict key twice.
+  const deduped = dedupeByExternalId(tickets, (t) => t.externalId);
+  const validTickets = deduped.filter(
     (t) => isCompleteTicket(t) && isOutboundGroupTicket(t.from, t.to) && !isReturnLegExternalId(t.externalId)
   );
   const skipped = tickets.length - validTickets.length;
@@ -37,12 +40,7 @@ export async function upsertTickets(
     return { created: validTickets.length, updated: 0, deactivated: 0, skipped, changes: [] };
   }
 
-  const { data: existingRowsData } = await supabase
-    .from("tickets")
-    .select("*")
-    .eq("source_provider", provider);
-  const existingRows = existingRowsData ?? [];
-
+  const existingRows = await fetchAllRows(supabase, "tickets", provider);
   const existingByExternalId = new Map(
     existingRows
       .filter((row) => row.external_id)
@@ -287,14 +285,11 @@ async function upsertPackageRows(
   rows: Record<string, unknown>[],
   provider: string
 ): Promise<UpsertTicketsResult> {
-  const validRows = rows.filter((row) => isCompletePackageRow(row));
+  const deduped = dedupeByExternalId(rows, (row) => String(row.external_id || ""));
+  const validRows = deduped.filter((row) => isCompletePackageRow(row));
   const skipped = rows.length - validRows.length;
   const supabase = createAdminClient();
-  const { data: existingRowsData } = await supabase
-    .from(table)
-    .select("*")
-    .eq("source_provider", provider);
-  const existingRows = existingRowsData ?? [];
+  const existingRows = await fetchAllRows(supabase, table, provider);
 
   const existingByExternalId = new Map(
     existingRows
@@ -356,11 +351,41 @@ async function batchInsert(
   rows: Record<string, unknown>[]
 ) {
   if (!rows.length) return;
-  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE);
+  // Collapse duplicate external_ids inside a batch (last wins).
+  const unique = new Map<string, Record<string, unknown>>();
+  for (const row of rows) {
+    const key = String(row.external_id || row.id || "");
+    if (!key) continue;
+    unique.set(key, row);
+  }
+  const uniqueRows = Array.from(unique.values());
+  for (let i = 0; i < uniqueRows.length; i += BATCH_SIZE) {
+    const batch = uniqueRows.slice(i, i + BATCH_SIZE);
     const { error } = await supabase.from(table).insert(batch);
     if (error) throw error;
   }
+}
+
+/** PostgREST defaults to max 1000 rows — paginate so sync never misses existing ids. */
+async function fetchAllRows(
+  supabase: ReturnType<typeof createAdminClient>,
+  table: "tickets" | "umrah_packages" | "tour_packages",
+  provider: string
+): Promise<Record<string, unknown>[]> {
+  const pageSize = 1000;
+  const all: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .eq("source_provider", provider)
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    if (!data?.length) break;
+    all.push(...(data as Record<string, unknown>[]));
+    if (data.length < pageSize) break;
+  }
+  return all;
 }
 
 async function batchUpdate(
@@ -382,8 +407,17 @@ async function batchUpsert(
   rows: Record<string, unknown>[]
 ) {
   if (!rows.length) return;
-  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE).map((row) => {
+  // Defense: collapse any remaining duplicate primary keys in a batch.
+  const uniqueById = new Map<string, Record<string, unknown>>();
+  for (const row of rows) {
+    const id = String(row.id ?? "");
+    if (!id) continue;
+    uniqueById.set(id, row);
+  }
+  const uniqueRows = Array.from(uniqueById.values());
+
+  for (let i = 0; i < uniqueRows.length; i += BATCH_SIZE) {
+    const batch = uniqueRows.slice(i, i + BATCH_SIZE).map((row) => {
       // Never send an explicit null id — Postgres rejects it even when the
       // column has a default. New rows must carry a generated UUID.
       if (row.id == null) {
@@ -392,9 +426,19 @@ async function batchUpsert(
       }
       return row;
     });
-    const { error } = await supabase.from(table).upsert(batch);
+    const { error } = await supabase.from(table).upsert(batch, { onConflict: "id" });
     if (error) throw error;
   }
+}
+
+function dedupeByExternalId<T>(items: T[], getId: (item: T) => string): T[] {
+  const map = new Map<string, T>();
+  for (const item of items) {
+    const id = getId(item);
+    if (!id) continue;
+    map.set(id, item); // last occurrence wins
+  }
+  return Array.from(map.values());
 }
 
 const ticketDiffFields = [

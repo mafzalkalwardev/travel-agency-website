@@ -1,16 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Briefcase, ChevronDown, CircleCheck, Clock3, Plane, Users, UtensilsCrossed } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { AnimatedNumber } from "@/components/motion/AnimatedNumber";
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
-import { BookRequestSheet } from "@/components/booking/BookRequestSheet";
 import { resolveAirlineName } from "@/data/airlines";
 import { formatTicketDate } from "@/lib/ticket-filters";
 import { cn } from "@/lib/utils";
 import type { Ticket } from "@/types";
+
+const BookRequestSheet = dynamic(
+  () => import("@/components/booking/BookRequestSheet").then((m) => m.BookRequestSheet),
+  { ssr: false }
+);
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -58,25 +61,19 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
 
   return (
     <>
-      <motion.article
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.2 }}
+      <article
         className={cn(
-          "rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md",
+          "rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md",
           isCancelled && "border-red-100 bg-red-50/40",
           compact && "text-sm"
         )}
       >
-        {/* Status pill — always visible (matches TravelLine's own booking-table
-            convention of a permanent, bold status badge, not a hover/desktop-only
-            treatment) so a cancelled ticket is unambiguous at a glance. */}
         <div className="mb-3 flex justify-end">
           <Badge className={cn("rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase", status.className)}>
             {status.label}
           </Badge>
         </div>
         <div className={cn("flex flex-col gap-4", !compact && "lg:flex-row lg:items-center lg:justify-between")}>
-          {/* Airline + route */}
           <div className={cn("flex items-start justify-between gap-4", !compact && "lg:w-56 lg:justify-start")}>
             <div className="flex items-start gap-3">
               <AirlineLogo code={ticket.airlineCode} name={airlineName} size={compact ? "sm" : "md"} />
@@ -97,7 +94,6 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
             </p>
           </div>
 
-          {/* Times + duration */}
           <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2 px-1 lg:px-2">
             <div className="text-center">
               <p className={cn("font-bold text-gray-900", compact ? "text-lg" : "text-xl")}>
@@ -120,7 +116,6 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
             </div>
           </div>
 
-          {/* Baggage, meal, price, CTA */}
           <div className={cn("flex flex-wrap items-center justify-between gap-3", !compact && "lg:flex-nowrap lg:justify-end lg:gap-4")}>
             <div className="flex flex-col gap-1 text-xs text-gray-600">
               {ticket.baggage && (
@@ -139,7 +134,7 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
               {ticket.price > 0 ? (
                 <>
                   <p className="text-lg font-bold text-green-800">
-                    <AnimatedNumber value={ticket.price} prefix={`${ticket.currency} `} />
+                    {ticket.currency} {ticket.price.toLocaleString("en-PK")}
                   </p>
                   <p className="text-[10px] text-green-700">per person</p>
                 </>
@@ -179,24 +174,23 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
             <ChevronDown className={cn("h-4 w-4 transition-transform", detailsOpen && "rotate-180")} />
           </button>
           {detailsOpen && (
-            <div className="mt-4 space-y-4 rounded-lg bg-gray-50 p-4">
-              {(ticket.segments?.length ? ticket.segments : []).map((segment, index) => (
-                <div key={`${segment.flightNumber}-${index}`} className="relative grid gap-4 border-l-2 border-blue-200 pl-5 md:grid-cols-[1fr_auto_1fr] md:items-center">
-                  <span className="absolute -left-[7px] top-1 h-3 w-3 rounded-full border-2 border-blue-500 bg-white" />
-                  <div>
-                    <p className="font-bold text-gray-900">{formatSegmentDate(segment.departureDatetime)} · {formatSegmentTime(segment.departureDatetime)}</p>
-                    <p className="text-sm font-semibold text-gray-800">{segment.departureCity} ({segment.departureCode})</p>
-                    <p className="text-xs text-gray-500">{segment.departureAirport}{segment.departureTerminal ? ` · Terminal ${segment.departureTerminal}` : ""}</p>
+            <div className="mt-3 space-y-3">
+              {(ticket.segments || []).map((segment, index) => (
+                <div key={`${segment.flightNumber}-${index}`} className="rounded-md bg-slate-50 px-3 py-2 text-xs text-gray-700">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold text-gray-900">
+                      {segment.airlineCode || ticket.airlineCode} {segment.flightNumber || ticket.flightNumber}
+                    </span>
+                    <span>{segment.aircraft || ticket.aircraft || "Aircraft TBA"}</span>
                   </div>
-                  <div className="min-w-36 rounded-md border border-gray-200 bg-white px-3 py-2 text-center text-xs text-gray-500">
-                    <p className="font-semibold text-gray-900">{segment.airline} {segment.flightNumber}</p>
-                    <p>{segment.aircraft || "Aircraft TBA"}</p>
-                    <p>{segment.meal === "Yes" ? "Meal included" : segment.meal || "Meal not specified"}</p>
-                  </div>
-                  <div className="md:text-right">
-                    <p className="font-bold text-gray-900">{formatSegmentDate(segment.arrivalDatetime)} · {formatSegmentTime(segment.arrivalDatetime)}</p>
-                    <p className="text-sm font-semibold text-gray-800">{segment.arrivalCity} ({segment.arrivalCode})</p>
-                    <p className="text-xs text-gray-500">{segment.arrivalAirport}{segment.arrivalTerminal ? ` · Terminal ${segment.arrivalTerminal}` : ""}</p>
+                  <div className="mt-1 flex flex-wrap gap-3">
+                    <span>
+                      {segment.fromCode} {formatSegmentTime(segment.departureAt)} · {formatSegmentDate(segment.departureAt)}
+                    </span>
+                    <span>→</span>
+                    <span>
+                      {segment.toCode} {formatSegmentTime(segment.arrivalAt)} · {formatSegmentDate(segment.arrivalAt)}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -210,19 +204,21 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
             </div>
           )}
         </div>
-      </motion.article>
+      </article>
 
-      <BookRequestSheet
-        open={bookOpen}
-        onOpenChange={setBookOpen}
-        productType="ticket"
-        productTitle={productTitle}
-        quotedPrice={ticket.price}
-        currency={ticket.currency}
-        ticketId={ticket.id}
-        sourcePage={sourcePage}
-        ticket={ticket}
-      />
+      {bookOpen ? (
+        <BookRequestSheet
+          open={bookOpen}
+          onOpenChange={setBookOpen}
+          productType="ticket"
+          productTitle={productTitle}
+          quotedPrice={ticket.price}
+          currency={ticket.currency}
+          ticketId={ticket.id}
+          sourcePage={sourcePage}
+          ticket={ticket}
+        />
+      ) : null}
     </>
   );
 }

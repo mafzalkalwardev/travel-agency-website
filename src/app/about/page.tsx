@@ -1,38 +1,47 @@
 import { createPageMetadata } from "@/lib/metadata";
 import { AboutExperience } from "@/components/about/AboutExperience";
-import { SITE } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { PAGE_SEO } from "@/lib/seo";
 import type { Review, ReviewStats } from "@/types";
 
+export const revalidate = 60;
+
 export const metadata = createPageMetadata({
-  title: "About Us | Offices, Reviews & Airline Partners",
-  description: `Discover ${SITE.name}, our travel services, airline partners, verified client reviews, portal access, and offices in Peshawar, Islamabad and Bannu.`,
-  path: "/about/",
+  title: PAGE_SEO.about.title,
+  description: PAGE_SEO.about.description,
+  path: PAGE_SEO.about.path,
+  keywords: PAGE_SEO.about.keywords,
 });
 
 export default async function AboutPage() {
-  const reviews = await getVerifiedReviews();
-  const reviewStats = getReviewStats(reviews);
+  const { reviews, stats } = await getVerifiedReviews();
 
-  return <AboutExperience reviews={reviews} reviewStats={reviewStats} />;
+  return <AboutExperience reviews={reviews} reviewStats={stats} />;
 }
 
-async function getVerifiedReviews(): Promise<Review[]> {
-  if (!isSupabaseConfigured()) return [];
+async function getVerifiedReviews(): Promise<{ reviews: Review[]; stats: ReviewStats }> {
+  const empty = { reviews: [] as Review[], stats: emptyStats() };
+  if (!isSupabaseConfigured()) return empty;
 
   try {
     const { data, error } = await createAdminClient()
       .from("reviews")
       .select("id,name,city,service,rating,comment,avatar_url,status,featured,created_at")
       .eq("status", "approved")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(12);
 
-    if (error || !data) return [];
-    return data as Review[];
+    if (error || !data) return empty;
+    const reviews = data as Review[];
+    return { reviews, stats: getReviewStats(reviews) };
   } catch {
-    return [];
+    return empty;
   }
+}
+
+function emptyStats(): ReviewStats {
+  return { count: 0, average: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 }
 
 function getReviewStats(reviews: Review[]): ReviewStats {

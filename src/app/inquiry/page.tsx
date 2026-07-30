@@ -1,13 +1,14 @@
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { InquiryForm } from "@/components/forms/InquiryForm";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
-import { SITE } from "@/lib/constants";
 
 export const metadata = createPageMetadata({
-  title: "Book / Inquiry",
-  description: `Submit a booking or travel inquiry to ${SITE.name} via WhatsApp.`,
-  path: "/inquiry/",
+  title: PAGE_SEO.inquiry.title,
+  description: PAGE_SEO.inquiry.description,
+  path: PAGE_SEO.inquiry.path,
+  keywords: PAGE_SEO.inquiry.keywords,
 });
 
 export default function InquiryPage() {

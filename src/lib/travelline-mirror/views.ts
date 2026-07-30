@@ -6,7 +6,7 @@ const MIRROR_IMAGES: Record<string, string> = {
   umrah: "/assets/destinations/umrah-makkah.jpg",
   umrahGroups: "/assets/destinations/umrah-makkah.jpg",
   uae: "/assets/destinations/uae-dubai.jpg",
-  oman: "/assets/destinations/uae-dubai.jpg",
+  oman: "/assets/destinations/oman-muscat.jpg",
   ksa: "/assets/destinations/ksa-jeddah.jpg",
   bahrain: "/assets/destinations/bahrain.jpg",
 };

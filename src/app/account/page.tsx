@@ -18,16 +18,17 @@ import { getApprovalMessage } from "@/lib/customer-approval";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus, CustomerProfile } from "@/types";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = createPageMetadata({
-  title: "Agent Portal",
-  description:
-    "Manage your agency profile, booking requests, and trip statuses with Al Qibla Air Services.",
-  path: "/account/",
+  title: PAGE_SEO.account.title,
+  description: PAGE_SEO.account.description,
+  path: PAGE_SEO.account.path,
+  keywords: PAGE_SEO.account.keywords,
 });
 
 const statusColors: Record<BookingStatus, string> = {

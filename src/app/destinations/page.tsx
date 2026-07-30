@@ -2,19 +2,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MapPin } from "lucide-react";
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
 import { formatPrice } from "@/lib/ticket-filters";
 import { dataProvider } from "@/lib/data-provider";
-import { SITE } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = createPageMetadata({
-  title: "Explore by Destination",
-  description: `Explore Umrah, group tickets, visas and tours by destination with ${SITE.name}.`,
-  path: "/destinations/",
+  title: PAGE_SEO.destinations.title,
+  description: PAGE_SEO.destinations.description,
+  path: PAGE_SEO.destinations.path,
+  keywords: PAGE_SEO.destinations.keywords,
 });
 
 export default async function DestinationsPage() {

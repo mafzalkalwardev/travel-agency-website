@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { reviewSchema } from "@/lib/validations";
 
@@ -21,6 +22,18 @@ export async function POST(request: Request) {
         message: "Thank you. Your review will appear after admin approval. (Development mode — configure Supabase to persist.)",
         devFallback: true,
       });
+    }
+
+    const userClient = await createClient();
+    const {
+      data: { user },
+    } = await userClient.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Please sign in to submit a review." },
+        { status: 401 }
+      );
     }
 
     const supabase = createAdminClient();

@@ -4,9 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Lock, Mail } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { ArrowUpRight, Lock, Mail } from "lucide-react";
 import { AnimatedFlightPath } from "@/components/motion/AnimatedFlightPath";
 import { FloatingAircraftLayer } from "@/components/motion/FloatingAircraftLayer";
 import { Button } from "@/components/ui/button";
@@ -50,23 +48,27 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    if (!isSupabaseConfigured()) {
-      setError("Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and keys to .env.local");
+    try {
+      const res = await fetch("/api/admin/auth/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+
+      if (!res.ok) {
+        setError(data?.error || "Invalid email or password.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/admin/dashboard/");
+      router.refresh();
+    } catch {
+      setError("Unable to sign in right now. Please try again.");
       setLoading(false);
-      return;
     }
-
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-      return;
-    }
-
-    router.push("/admin/dashboard/");
-    router.refresh();
   }
 
   return (
@@ -189,14 +191,26 @@ export default function AdminLoginPage() {
           </motion.form>
         </div>
 
-        <motion.p
+        <motion.div
           initial={reduced ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.4 }}
-          className="mt-6 text-center text-xs text-white/40"
+          className="mt-6 flex flex-col items-center gap-3"
         >
-          Authorized personnel only
-        </motion.p>
+          <p className="text-center text-xs text-white/40">Authorized personnel only</p>
+          <a
+            href="https://www.induswebagency.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-light transition hover:-translate-y-0.5 hover:border-gold/70 hover:bg-gold/20 hover:text-gold"
+          >
+            <span className="font-medium normal-case tracking-normal text-white/70 group-hover:text-white/90">
+              Made by
+            </span>
+            <span className="font-bold tracking-[0.12em]">INDUS WEB AGENCY</span>
+            <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </a>
+        </motion.div>
       </motion.div>
     </div>
   );

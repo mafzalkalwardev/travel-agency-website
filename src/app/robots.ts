@@ -8,11 +8,13 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/favicon.ico", "/favicon.png", "/favicon-48.png", "/icon-192.png", "/icon-512.png", "/google-site-logo.png", "/apple-touch-icon.png", "/site.webmanifest"],
+        allow: "/",
+        disallow: ["/admin/", "/api/admin/", "/tl-mirror/", "/account/bookings/"],
       },
       {
         userAgent: "Googlebot",
         allow: "/",
+        disallow: ["/admin/", "/api/admin/", "/tl-mirror/"],
       },
     ],
     host: SITE.url,

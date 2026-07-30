@@ -76,6 +76,7 @@ export class TravelLineTicketProvider implements TicketProvider {
           : "No tickets returned from Travel Line scraper",
       };
     } catch (e) {
+      const message = syncErrorMessage(e);
       return {
         provider: this.name,
         status: "failed",
@@ -83,8 +84,24 @@ export class TravelLineTicketProvider implements TicketProvider {
         ticketsCreated: 0,
         ticketsUpdated: 0,
         ticketsDeactivated: 0,
-        message: e instanceof Error ? e.message : "Sync failed",
+        message,
       };
     }
   }
+}
+
+function syncErrorMessage(e: unknown): string {
+  if (e instanceof Error && e.message) return e.message;
+  if (e && typeof e === "object") {
+    const maybe = e as { message?: unknown; error?: unknown; details?: unknown };
+    if (typeof maybe.message === "string" && maybe.message) return maybe.message;
+    if (typeof maybe.error === "string" && maybe.error) return maybe.error;
+    if (typeof maybe.details === "string" && maybe.details) return maybe.details;
+    try {
+      return JSON.stringify(e).slice(0, 300);
+    } catch {
+      /* ignore */
+    }
+  }
+  return "Sync failed";
 }

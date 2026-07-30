@@ -99,7 +99,7 @@
   .text-gradient-gold {
     @apply bg-gradient-to-r from-gold via-gold-light to-gold bg-clip-text text-transparent;
   }
-  .section-padding { @apply py-16 md:py-24; }
+  .section-padding { @apply py-10 md:py-14; }
   .container-wide { @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8; }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .card-premium {

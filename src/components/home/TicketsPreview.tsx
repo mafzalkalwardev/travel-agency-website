@@ -23,7 +23,7 @@ export function TicketsPreview({ tickets }: TicketsPreviewProps) {
           />
         </GsapReveal>
         <GsapStagger className="mx-auto max-w-6xl space-y-3" stagger={0.08}>
-          {tickets.slice(0, 4).map((ticket) => (
+          {tickets.map((ticket) => (
             <GsapStaggerItem key={ticket.id}>
               <TicketCard ticket={ticket} />
             </GsapStaggerItem>

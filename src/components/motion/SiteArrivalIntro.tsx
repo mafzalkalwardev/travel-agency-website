@@ -7,18 +7,15 @@ import { useCallback, useLayoutEffect, useState } from "react";
 import { assetPath } from "@/lib/base-path";
 import { LOGO_PATH } from "@/lib/constants";
 
-const INTRO_DURATION_MS = 5000;
-const INTRO_SESSION_KEY = "al-qibla-arrival-intro-seen";
+/** Short brand beat — long enough to feel intentional, not a wait. */
+const INTRO_DURATION_MS = 1800;
+const INTRO_STORAGE_KEY = "al-qibla-arrival-intro-seen";
 
 export function SiteArrivalIntro() {
   const pathname = usePathname();
   const reducedMotion = useReducedMotion();
-  // Optimistically match the final client state at SSR time (pathname is
-  // known on the server; sessionStorage/reduced-motion aren't). This
-  // makes the intro part of the FIRST rendered HTML on the homepage
-  // instead of appearing only after a client effect mounts it — the
-  // previous default-false state let the real homepage flash on screen
-  // for a frame before the intro popped in on top of it.
+  // Optimistically match homepage on SSR so the intro is in first paint
+  // (avoids a flash of the real homepage before the overlay mounts).
   const [visible, setVisible] = useState(() => pathname === "/");
   const [ready, setReady] = useState(false);
 
@@ -34,7 +31,7 @@ export function SiteArrivalIntro() {
 
     let seen = false;
     try {
-      seen = Boolean(window.sessionStorage.getItem(INTRO_SESSION_KEY));
+      seen = Boolean(window.localStorage.getItem(INTRO_STORAGE_KEY));
     } catch {
       seen = false;
     }
@@ -45,7 +42,7 @@ export function SiteArrivalIntro() {
     }
 
     try {
-      window.sessionStorage.setItem(INTRO_SESSION_KEY, "true");
+      window.localStorage.setItem(INTRO_STORAGE_KEY, "true");
     } catch {
       // ignore storage failures
     }
@@ -66,6 +63,8 @@ export function SiteArrivalIntro() {
 
   if (!visible) return null;
 
+  const durationSec = INTRO_DURATION_MS / 1000;
+
   return (
     <AnimatePresence>
       {visible && (
@@ -73,7 +72,7 @@ export function SiteArrivalIntro() {
           className="arrival-intro fixed inset-0 z-[200] overflow-hidden text-white"
           initial={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0.96, y: "-100%" }}
-          transition={{ duration: 0.72, ease: [0.76, 0, 0.24, 1] }}
+          transition={{ duration: 0.55, ease: [0.76, 0, 0.24, 1] }}
           role="dialog"
           aria-modal="true"
           aria-label="Al Qibla Air Services introduction"
@@ -83,11 +82,12 @@ export function SiteArrivalIntro() {
           <div className="arrival-cloud arrival-cloud-near absolute inset-x-[-16%] bottom-[-18%] h-[48%]" />
           <div className="arrival-vignette absolute inset-0" />
 
+          {/* Brand mark early — readable within the first beat */}
           <motion.div
             className="absolute left-5 top-5 z-30 flex items-center gap-3 sm:left-8 sm:top-8"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: [0, 1, 1, 0], y: [-10, 0, 0, -8] }}
-            transition={{ duration: 4.6, times: [0, 0.09, 0.9, 1] }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: [0, 1, 1, 0], y: [-8, 0, 0, -6] }}
+            transition={{ duration: durationSec, times: [0, 0.08, 0.88, 1] }}
           >
             <div className="relative h-11 w-11 overflow-hidden sm:h-12 sm:w-12">
               <Image
@@ -101,30 +101,29 @@ export function SiteArrivalIntro() {
             </div>
             <div>
               <p className="font-brand text-sm font-bold tracking-[0.12em] sm:text-base">AL QIBLA</p>
-              <p className="text-[9px] font-semibold tracking-[0.3em] text-white/60 sm:text-[10px]">AIR SERVICES</p>
+              <p className="text-[9px] font-semibold tracking-[0.3em] text-white/60 sm:text-[10px]">
+                AIR SERVICES
+              </p>
             </div>
           </motion.div>
 
+          {/* One aircraft path — cinematic, not busy */}
           <motion.div
             className="arrival-aircraft absolute z-20 aspect-[16/8.5] w-[135vw] max-w-[1600px] overflow-hidden transform-gpu sm:w-[94vw]"
-            initial={{ x: "-74%", y: "34%", scale: 0.38, rotate: -2, opacity: 0 }}
+            initial={{ x: "-74%", y: "34%", scale: 0.4, rotate: -2, opacity: 0 }}
             animate={{
-              x: ["-74%", "-22%", "32%"],
-              y: ["34%", "4%", "-36%"],
-              scale: [0.38, 0.68, 0.96],
+              x: ["-74%", "-18%", "38%"],
+              y: ["34%", "6%", "-32%"],
+              scale: [0.4, 0.72, 0.98],
               rotate: [-2, -5, -8],
-              opacity: ready ? [0, 1, 1, 0.98] : 0,
+              opacity: ready ? [0, 1, 1, 0.95] : 0,
             }}
-            transition={{ duration: 3.2, times: [0, 0.42, 1], ease: [0.22, 0.72, 0.2, 1] }}
+            transition={{
+              duration: 2.35,
+              times: [0, 0.4, 1],
+              ease: [0.22, 0.72, 0.2, 1],
+            }}
           >
-            {/*
-              Only a real aircraft-photo asset swap fixes the angle
-              properly (no image-generation tool available here) — as a
-              real improvement within existing assets, this crops toward
-              the nose/cockpit (upper-right of the source photo) instead
-              of showing the full belly-on silhouette, and uses the
-              higher-resolution transparent asset.
-            */}
             <Image
               src={assetPath("/assets/aircraft/arrival-aircraft-hq.webp")}
               alt=""
@@ -139,11 +138,12 @@ export function SiteArrivalIntro() {
             />
           </motion.div>
 
+          {/* Tagline early so Skip doesn’t hide the brand message */}
           <motion.div
             className="absolute inset-x-0 bottom-[18%] z-30 flex flex-col items-center px-6 text-center sm:bottom-[22%]"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: [0, 1, 1, 0], y: [14, 0, 0, -6] }}
-            transition={{ duration: 5, times: [0.52, 0.64, 0.92, 1] }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: [0, 1, 1, 0], y: [12, 0, 0, -4] }}
+            transition={{ duration: durationSec, times: [0.12, 0.28, 0.86, 1] }}
           >
             <p className="font-brand text-2xl font-bold tracking-tight sm:text-4xl">
               Travel Smart. Travel Safe.
@@ -161,7 +161,7 @@ export function SiteArrivalIntro() {
               className="h-full bg-[#e4ad3d] shadow-[0_0_18px_rgba(228,173,61,0.6)]"
               initial={{ width: 0 }}
               animate={{ width: "100%" }}
-              transition={{ duration: INTRO_DURATION_MS / 1000, ease: "linear" }}
+              transition={{ duration: durationSec, ease: "linear" }}
             />
           </motion.div>
 

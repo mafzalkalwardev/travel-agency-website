@@ -15,6 +15,8 @@ interface PageHeroProps {
   badge?: string;
   cta?: { label: string; href: string };
   showAnimatedRoute?: boolean;
+  /** Skip aircraft + motion layers (faster inventory pages). */
+  lite?: boolean;
   children?: React.ReactNode;
 }
 
@@ -26,8 +28,11 @@ export function PageHero({
   badge,
   cta,
   showAnimatedRoute = true,
+  lite = false,
   children,
 }: PageHeroProps) {
+  const motionOn = !lite && showAnimatedRoute;
+
   return (
     <section className="relative min-h-[42vh] overflow-hidden bg-navy md:min-h-[48vh]">
       <div className="absolute inset-0">
@@ -53,10 +58,10 @@ export function PageHero({
             <source src={assetPath(backgroundVideo)} type="video/mp4" />
           </video>
         )}
-        <FloatingAircraftLayer density="low" />
-        {showAnimatedRoute && (
+        {motionOn ? <FloatingAircraftLayer density="low" /> : null}
+        {motionOn ? (
           <AnimatedFlightPath variant="section" className="bottom-0 h-28 opacity-50" />
-        )}
+        ) : null}
       </div>
       <div className="container-wide relative z-10 flex min-h-[42vh] flex-col justify-center py-16 md:min-h-[48vh] md:py-20">
         <PageHeroMotion badge={badge} title={title} subtitle={subtitle}>

@@ -1,15 +1,16 @@
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { ContactForm } from "@/components/shared/ContactForm";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
-import { SITE } from "@/lib/constants";
 import { Building2, Clock, FileCheck, Headphones, Users } from "lucide-react";
 
 export const metadata = createPageMetadata({
-  title: "Corporate Travel",
-  description: `Corporate travel management for NGOs and companies by ${SITE.name} — group tickets, billing and 24/7 support.`,
-  path: "/corporate-travel/",
+  title: PAGE_SEO.corporate.title,
+  description: PAGE_SEO.corporate.description,
+  path: PAGE_SEO.corporate.path,
+  keywords: PAGE_SEO.corporate.keywords,
 });
 
 const features = [

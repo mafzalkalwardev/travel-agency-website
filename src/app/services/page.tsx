@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
-import { SITE, TRUST_TEXT } from "@/lib/constants";
+import { TRUST_TEXT } from "@/lib/constants";
 import { CheckCircle } from "lucide-react";
 import { Plane, Sparkles, FileText, Hotel, Shield, Car, Building2, Palmtree, Users, Globe, type LucideIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = createPageMetadata({
-  title: "Services",
-  description: `Travel services by ${SITE.name} — ticketing, Umrah, visas, hotels, insurance and corporate travel.`,
-  path: "/services/",
+  title: PAGE_SEO.services.title,
+  description: PAGE_SEO.services.description,
+  path: PAGE_SEO.services.path,
+  keywords: PAGE_SEO.services.keywords,
 });
 
 const iconMap: Record<string, LucideIcon> = {

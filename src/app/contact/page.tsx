@@ -1,4 +1,5 @@
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { ContactForm } from "@/components/shared/ContactForm";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
@@ -7,9 +8,10 @@ import { FacebookIcon, InstagramIcon } from "@/components/shared/SocialIcons";
 import { MapPin, MessageCircle, Phone, Mail, Clock } from "lucide-react";
 
 export const metadata = createPageMetadata({
-  title: "Contact Us",
-  description: `Contact ${SITE.name} — Peshawar head office, Islamabad & Bannu branches. WhatsApp ${SITE.whatsappNumber}`,
-  path: "/contact/",
+  title: PAGE_SEO.contact.title,
+  description: PAGE_SEO.contact.description,
+  path: PAGE_SEO.contact.path,
+  keywords: PAGE_SEO.contact.keywords,
 });
 
 function TwitterIcon({ className = "h-4 w-4" }: { className?: string }) {

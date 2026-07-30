@@ -54,25 +54,67 @@ interface SessionUser {
   phoneNumber?: string;
 }
 
-function buildPassenger(details: Record<string, unknown>) {
-  const names = String(details.names || "Al Qibla Test");
-  const parts = names.trim().split(/\s+/);
-  const givenName = parts.slice(0, -1).join(" ") || parts[0] || "Al Qibla";
-  const surname = parts.length > 1 ? parts[parts.length - 1] : "Test";
+function resolvePassportNo(details: Record<string, unknown>): string {
+  return String(details.passportNo || details.passport || "").trim();
+}
+
+function parsePassengerNameLines(details: Record<string, unknown>): string[] {
+  return String(details.names || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/** Build one Travel Line passenger from a full name + shared document fields. */
+function buildPassengerFromName(fullName: string, details: Record<string, unknown>) {
+  const passportNo = resolvePassportNo(details);
+  const dob = String(details.dob || "").trim();
+  const nationality = String(details.nationality || "PK").trim() || "PK";
+
+  if (!passportNo) {
+    throw new Error("Passport number is required for Travel Line seat hold");
+  }
+  if (!dob) {
+    throw new Error("Date of birth is required for Travel Line seat hold");
+  }
+  if (!fullName.trim()) {
+    throw new Error("Passenger names are required for Travel Line seat hold");
+  }
+
+  const parts = fullName.trim().split(/\s+/);
+  const givenName = parts.slice(0, -1).join(" ") || parts[0];
+  const surname = parts.length > 1 ? parts[parts.length - 1] : parts[0];
 
   return {
     id: randomUUID(),
     givenName: givenName.toUpperCase(),
     surname: surname.toUpperCase(),
-    dob: String(details.dob || "1990-01-01"),
-    passportNo: String(details.passportNo || "AB1234567"),
-    nationality: String(details.nationality || "PK"),
+    dob,
+    passportNo,
+    nationality: nationality.toUpperCase().slice(0, 2),
     passportDOE: String(details.passportDOE || "2030-01-01"),
     type: "adult",
     title: "MR",
     passengerId: randomUUID(),
     remarks: String(details.remarks || "00"),
   };
+}
+
+/**
+ * One passenger per non-empty name line. If fewer names than seat count,
+ * the last name is reused only when a single name was provided for all seats.
+ */
+function buildPassengersForHold(details: Record<string, unknown>, seatCount: number) {
+  const names = parsePassengerNameLines(details);
+  if (!names.length) {
+    throw new Error("Passenger names are required for Travel Line seat hold");
+  }
+
+  const count = Math.max(1, seatCount);
+  return Array.from({ length: count }, (_, index) => {
+    const name = names[index] || (names.length === 1 ? names[0] : names[names.length - 1]);
+    return buildPassengerFromName(name, details);
+  });
 }
 
 export class TravelLineClient {
@@ -271,6 +313,19 @@ export class TravelLineClient {
       let umrahErr: unknown;
 
       if (pkg?.slug) {
+        let passengers;
+        try {
+          passengers = buildPassengersForHold(input.passengerDetails, input.passengers);
+        } catch (passengerError) {
+          return {
+            success: false,
+            error:
+              passengerError instanceof Error
+                ? passengerError.message
+                : "Passenger details incomplete for Travel Line hold",
+          };
+        }
+
         const umrahPayload = {
           companyId: this.sessionUser.companyId,
           packageId: pkg.id,
@@ -281,9 +336,7 @@ export class TravelLineClient {
           agentContactNumber: this.config.username,
           reservedBy: this.sessionUser.agentName || "Al Qibla Agent",
           saleFare: input.quotedPrice,
-          passengers: Array.from({ length: input.passengers }, () =>
-            buildPassenger(input.passengerDetails)
-          ),
+          passengers,
         };
 
         const umrahRes = await fetch(
@@ -322,14 +375,25 @@ export class TravelLineClient {
       };
     }
 
+    let passengers;
+    try {
+      passengers = buildPassengersForHold(input.passengerDetails, input.passengers);
+    } catch (passengerError) {
+      return {
+        success: false,
+        error:
+          passengerError instanceof Error
+            ? passengerError.message
+            : "Passenger details incomplete for Travel Line hold",
+      };
+    }
+
     const payload = {
       companyId: this.sessionUser.companyId,
       agentContactNumber: this.config.username,
       reservedBy: this.sessionUser.agentName || "Al Qibla Agent",
       groupId,
-      passengers: Array.from({ length: input.passengers }, () =>
-        buildPassenger(input.passengerDetails)
-      ),
+      passengers,
     };
 
     const res = await fetch(`${this.config.baseUrl}${BOOKING_PATH}`, {

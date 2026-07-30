@@ -147,11 +147,15 @@ export async function POST(request: Request) {
     let supplierError: string | null = null;
 
     if (externalProductId && isTravelLineConfigured()) {
+      const details = data.passenger_details as Record<string, unknown>;
       const hold = await attemptSupplierHold(booking.id, {
         externalProductId,
         productType: data.product_type,
         passengers: data.passengers,
-        passengerDetails: data.passenger_details,
+        passengerDetails: {
+          ...details,
+          passportNo: details.passportNo || details.passport,
+        },
         quotedPrice: data.quoted_price,
         currency: data.currency,
       });

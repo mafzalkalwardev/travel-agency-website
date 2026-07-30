@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Clock, MapPin, MessageCircle } from "lucide-react";
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { PageHero } from "@/components/shared/PageHero";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { SafeImage } from "@/components/shared/SafeImage";
@@ -15,9 +16,10 @@ import { SITE } from "@/lib/constants";
 export const revalidate = 60;
 
 export const metadata = createPageMetadata({
-  title: "Tours",
-  description: `Guided tours, group trips and travel experiences curated by ${SITE.name}.`,
-  path: "/tours/",
+  title: PAGE_SEO.tours.title,
+  description: PAGE_SEO.tours.description,
+  path: PAGE_SEO.tours.path,
+  keywords: PAGE_SEO.tours.keywords,
 });
 
 interface TourRow {

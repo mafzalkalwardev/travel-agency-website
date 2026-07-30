@@ -4,11 +4,13 @@ import { AccountAccessShell } from "@/components/account/AccountAccessShell";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "Create Sub-Agent Account",
-  description: "Register your travel agency with full company details for administrator-approved B2B booking access.",
-  path: "/account/signup/",
+  title: PAGE_SEO.accountSignup.title,
+  description: PAGE_SEO.accountSignup.description,
+  path: PAGE_SEO.accountSignup.path,
+  keywords: PAGE_SEO.accountSignup.keywords,
 });
 
 export default async function AccountSignupPage({

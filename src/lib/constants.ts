@@ -3,9 +3,9 @@ export const SITE = {
   shortName: "Al Qibla",
   tagline: "Travel Smart. Travel Safe. Travel with Al Qibla.",
   heroSubheading:
-    "Your trusted travel partner for Umrah packages, worldwide air ticketing, visit visas, hotels, tours and corporate travel.",
+    "Your trusted partner for ticket booking, Umrah packages, group flights, visit visas, hotels, tours and corporate travel.",
   description:
-    "Premium travel agency offering domestic and international air ticketing, Umrah packages, visit visas, hotel reservations, travel insurance, and corporate travel management across Pakistan, UAE, Saudi Arabia, Afghanistan and worldwide.",
+    "Book air tickets, Umrah tickets, group flights and tour packages online with Al Qibla Air Services. Domestic & international ticket booking, Umrah packages from Pakistan, group travels to UAE, Oman, KSA & Bahrain. Become a ticket booking agent — offices in Peshawar, Islamabad & Bannu.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.flywithalqibla.com",
   whatsapp: "https://wa.me/923315576169",
   whatsappNumber: "+923315576169",

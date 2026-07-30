@@ -1,20 +1,21 @@
 import { Suspense } from "react";
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { UmrahPackagesPageClient } from "@/components/packages/UmrahPackagesPageClient";
 import { InquiryForm } from "@/components/forms/InquiryForm";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
-import { SITE } from "@/lib/constants";
 
 // Live Travel Line inventory — must not be frozen at build time.
 export const dynamic = "force-dynamic";
 
 export const metadata = createPageMetadata({
-  title: "Umrah Packages",
-  description: `Book Umrah packages with ${SITE.name} — live flights, hotels, and seat availability synced from Travel Line.`,
-  path: "/umrah-packages/",
+  title: PAGE_SEO.umrahPackages.title,
+  description: PAGE_SEO.umrahPackages.description,
+  path: PAGE_SEO.umrahPackages.path,
+  keywords: PAGE_SEO.umrahPackages.keywords,
 });
 
 export default async function UmrahPackagesPage() {

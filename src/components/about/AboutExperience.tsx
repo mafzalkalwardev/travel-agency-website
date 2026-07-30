@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
@@ -8,10 +9,21 @@ import {
   MapPin, Plane, ShieldCheck, Sparkles, Star, Users,
 } from "lucide-react";
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
-import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { airlines } from "@/data/airlines";
 import { OFFICE_DISPLAY_ORDER, SITE, TRUST_TEXT } from "@/lib/constants";
 import type { Review, ReviewStats } from "@/types";
+
+const ReviewForm = dynamic(
+  () => import("@/components/reviews/ReviewForm").then((m) => m.ReviewForm),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-xl border border-border bg-white p-6 text-sm text-navy/60 shadow-sm">
+        Loading review form…
+      </div>
+    ),
+  }
+);
 
 const values = [
   { icon: HeartHandshake, title: "Personal service", text: "A dedicated travel team supports families, pilgrims, groups and organizations from inquiry to return." },
@@ -84,36 +96,22 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
       </section>
 
       <section className="relative overflow-hidden bg-[#f4efe7] text-navy">
-        <div className="grid lg:grid-cols-[minmax(0,42%)_minmax(0,58%)] lg:items-stretch">
-          {/* Left — edge-to-edge photo, height locked to the text column */}
-          <motion.div {...reveal} className="relative min-h-[380px] sm:min-h-[440px] lg:min-h-0">
-            <Image
-              src="/assets/team/farman-ullah-portrait.jpg"
-              alt="Farman Ullah, Founder & CEO of Al Qibla Air Services"
-              fill
-              sizes="(max-width: 1024px) 100vw, 42vw"
-              className="object-cover object-[center_42%]"
-              priority
-            />
-          </motion.div>
-
-          {/* Right — copy aligned to the photo */}
-          <motion.div {...reveal} className="relative flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-12 lg:py-14 xl:pr-20 xl:pl-14">
-            <p className="text-xs font-bold uppercase tracking-[.2em] text-[#a66d2f]">People behind your journey</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
-              Meet our leadership
-            </h2>
-            <p className="mt-3 max-w-md text-sm leading-7 text-slate-600">
+        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-10 lg:px-8 lg:py-12">
+          {/* Left — copy (compact) */}
+          <motion.div {...reveal} className="relative order-2 lg:order-1">
+            <p className="text-[11px] font-bold uppercase tracking-[.18em] text-[#a66d2f]">People behind your journey</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Meet our leadership</h2>
+            <p className="mt-2 max-w-md text-[13px] leading-6 text-slate-600">
               Leadership that stays accountable from the first inquiry until every traveler is safely home.
             </p>
 
-            <div className="mt-6 border-t border-navy/10 pt-6">
+            <div className="mt-5 border-t border-navy/10 pt-5">
               <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-navy px-3 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-gold">
                 <BadgeCheck className="h-3.5 w-3.5" /> Founder &amp; CEO
               </span>
-              <h3 className="mt-2.5 text-xl font-bold tracking-tight sm:text-2xl">Farman Ullah</h3>
+              <h3 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">Farman Ullah</h3>
 
-              <div className="mt-3.5 max-w-lg space-y-2.5 text-[13px] leading-6 text-slate-700">
+              <div className="mt-3 max-w-lg space-y-2 text-[13px] leading-6 text-slate-700">
                 <p>
                   Farman Ullah founded {SITE.name} on a simple conviction: travel should be dependable, transparent and genuinely personal. What began as a promise of honest fares and reliable service has grown into a full-service travel company trusted by pilgrims, families, agents and organizations.
                 </p>
@@ -125,7 +123,7 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
                 </p>
               </div>
 
-              <div className="mt-4 grid max-w-lg gap-1.5 sm:grid-cols-2">
+              <div className="mt-3.5 grid max-w-lg gap-1.5 sm:grid-cols-2">
                 {founderHighlights.map((item) => (
                   <div key={item} className="flex items-start gap-2 text-xs font-medium text-navy">
                     <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
@@ -134,14 +132,14 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
                 ))}
               </div>
 
-              <figure className="mt-5 max-w-lg border-l-[3px] border-gold pl-3.5">
+              <figure className="mt-4 max-w-lg border-l-[3px] border-gold pl-3.5">
                 <blockquote className="text-sm font-medium italic leading-6 text-navy">
                   “We don’t just book journeys — we take responsibility for them.”
                 </blockquote>
                 <figcaption className="mt-1 text-[11px] font-semibold text-slate-500">— Farman Ullah, Founder &amp; CEO</figcaption>
               </figure>
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Link href="/inquiry/" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-gold px-4 text-xs font-semibold text-navy transition hover:bg-gold-light">
                   Plan your journey <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
@@ -154,6 +152,20 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
                   Message on WhatsApp
                 </a>
               </div>
+            </div>
+          </motion.div>
+
+          {/* Right — portrait photo */}
+          <motion.div {...reveal} className="relative order-1 mx-auto w-full max-w-md overflow-hidden rounded-2xl bg-navy-light shadow-[0_18px_40px_rgba(41,54,51,.14)] lg:order-2 lg:mx-0 lg:max-w-none">
+            <div className="relative aspect-[4/5] w-full">
+              <Image
+                src="/assets/team/farman-ullah-portrait.jpg"
+                alt="Farman Ullah, Founder & CEO of Al Qibla Air Services"
+                fill
+                sizes="(max-width: 1024px) 90vw, 420px"
+                className="object-cover object-[center_42%]"
+                loading="lazy"
+              />
             </div>
           </motion.div>
         </div>
@@ -189,12 +201,12 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
 
       <section className="section-padding bg-navy-light text-white">
         <div className="container-wide">
-          <motion.div {...reveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-[.22em] text-gold">Approved client reviews</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">Experiences shared by our travelers</h2></div>{reviewStats.count > 0 && <div className="rounded-xl border border-white/10 bg-white/5 px-5 py-3"><strong className="text-2xl text-gold">{reviewStats.average.toFixed(1)}</strong><span className="ml-2 text-sm text-white/60">from {reviewStats.count} approved reviews</span></div>}</motion.div>
-          {reviews.length ? <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{reviews.map((review) => <article key={review.id} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur"><div className="flex gap-1" aria-label={`${review.rating} out of 5 stars`}>{[1,2,3,4,5].map((n) => <Star key={n} className={`h-4 w-4 ${n <= review.rating ? "fill-gold text-gold" : "text-white/20"}`} />)}</div><p className="mt-4 text-sm leading-7 text-white/80">“{review.comment}”</p><div className="mt-6 flex items-center gap-3 border-t border-white/10 pt-4">{review.avatar_url ? <Image src={review.avatar_url} alt="" width={44} height={44} className="h-11 w-11 rounded-full object-cover" /> : <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gold font-bold text-navy">{review.name.charAt(0).toUpperCase()}</div>}<div><p className="font-semibold">{review.name}</p><p className="text-xs text-gold-light">{[review.city, review.service].filter(Boolean).join(" · ") || "Verified client"}</p></div></div></article>)}</div> : <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/65">Approved customer reviews will appear here. We never invent testimonials.</div>}
+          <motion.div {...reveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-[.22em] text-gold">Client reviews</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">Experiences shared by our travelers</h2></div>{reviewStats.count > 0 && <div className="rounded-xl border border-white/10 bg-white/5 px-5 py-3"><strong className="text-2xl text-gold">{reviewStats.average.toFixed(1)}</strong><span className="ml-2 text-sm text-white/60">from {reviewStats.count} {reviewStats.count === 1 ? "review" : "reviews"}</span></div>}</motion.div>
+          {reviews.length ? <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{reviews.map((review) => <article key={review.id} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur"><div className="flex gap-1" aria-label={`${review.rating} out of 5 stars`}>{[1,2,3,4,5].map((n) => <Star key={n} className={`h-4 w-4 ${n <= review.rating ? "fill-gold text-gold" : "text-white/20"}`} />)}</div><p className="mt-4 text-sm leading-7 text-white/80">“{review.comment}”</p><div className="mt-6 flex items-center gap-3 border-t border-white/10 pt-4">{review.avatar_url ? <Image src={review.avatar_url} alt="" width={44} height={44} className="h-11 w-11 rounded-full object-cover" /> : <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gold font-bold text-navy">{review.name.charAt(0).toUpperCase()}</div>}<div><p className="font-semibold">{review.name}</p><p className="text-xs text-gold-light">{[review.city, review.service].filter(Boolean).join(" · ") || "Verified client"}</p></div></div></article>)}</div> : <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/65">Traveler reviews will appear here soon.</div>}
 
           <div className="mt-12 max-w-xl">
             <p className="mb-4 text-sm text-white/70">
-              Traveled with us? Share your experience — reviews appear after our team approves them.
+              Traveled with us? Sign in to share your experience with future travelers.
             </p>
             <ReviewForm />
           </div>

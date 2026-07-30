@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { ArrowRightLeft, Calendar, MapPin, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -68,12 +67,7 @@ export function TicketsSearchBar({ className, basePath = "/available-tickets/" }
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.15 }}
-      className={className}
-    >
+    <div className={className}>
       <form
         onSubmit={handleSearch}
         className="rounded-2xl border border-gold/20 bg-white/95 p-5 shadow-2xl shadow-navy/10 backdrop-blur-md md:p-6"
@@ -154,6 +148,6 @@ export function TicketsSearchBar({ className, basePath = "/available-tickets/" }
           </div>
         </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

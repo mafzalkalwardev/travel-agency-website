@@ -1,16 +1,17 @@
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { GalleryGrid } from "@/components/shared/GalleryGrid";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
-import { SITE } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = createPageMetadata({
-  title: "Gallery",
-  description: `Photo gallery from ${SITE.name} — Umrah journeys, travel experiences and destinations.`,
-  path: "/gallery/",
+  title: PAGE_SEO.gallery.title,
+  description: PAGE_SEO.gallery.description,
+  path: PAGE_SEO.gallery.path,
+  keywords: PAGE_SEO.gallery.keywords,
 });
 
 export default async function GalleryPage() {

@@ -2,11 +2,13 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, Briefcase, Plane, ShieldCheck, Sparkles } from "lucide-react";
 import { AnimatedFlightPath } from "@/components/motion/AnimatedFlightPath";
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 
 export const metadata = createPageMetadata({
-  title: "Portal Access",
-  description: "Secure sub-agent access and live group inventory for Al Qibla Air Services.",
-  path: "/portal/",
+  title: PAGE_SEO.portal.title,
+  description: PAGE_SEO.portal.description,
+  path: PAGE_SEO.portal.path,
+  keywords: PAGE_SEO.portal.keywords,
 });
 
 const entries = [

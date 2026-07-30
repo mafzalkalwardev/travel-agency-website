@@ -45,10 +45,15 @@ export interface TravelLineUmrahApiItem {
     rating?: number;
     makkahName?: string;
     makkahDistance?: string;
+    makkahDistanceMeters?: number;
     madinahName?: string;
+    madinahDistanceMeters?: number;
   };
   inclusions?: string[];
-  ziyaraa?: boolean;
+  exclusions?: string[];
+  ziyaraa?: boolean | { sites?: string[]; notes?: string };
+  departureBaggage?: string;
+  returnBaggage?: string;
   [key: string]: unknown;
 }
 
@@ -383,13 +388,36 @@ export function ticketsFromGroupFlights(
     .sort((a, b) => b.date.localeCompare(a.date) || a.departureTime.localeCompare(b.departureTime));
 }
 
+function formatDistanceMeters(meters?: number): string | undefined {
+  if (meters == null || Number.isNaN(meters)) return undefined;
+  if (meters >= 1000) return `${(meters / 1000).toFixed(meters % 1000 === 0 ? 0 : 1)} km from Haram`;
+  return `${meters} m from Haram`;
+}
+
+function inclusionsIncludeVisa(inclusions?: string[]): boolean {
+  return Boolean(inclusions?.some((item) => /visa/i.test(item)));
+}
+
+function ziyaratIncluded(ziyaraa: TravelLineUmrahApiItem["ziyaraa"]): boolean {
+  if (typeof ziyaraa === "boolean") return ziyaraa;
+  if (ziyaraa && typeof ziyaraa === "object") {
+    return Boolean(ziyaraa.notes || (ziyaraa.sites && ziyaraa.sites.length > 0));
+  }
+  return false;
+}
+
 export function mapTravelLineUmrahApiItem(item: TravelLineUmrahApiItem, markupPercent = 0) {
   const image = normalizeImageUrl(item.images?.[0], FALLBACK_IMAGES.umrah);
 
   const highlights: string[] = [];
-  if (item.hotel?.makkahName) highlights.push(`Makkah: ${item.hotel.makkahName}`);
-  if (item.hotel?.madinahName) highlights.push(`Madinah: ${item.hotel.madinahName}`);
-  if (item.inclusions?.length) highlights.push(...item.inclusions.slice(0, 3));
+  if (item.inclusions?.length) highlights.push(...item.inclusions.slice(0, 5));
+  if (typeof item.ziyaraa === "object" && item.ziyaraa?.notes) {
+    highlights.push(item.ziyaraa.notes);
+  }
+
+  const distance =
+    item.hotel?.makkahDistance ||
+    formatDistanceMeters(item.hotel?.makkahDistanceMeters);
 
   return {
     external_id: item.id,
@@ -407,10 +435,10 @@ export function mapTravelLineUmrahApiItem(item: TravelLineUmrahApiItem, markupPe
     airline: item.airline,
     hotel_makkah: item.hotel?.makkahName || item.hotel?.name,
     hotel_madinah: item.hotel?.madinahName,
-    distance_from_haram: item.hotel?.makkahDistance,
+    distance_from_haram: distance,
     transport: true,
-    visa: false,
-    ziyarat: Boolean(item.ziyaraa),
+    visa: inclusionsIncludeVisa(item.inclusions),
+    ziyarat: ziyaratIncluded(item.ziyaraa),
     seats_left: item.seatsAvailable ?? null,
     highlights,
     image_url: image,

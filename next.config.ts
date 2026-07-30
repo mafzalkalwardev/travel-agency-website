@@ -5,6 +5,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const nextConfig: NextConfig = {
   ...(basePath ? { basePath, assetPrefix: `${basePath}/` } : {}),
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [{ protocol: "https", hostname: "**.supabase.co" }],
   },
   trailingSlash: true,

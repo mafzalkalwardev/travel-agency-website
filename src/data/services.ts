@@ -2,18 +2,22 @@ import { ASSETS } from "@/lib/assets";
 import type { GalleryItem, Service } from "@/types";
 
 export const galleryImages: GalleryItem[] = [
-  { id: "g1", src: ASSETS.gallery[0], alt: "Masjid al-Haram in Makkah", category: "umrah" },
-  { id: "g2", src: ASSETS.gallery[1], alt: "Jeddah, Saudi Arabia", category: "umrah" },
-  { id: "g3", src: ASSETS.gallery[2], alt: "Dubai skyline", category: "tours" },
-  { id: "g4", src: ASSETS.gallery[3], alt: "Istanbul, Turkey", category: "tours" },
-  { id: "g5", src: ASSETS.gallery[4], alt: "Kuala Lumpur, Malaysia", category: "tours" },
-  { id: "g6", src: ASSETS.gallery[5], alt: "Thailand travel destination", category: "tours" },
-  { id: "g7", src: ASSETS.gallery[6], alt: "Premium Umrah accommodation", category: "umrah" },
-  { id: "g8", src: ASSETS.gallery[7], alt: "Family Umrah journey", category: "umrah" },
-  { id: "g9", src: ASSETS.gallery[8], alt: "Dubai holiday experience", category: "tours" },
-  { id: "g10", src: ASSETS.gallery[9], alt: "Turkey tour experience", category: "tours" },
-  { id: "g11", src: ASSETS.gallery[10], alt: "Malaysia tour experience", category: "tours" },
-  { id: "g12", src: ASSETS.gallery[11], alt: "International air travel", category: "tickets" },
+  { id: "g1", src: ASSETS.gallery[0], alt: "Travel journey with Al Qibla", category: "tickets" },
+  { id: "g2", src: ASSETS.gallery[1], alt: "Airport and flight experience", category: "tickets" },
+  { id: "g3", src: ASSETS.gallery[2], alt: "Family travel moments", category: "tours" },
+  { id: "g4", src: ASSETS.gallery[3], alt: "Group travel coordination", category: "tickets" },
+  { id: "g5", src: ASSETS.gallery[4], alt: "Holiday destination views", category: "tours" },
+  { id: "g6", src: ASSETS.gallery[5], alt: "International air travel", category: "tickets" },
+  { id: "g7", src: ASSETS.gallery[6], alt: "Masjid al-Haram in Makkah", category: "umrah" },
+  { id: "g8", src: ASSETS.gallery[7], alt: "Jeddah, Saudi Arabia", category: "umrah" },
+  { id: "g9", src: ASSETS.gallery[8], alt: "Dubai skyline", category: "tours" },
+  { id: "g10", src: ASSETS.gallery[9], alt: "Muscat, Oman", category: "tours" },
+  { id: "g11", src: ASSETS.gallery[10], alt: "Bahrain destination", category: "tickets" },
+  { id: "g12", src: ASSETS.gallery[11], alt: "Istanbul, Turkey", category: "tours" },
+  { id: "g13", src: ASSETS.gallery[12], alt: "Premium Umrah accommodation", category: "umrah" },
+  { id: "g14", src: ASSETS.gallery[13], alt: "Family Umrah journey", category: "umrah" },
+  { id: "g15", src: ASSETS.gallery[14], alt: "Dubai holiday experience", category: "tours" },
+  { id: "g16", src: ASSETS.gallery[15], alt: "Al Qibla travel brand", category: "tickets" },
 ];
 
 export const services: Service[] = [

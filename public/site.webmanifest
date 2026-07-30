@@ -1,11 +1,13 @@
 {
-  "name": "Al Qibla Air Services",
+  "name": "Al Qibla Air Services — Ticket Booking, Umrah & Group Flights",
   "short_name": "Al Qibla",
-  "description": "Premium travel agency for air ticketing, Umrah packages, visas and tours.",
+  "description": "Book air tickets, Umrah tickets, group flights and tour packages. Become a ticket booking agent with Al Qibla Air Services.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#071b3a",
+  "lang": "en-PK",
+  "categories": ["travel", "business"],
   "icons": [
     {
       "src": "/favicon-48.png",

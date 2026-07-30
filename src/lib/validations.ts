@@ -42,13 +42,18 @@ export const bookingSchema = z.object({
   currency: z.string().default("PKR"),
   passenger_details: z
     .object({
-      names: z.string().optional(),
+      names: z.string().min(2, "Passenger names are required"),
       cnic: z.string().optional(),
+      /** Legacy alias — prefer passportNo for Travel Line */
       passport: z.string().optional(),
+      passportNo: z.string().min(5, "Passport number is required"),
+      dob: z.string().min(8, "Date of birth is required"),
+      nationality: z.string().min(2, "Nationality is required").default("PK"),
+      passportDOE: z.string().optional(),
       notes: z.string().optional(),
     })
     .passthrough()
-    .default({}),
+    .default({ names: "", passportNo: "", dob: "", nationality: "PK" }),
   source_page: z.string().optional(),
   product_title: z.string().optional(),
 });

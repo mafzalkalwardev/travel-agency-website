@@ -149,8 +149,13 @@ class MockDataProvider implements IDataProvider {
   }
 }
 
+/** Columns needed for public ticket lists — avoid select("*") payload bloat. */
+const TICKET_LIST_COLUMNS =
+  "id,airline,airline_code,flight_number,from_code,from_city,to_code,to_city,sector,destination,departure_date,departure_time,arrival_time,duration,price,currency,seats_left,status,baggage,meal,trip_type,is_direct,active,last_updated,group_category,aircraft,external_id";
+
 class SupabaseDataProvider implements IDataProvider {
   private mock = new MockDataProvider();
+  private ticketsInflight: Promise<Ticket[]> | null = null;
 
   async getAnnouncements() {
     try {
@@ -217,13 +222,33 @@ class SupabaseDataProvider implements IDataProvider {
   }
 
   async getTickets(filters?: TicketFilters) {
+    // Deduplicate concurrent unfiltered reads (home used to call this twice per request).
+    if (!filters) {
+      if (!this.ticketsInflight) {
+        this.ticketsInflight = this.loadTickets().finally(() => {
+          // Clear on next microtask so this request's callers share one fetch,
+          // but the next request does not reuse a stale in-memory promise forever.
+          queueMicrotask(() => {
+            this.ticketsInflight = null;
+          });
+        });
+      }
+      return this.ticketsInflight;
+    }
+
+    const all = await this.loadTickets();
+    return filterTickets(all, filters);
+  }
+
+  private async loadTickets(): Promise<Ticket[]> {
     try {
       const supabase = createAdminClient();
-      const { data, error } = await supabase.from("tickets").select("*").eq("active", true);
+      const { data, error } = await supabase
+        .from("tickets")
+        .select(TICKET_LIST_COLUMNS)
+        .eq("active", true);
       if (!error && data?.length) {
-        const mapped = filterDisplayableTickets(data.filter(isDisplayableTicket).map(mapTicket));
-        if (!filters) return mapped;
-        return filterTickets(mapped, filters);
+        return filterDisplayableTickets(data.filter(isDisplayableTicket).map(mapTicket));
       }
     } catch {
       /* fallback */
@@ -263,15 +288,14 @@ class SupabaseDataProvider implements IDataProvider {
         segments: t.segments,
         lastUpdated: new Date().toISOString(),
       }));
-      if (!filters) return mapped;
-      return filterTickets(mapped, filters);
+      return mapped;
     }
 
     if (isTravelLineSyncEnabled()) {
       return [];
     }
 
-    return this.mock.getTickets(filters);
+    return this.mock.getTickets();
   }
 
   async getTicketsSyncMetadata(): Promise<SyncMetadata> {
@@ -326,9 +350,10 @@ class SupabaseDataProvider implements IDataProvider {
       const supabase = createAdminClient();
       const { data } = await supabase
         .from("reviews")
-        .select("*")
+        .select("id,name,city,service,rating,comment,avatar_url,status,featured,created_at")
         .eq("status", "approved")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(24);
       if (!data?.length) return this.mock.getApprovedReviews();
       return data.map((r) => ({
         id: r.id,
@@ -363,6 +388,23 @@ class SupabaseDataProvider implements IDataProvider {
 function mapUmrahPackage(row: Record<string, unknown>): TravelPackage {
   const raw = row.raw_payload as Record<string, unknown> | undefined;
   const hotel = raw?.hotel as Record<string, unknown> | undefined;
+  const meters = hotel?.makkahDistanceMeters as number | undefined;
+  const distanceFromHaram =
+    (row.distance_from_haram as string | undefined) ||
+    (hotel?.makkahDistance as string | undefined) ||
+    (typeof meters === "number"
+      ? meters >= 1000
+        ? `${(meters / 1000).toFixed(meters % 1000 === 0 ? 0 : 1)} km from Haram`
+        : `${meters} m from Haram`
+      : undefined);
+
+  const rawHighlights = (row.highlights as string[]) || [];
+  const highlights = rawHighlights.filter(
+    (h) => !/^makkah:\s*/i.test(h) && !/^madinah:\s*/i.test(h)
+  );
+
+  const inclusions = (raw?.inclusions as string[] | undefined) || [];
+  const visaFromInclusions = inclusions.some((item) => /visa/i.test(item));
 
   return {
     id: String(row.id),
@@ -371,7 +413,7 @@ function mapUmrahPackage(row: Record<string, unknown>): TravelPackage {
     price: Number(row.price),
     currency: String(row.currency || "PKR"),
     duration: String(row.duration),
-    highlights: (row.highlights as string[]) || [],
+    highlights: highlights.length ? highlights : inclusions.slice(0, 5),
     image: String(row.image_url || "/assets/gallery/umrah-1.svg"),
     featured: Boolean(row.featured),
     status: row.status as TravelPackage["status"],
@@ -382,10 +424,10 @@ function mapUmrahPackage(row: Record<string, unknown>): TravelPackage {
     airline: (row.airline || raw?.airline) as string,
     hotelMakkah: (row.hotel_makkah || hotel?.makkahName || hotel?.name) as string,
     hotelMadinah: (row.hotel_madinah || hotel?.madinahName) as string,
-    distanceFromHaram: (row.distance_from_haram || hotel?.makkahDistance) as string,
-    transport: Boolean(row.transport),
-    visa: Boolean(row.visa),
-    ziyarat: Boolean(row.ziyarat),
+    distanceFromHaram,
+    transport: row.transport !== false,
+    visa: Boolean(row.visa) || visaFromInclusions,
+    ziyarat: Boolean(row.ziyarat) || Boolean(raw?.ziyaraa),
     seatsLeft: row.seats_left as number,
     departureDate: raw?.departureDate as string | undefined,
     departureTime: raw?.departureTime as string | undefined,
@@ -393,6 +435,12 @@ function mapUmrahPackage(row: Record<string, unknown>): TravelPackage {
     hotelStars: hotel?.rating as number | undefined,
     durationDays: raw?.durationDays as number | undefined,
     durationNights: raw?.durationNights as number | undefined,
+    returnFlightNumber: raw?.returnFlightNo as string | undefined,
+    returnDate: raw?.returnDate as string | undefined,
+    makkahNights: raw?.makkahNights as number | undefined,
+    madinahNights: raw?.madinahNights as number | undefined,
+    departureBaggage: raw?.departureBaggage as string | undefined,
+    shortDescription: raw?.shortDescription as string | undefined,
   };
 }
 

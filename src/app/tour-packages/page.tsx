@@ -1,4 +1,5 @@
 import { createPageMetadata } from "@/lib/metadata";
+import { PAGE_SEO } from "@/lib/seo";
 import { PackageCard } from "@/components/shared/PackageCard";
 import { MotionStagger, MotionStaggerItem } from "@/components/motion/MotionStagger";
 import { MotionSection } from "@/components/motion/MotionSection";
@@ -6,14 +7,14 @@ import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
-import { SITE } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = createPageMetadata({
-  title: "Tour Packages",
-  description: `Holiday and tour packages by ${SITE.name} — Dubai, Turkey, Malaysia and domestic destinations.`,
-  path: "/tour-packages/",
+  title: PAGE_SEO.tourPackages.title,
+  description: PAGE_SEO.tourPackages.description,
+  path: PAGE_SEO.tourPackages.path,
+  keywords: PAGE_SEO.tourPackages.keywords,
 });
 
 export default async function TourPackagesPage() {
