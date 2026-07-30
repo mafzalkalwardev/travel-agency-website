@@ -358,7 +358,7 @@ export default function AdminBookingsPage() {
                       <Badge className={statusColors[b.status]}>{b.status.replace(/_/g, " ")}</Badge>
                       {b.travelline_status && (
                         <Badge className={tlStatusBadge[b.travelline_status] || "bg-gray-100"}>
-                          TL: {b.travelline_status}
+                          {b.travelline_status}
                         </Badge>
                       )}
                       {b.supplier_hold_status && (

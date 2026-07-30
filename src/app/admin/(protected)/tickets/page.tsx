@@ -246,7 +246,7 @@ export default function AdminTicketsPage() {
               </div>
             </>
           ) : (
-            <p className="text-muted-foreground">No sync runs yet. Set TRAVELLINE_* env vars and click Sync Now.</p>
+            <p className="text-muted-foreground">No sync runs yet. Configure supplier credentials and click Sync Now.</p>
           )}
         </CardContent>
       </Card>

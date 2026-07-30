@@ -77,7 +77,7 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
             {booking.status.replace(/_/g, " ")}
           </Badge>
           {booking.travelline_status && (
-            <Badge className="bg-slate-100 text-slate-800">TL: {booking.travelline_status}</Badge>
+            <Badge className="bg-slate-100 text-slate-800">{booking.travelline_status}</Badge>
           )}
           {booking.supplier_hold_status && (
             <Badge className={holdColors[booking.supplier_hold_status] || "bg-gray-100"}>
