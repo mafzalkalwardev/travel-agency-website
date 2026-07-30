@@ -16,7 +16,7 @@ import { SITE } from "@/lib/constants";
 
 gsap.registerPlugin(useGSAP);
 
-export function HeroSection() {
+export function HeroSection({ posters }: { posters: string[] }) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -96,8 +96,8 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="hero-cta hidden h-[440px] w-[300px] shrink-0 lg:block">
-          <HeroPosterCarousel />
+        <div className="hero-cta relative hidden h-[440px] w-[300px] shrink-0 lg:block">
+          <HeroPosterCarousel posters={posters} />
         </div>
       </div>
     </section>

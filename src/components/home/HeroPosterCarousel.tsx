@@ -6,7 +6,7 @@ import { HeroPosterFallback } from "./HeroPosterFallback";
 
 const Hero3DScreen = dynamic(() => import("./Hero3DScreen").then((m) => m.Hero3DScreen), {
   ssr: false,
-  loading: () => <HeroPosterFallback />,
+  loading: () => <div className="h-full w-full animate-pulse rounded-[1.75rem] bg-white/10" />,
 });
 
 function supportsWebGL(): boolean {
@@ -22,17 +22,10 @@ function supportsWebGL(): boolean {
 }
 
 /**
- * Picks the real WebGL "3D screen" hero when the device can reasonably
- * handle it, and falls back to a plain 2D carousel of the same posters
- * otherwise (no WebGL support, or the viewer prefers reduced motion) —
- * see docs/REDESIGN.md §7's perf-risk note for why this fallback exists.
- *
- * The parent only shows this panel at the `lg` breakpoint (CSS
- * `hidden lg:block`), but a CSS-hidden element still mounts and runs —
- * this component checks viewport width itself and renders nothing at all
- * below `lg` so a phone never pays for an invisible WebGL context.
+ * Picks the WebGL 3D screen when the device can handle it; otherwise 2D carousel.
+ * Posters come from Admin → Flyers (active, display order).
  */
-export function HeroPosterCarousel() {
+export function HeroPosterCarousel({ posters }: { posters: string[] }) {
   const [use3D, setUse3D] = useState(false);
   const [checked, setChecked] = useState(false);
   const [wideEnough, setWideEnough] = useState(false);
@@ -50,6 +43,6 @@ export function HeroPosterCarousel() {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  if (!checked || !wideEnough) return null;
-  return use3D ? <Hero3DScreen /> : <HeroPosterFallback />;
+  if (!checked || !wideEnough || !posters.length) return null;
+  return use3D ? <Hero3DScreen posters={posters} /> : <HeroPosterFallback posters={posters} />;
 }

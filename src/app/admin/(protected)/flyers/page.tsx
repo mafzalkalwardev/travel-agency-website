@@ -4,7 +4,7 @@ export default function AdminFlyersPage() {
   return (
     <AdminCrudManager
       title="Flyers"
-      description="Add promotional flyers — choose a file to upload or paste an image link."
+      description="Homepage 3D hero banners and promo brochures. Active flyers (by display order) appear in the hero carousel — upload images or paste a URL, then set Active."
       table="flyers"
     />
   );

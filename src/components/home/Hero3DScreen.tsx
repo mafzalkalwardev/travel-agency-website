@@ -4,13 +4,7 @@ import { Suspense, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { assetPath } from "@/lib/base-path";
 
-const POSTER_COUNT = 6;
-const POSTER_PATHS = Array.from(
-  { length: POSTER_COUNT },
-  (_, i) => assetPath(`/assets/flyers/flyer-${i + 1}.jpeg`)
-);
 const SLIDE_SECONDS = 4.5;
 const CROSSFADE_SECONDS = 0.9;
 
@@ -23,8 +17,9 @@ function PosterPlane({ texture, opacity, z }: { texture: THREE.Texture; opacity:
   );
 }
 
-function Screen() {
-  const textures = useTexture(POSTER_PATHS);
+function Screen({ posters }: { posters: string[] }) {
+  const textures = useTexture(posters);
+  const list = Array.isArray(textures) ? textures : [textures];
   const groupRef = useRef<THREE.Group>(null);
   const [current, setCurrent] = useState(0);
   const [previous, setPrevious] = useState<number | null>(null);
@@ -40,11 +35,13 @@ function Screen() {
       groupRef.current.position.y = Math.sin(t * 0.6) * 0.08;
     }
 
+    if (list.length <= 1) return;
+
     clockRef.current += delta;
     if (clockRef.current >= SLIDE_SECONDS) {
       clockRef.current = 0;
       setPrevious(current);
-      setCurrent((i) => (i + 1) % textures.length);
+      setCurrent((i) => (i + 1) % list.length);
       setFade(0);
     }
     if (fade < 1) {
@@ -54,10 +51,10 @@ function Screen() {
 
   return (
     <group ref={groupRef}>
-      {previous !== null && fade < 1 && (
-        <PosterPlane texture={textures[previous]} opacity={1 - fade} z={-0.0005} />
+      {previous !== null && fade < 1 && list[previous] && (
+        <PosterPlane texture={list[previous]} opacity={1 - fade} z={-0.0005} />
       )}
-      <PosterPlane texture={textures[current]} opacity={fade} z={0} />
+      {list[current] && <PosterPlane texture={list[current]} opacity={fade} z={0} />}
     </group>
   );
 }
@@ -73,18 +70,12 @@ function SceneLights() {
 }
 
 /**
- * The homepage hero's "3D screen" — a real WebGL panel that auto-rotates
- * through Al Qibla's own promo posters, crossfading between them. Genuine
- * 3D per the user's explicit choice over a flatter carousel (see
- * docs/REDESIGN.md §3.4/§7) — travellinetour.com's own hero is a simpler
- * tilted-photo-card effect, this intentionally goes further.
- *
- * Always rendered behind a capability check (see HeroPosterCarousel.tsx)
- * that falls back to a 2D carousel — this component assumes WebGL and a
- * motion-tolerant viewer.
+ * Homepage hero 3D screen — rotates through Admin → Flyers images (with static fallback).
  */
-export function Hero3DScreen() {
+export function Hero3DScreen({ posters }: { posters: string[] }) {
   const dpr = useMemo<[number, number]>(() => [1, 1.75], []);
+  const key = posters.join("|");
+
   return (
     <div
       className="relative h-full w-full"
@@ -97,7 +88,7 @@ export function Hero3DScreen() {
       >
         <SceneLights />
         <Suspense fallback={null}>
-          <Screen />
+          <Screen key={key} posters={posters} />
         </Suspense>
       </Canvas>
     </div>
