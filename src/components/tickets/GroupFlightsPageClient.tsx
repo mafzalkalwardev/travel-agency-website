@@ -45,6 +45,7 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
     groupCategory: category?.apiCategory ?? undefined,
   });
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => {
     const initial: TicketFilters = {
@@ -71,10 +72,12 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
       initial.airline = codeMap[airline] || airline;
     }
     setFilters(initial);
+    setVisibleCount(20);
   }, [searchParams, category?.apiCategory]);
 
   const options = useMemo(() => getUniqueFilterOptions(tickets), [tickets]);
   const filtered = useMemo(() => filterTickets(tickets, filters), [tickets, filters]);
+  const visible = filtered.slice(0, visibleCount);
   const activeFilterCount = Object.entries(filters).filter(
     ([key, value]) => value && key !== "groupCategory"
   ).length;
@@ -83,6 +86,7 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
 
   function updateFilters(next: TicketFilters) {
     setFilters({ ...next, groupCategory: category?.apiCategory ?? undefined });
+    setVisibleCount(20);
   }
 
   return (
@@ -125,7 +129,8 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
         <div className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing <strong className="text-navy">all {filtered.length}</strong> flights
+              Showing <strong className="text-navy">{visible.length}</strong> of{" "}
+              <strong className="text-navy">{filtered.length}</strong> flights
               <span className="text-muted-foreground/80"> · Sorted by earliest departure</span>
             </p>
 
@@ -170,8 +175,8 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
             <div className="rounded-xl border border-dashed border-border p-10 text-center sm:p-12">
               <p className="text-muted-foreground">
                 {tickets.length === 0
-                  ? "Live inventory for this category is being updated — check back shortly or try another category."
-                  : "No flights in this category right now. Try another category or adjust filters."}
+                  ? "Travel Line currently has no live groups in this category. Check back shortly or try another destination."
+                  : "No flights match your filters right now. Try clearing filters or choose another category."}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {groupCategories.map((item) => (
@@ -188,7 +193,7 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
           ) : (
             <>
               <div className="space-y-4">
-                {filtered.map((ticket) => (
+                {visible.map((ticket) => (
                   <div
                     key={ticket.id}
                     className="inventory-card-shell"
@@ -197,7 +202,13 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
                   </div>
                 ))}
               </div>
-
+              {visibleCount < filtered.length && (
+                <div className="flex justify-center pt-2">
+                  <Button type="button" variant="outline" onClick={() => setVisibleCount((n) => n + 20)}>
+                    Load more flights
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -8,6 +8,7 @@ import {
   MapPin, Plane, ShieldCheck, Sparkles, Star, Users,
 } from "lucide-react";
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
+import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { airlines } from "@/data/airlines";
 import { OFFICE_DISPLAY_ORDER, SITE, TRUST_TEXT } from "@/lib/constants";
 import type { Review, ReviewStats } from "@/types";
@@ -190,6 +191,13 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
         <div className="container-wide">
           <motion.div {...reveal} className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-[.22em] text-gold">Approved client reviews</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">Experiences shared by our travelers</h2></div>{reviewStats.count > 0 && <div className="rounded-xl border border-white/10 bg-white/5 px-5 py-3"><strong className="text-2xl text-gold">{reviewStats.average.toFixed(1)}</strong><span className="ml-2 text-sm text-white/60">from {reviewStats.count} approved reviews</span></div>}</motion.div>
           {reviews.length ? <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{reviews.map((review) => <article key={review.id} className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur"><div className="flex gap-1" aria-label={`${review.rating} out of 5 stars`}>{[1,2,3,4,5].map((n) => <Star key={n} className={`h-4 w-4 ${n <= review.rating ? "fill-gold text-gold" : "text-white/20"}`} />)}</div><p className="mt-4 text-sm leading-7 text-white/80">“{review.comment}”</p><div className="mt-6 flex items-center gap-3 border-t border-white/10 pt-4">{review.avatar_url ? <Image src={review.avatar_url} alt="" width={44} height={44} className="h-11 w-11 rounded-full object-cover" /> : <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gold font-bold text-navy">{review.name.charAt(0).toUpperCase()}</div>}<div><p className="font-semibold">{review.name}</p><p className="text-xs text-gold-light">{[review.city, review.service].filter(Boolean).join(" · ") || "Verified client"}</p></div></div></article>)}</div> : <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/65">Approved customer reviews will appear here. We never invent testimonials.</div>}
+
+          <div className="mt-12 max-w-xl">
+            <p className="mb-4 text-sm text-white/70">
+              Traveled with us? Share your experience — reviews appear after our team approves them.
+            </p>
+            <ReviewForm />
+          </div>
         </div>
       </section>
     </main>

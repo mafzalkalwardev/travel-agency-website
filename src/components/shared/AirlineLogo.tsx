@@ -12,7 +12,7 @@ interface AirlineLogoProps {
   name: string;
   /** Ignored for known IATA codes — always use local curated PNGs. */
   logo?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
@@ -20,6 +20,7 @@ const sizes = {
   sm: { box: "h-12 w-12", img: 40, pad: "p-1" },
   md: { box: "h-16 w-16", img: 52, pad: "p-1.5" },
   lg: { box: "h-20 w-20", img: 64, pad: "p-2" },
+  xl: { box: "h-[6.75rem] w-[6.75rem]", img: 112, pad: "p-1" },
 };
 
 export function AirlineLogo({ code, name, logo, size = "md", className }: AirlineLogoProps) {
@@ -47,7 +48,6 @@ export function AirlineLogo({ code, name, logo, size = "md", className }: Airlin
           width={s.img}
           height={s.img}
           className={cn("h-full w-full object-contain", s.pad)}
-          unoptimized
           onError={() => setFailed(true)}
         />
       ) : (

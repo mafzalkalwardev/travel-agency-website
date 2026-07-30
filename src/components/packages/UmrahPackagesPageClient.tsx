@@ -79,13 +79,16 @@ interface UmrahPackagesPageClientProps {
 export function UmrahPackagesPageClient({ packages }: UmrahPackagesPageClientProps) {
   const [filters, setFilters] = useState<UmrahPackageFilters>({ sortBy: "date" });
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   const options = useMemo(() => getPackageFilterOptions(packages), [packages]);
   const filtered = useMemo(() => filterPackages(packages, filters), [packages, filters]);
+  const visible = filtered.slice(0, visibleCount);
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   function updateFilters(next: UmrahPackageFilters) {
     setFilters(next);
+    setVisibleCount(12);
   }
 
   const filterControls = (
@@ -198,7 +201,8 @@ export function UmrahPackagesPageClient({ packages }: UmrahPackagesPageClientPro
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Showing <strong className="text-navy">all {filtered.length}</strong> packages
+        Showing <strong className="text-navy">{visible.length}</strong> of{" "}
+        <strong className="text-navy">{filtered.length}</strong> packages
         <span className="text-muted-foreground/80"> · Sorted by earliest departure</span>
       </p>
 
@@ -207,13 +211,26 @@ export function UmrahPackagesPageClient({ packages }: UmrahPackagesPageClientPro
           No packages match your filters.
         </div>
       ) : (
-        <div className="space-y-4">
-          {filtered.map((pkg) => (
-            <div key={pkg.id} className="inventory-card-shell">
-              <UmrahPackageListCard pkg={pkg} />
+        <>
+          <div className="space-y-4">
+            {visible.map((pkg) => (
+              <div key={pkg.id} className="inventory-card-shell">
+                <UmrahPackageListCard pkg={pkg} />
+              </div>
+            ))}
+          </div>
+          {visibleCount < filtered.length && (
+            <div className="flex justify-center pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setVisibleCount((n) => n + 12)}
+              >
+                Load more packages
+              </Button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

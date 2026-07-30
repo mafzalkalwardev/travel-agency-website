@@ -1,10 +1,10 @@
 import { AnnouncementTicker } from "@/components/home/AnnouncementTicker";
+import { DeferredFlightPathStory } from "@/components/home/DeferredFlightPathStory";
 import { DestinationGrid } from "@/components/home/DestinationGrid";
 import { HeroSection } from "@/components/home/HeroSection";
 import { SubAgentCTA } from "@/components/home/SubAgentCTA";
 import { TicketsPreview } from "@/components/home/TicketsPreview";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
-import { FlightPathStory } from "@/components/motion/FlightPathStory";
 import { dataProvider } from "@/lib/data-provider";
 
 // Home embeds live ticket inventory — cache the page and refresh every 60s
@@ -23,9 +23,9 @@ export default async function HomePage() {
       <HeroSection />
       <AnnouncementTicker announcements={announcements} />
       <DestinationGrid destinations={destinations} />
-      <TicketsPreview tickets={tickets.filter((t) => t.status !== "sold_out")} />
+      <TicketsPreview tickets={tickets.filter((t) => t.status !== "sold_out").slice(0, 8)} />
       <WhyChooseUs />
-      <FlightPathStory />
+      <DeferredFlightPathStory />
       <SubAgentCTA />
     </>
   );

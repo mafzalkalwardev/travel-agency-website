@@ -26,6 +26,7 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState<TicketFilters>({});
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   useEffect(() => {
     const initial: TicketFilters = {};
@@ -50,14 +51,17 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
       initial.airline = codeMap[airline] || airline;
     }
     setFilters(initial);
+    setVisibleCount(20);
   }, [searchParams]);
 
   const options = useMemo(() => getUniqueFilterOptions(tickets), [tickets]);
   const filtered = useMemo(() => filterTickets(tickets, filters), [tickets, filters]);
+  const visible = filtered.slice(0, visibleCount);
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   function updateFilters(next: TicketFilters) {
     setFilters(next);
+    setVisibleCount(20);
   }
 
   return (
@@ -74,7 +78,8 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing <strong className="text-navy">all {filtered.length}</strong> group tickets
+            Showing <strong className="text-navy">{visible.length}</strong> of{" "}
+            <strong className="text-navy">{filtered.length}</strong> group tickets
             {filtered.length !== tickets.length && (
               <span className="text-muted-foreground/80"> (filtered from {tickets.length})</span>
             )}
@@ -140,7 +145,7 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
         ) : (
           <>
             <div className="space-y-4">
-              {filtered.map((ticket) => (
+              {visible.map((ticket) => (
                 <div
                   key={ticket.id}
                   className="inventory-card-shell"
@@ -149,7 +154,13 @@ export function TicketsPageClient({ tickets }: TicketsPageClientProps) {
                 </div>
               ))}
             </div>
-
+            {visibleCount < filtered.length && (
+              <div className="flex justify-center pt-2">
+                <Button type="button" variant="outline" onClick={() => setVisibleCount((n) => n + 20)}>
+                  Load more tickets
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -80,8 +80,15 @@ export function UmrahPackageListCard({ pkg }: UmrahPackageListCardProps) {
         <Card className="overflow-hidden border-border/60 transition-all hover:border-gold/30 hover:shadow-lg">
           <CardContent className="p-0">
             <div className="flex flex-col lg:flex-row">
-              <div className="flex w-full items-center justify-center border-b border-border/40 bg-navy p-4 lg:w-36 lg:border-b-0 lg:border-r">
-                <AirlineLogo code={code} name={pkg.airline || "Airline"} size="md" />
+              <div className="flex w-full items-center justify-center border-b border-border/40 bg-secondary/40 p-4 lg:w-44 lg:border-b-0 lg:border-r lg:p-5">
+                <div className="flex h-[7.5rem] w-[7.5rem] items-center justify-center rounded-[28%] bg-navy shadow-md sm:h-32 sm:w-32">
+                  <AirlineLogo
+                    code={code}
+                    name={pkg.airline || "Airline"}
+                    size="xl"
+                    className="rounded-[32%] border-0 shadow-none"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-1 flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
