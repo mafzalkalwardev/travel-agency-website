@@ -82,58 +82,76 @@ export function AboutExperience({ reviews, reviewStats }: { reviews: Review[]; r
         </div>
       </section>
 
-      <section className="section-padding relative overflow-hidden bg-[#f4efe7] text-navy">
-        <div className="absolute -right-24 top-12 h-72 w-72 rounded-full bg-[#7e9276]/15 blur-3xl" />
-        <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-gold/15 blur-3xl" />
-        <div className="container-wide relative grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr] lg:gap-16">
-          <motion.div {...reveal}>
-            <p className="text-sm font-bold uppercase tracking-[.22em] text-[#a66d2f]">Our founder</p>
-            <h2 className="mt-3 text-4xl font-bold sm:text-5xl">Farman Ullah</h2>
-            <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-navy px-4 py-1.5 text-xs font-bold uppercase tracking-[.16em] text-gold">
-              <BadgeCheck className="h-4 w-4" /> Founder &amp; CEO
-            </span>
-            <div className="mt-6 space-y-4 text-[15px] leading-7 text-slate-700">
-              <p>Farman Ullah founded {SITE.name} on a simple conviction: travel should be dependable, transparent and genuinely personal. What began as a promise of honest fares and reliable service has grown into a full-service travel company trusted by pilgrims, families, agents and organizations.</p>
-              <p>Under his leadership, Al Qibla pairs on-the-ground expertise with modern, live inventory — handling Umrah journeys, worldwide air ticketing, group fares, visas, hotels and managed corporate travel from offices in Peshawar, Islamabad and Bannu.</p>
-              <p>His approach is hands-on and relationship-first: clear quotations, documented requests, and a team that stays accountable from the first inquiry until every traveler is safely home.</p>
-            </div>
-
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              {founderHighlights.map((item) => (
-                <div key={item} className="flex items-start gap-2 text-sm font-medium text-navy">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                  {item}
-                </div>
-              ))}
-            </div>
-
-            <figure className="mt-8 border-l-4 border-gold pl-5">
-              <blockquote className="text-lg font-medium italic leading-8 text-navy">“We don’t just book journeys — we take responsibility for them.”</blockquote>
-              <figcaption className="mt-2 text-sm font-semibold text-slate-500">— Farman Ullah, Founder &amp; CEO</figcaption>
-            </figure>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/inquiry/" className="inline-flex h-12 items-center gap-2 rounded-xl bg-gold px-6 font-semibold text-navy transition hover:bg-gold-light">Plan your journey <ArrowRight className="h-4 w-4" /></Link>
-              <a href={SITE.whatsapp} target="_blank" rel="noopener noreferrer" className="inline-flex h-12 items-center gap-2 rounded-xl border border-navy/15 bg-white px-6 font-semibold text-navy transition hover:border-gold/50 hover:bg-gold/5">Message on WhatsApp</a>
-            </div>
+      <section className="relative overflow-hidden bg-[#f4efe7] text-navy">
+        <div className="grid lg:grid-cols-[minmax(0,42%)_minmax(0,58%)] lg:items-stretch">
+          {/* Left — edge-to-edge photo, height locked to the text column */}
+          <motion.div {...reveal} className="relative min-h-[380px] sm:min-h-[440px] lg:min-h-0">
+            <Image
+              src="/assets/team/farman-ullah-portrait.jpg"
+              alt="Farman Ullah, Founder & CEO of Al Qibla Air Services"
+              fill
+              sizes="(max-width: 1024px) 100vw, 42vw"
+              className="object-cover object-[center_42%]"
+              priority
+            />
           </motion.div>
 
-          <motion.div {...reveal} className="relative mx-auto w-full max-w-md">
-            <div aria-hidden className="absolute -right-5 -top-5 h-28 w-28 rounded-3xl border border-gold/30 bg-gold/10 backdrop-blur" />
-            <div aria-hidden className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full border border-navy/10 bg-[#7e9276]/15" />
-            <div className="relative overflow-hidden rounded-[2rem] border border-navy/10 bg-white p-3 shadow-[0_30px_80px_rgba(41,54,51,.22)]">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[1.4rem] bg-navy-light">
-                <Image
-                  src="/assets/team/farman-ullah.jpg"
-                  alt="Farman Ullah, Founder & CEO of Al Qibla Air Services"
-                  fill
-                  sizes="(max-width: 1024px) 90vw, 460px"
-                  className="object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy/90 via-navy/30 to-transparent p-5 pt-20">
-                  <p className="text-lg font-bold text-white">Farman Ullah</p>
-                  <p className="text-xs font-semibold uppercase tracking-[.18em] text-gold-light">Founder &amp; CEO</p>
-                </div>
+          {/* Right — copy aligned to the photo */}
+          <motion.div {...reveal} className="relative flex flex-col justify-center px-6 py-10 sm:px-10 lg:px-12 lg:py-14 xl:pr-20 xl:pl-14">
+            <p className="text-xs font-bold uppercase tracking-[.2em] text-[#a66d2f]">People behind your journey</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
+              Meet our leadership
+            </h2>
+            <p className="mt-3 max-w-md text-sm leading-7 text-slate-600">
+              Leadership that stays accountable from the first inquiry until every traveler is safely home.
+            </p>
+
+            <div className="mt-6 border-t border-navy/10 pt-6">
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-navy px-3 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-gold">
+                <BadgeCheck className="h-3.5 w-3.5" /> Founder &amp; CEO
+              </span>
+              <h3 className="mt-2.5 text-xl font-bold tracking-tight sm:text-2xl">Farman Ullah</h3>
+
+              <div className="mt-3.5 max-w-lg space-y-2.5 text-[13px] leading-6 text-slate-700">
+                <p>
+                  Farman Ullah founded {SITE.name} on a simple conviction: travel should be dependable, transparent and genuinely personal. What began as a promise of honest fares and reliable service has grown into a full-service travel company trusted by pilgrims, families, agents and organizations.
+                </p>
+                <p>
+                  Under his leadership, Al Qibla pairs on-the-ground expertise with modern, live inventory — Umrah, worldwide ticketing, group fares, visas, hotels and corporate travel from Peshawar, Islamabad and Bannu.
+                </p>
+                <p>
+                  His approach is hands-on and relationship-first: clear quotations, documented requests, and a team accountable from first inquiry until every traveler is home.
+                </p>
+              </div>
+
+              <div className="mt-4 grid max-w-lg gap-1.5 sm:grid-cols-2">
+                {founderHighlights.map((item) => (
+                  <div key={item} className="flex items-start gap-2 text-xs font-medium text-navy">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <figure className="mt-5 max-w-lg border-l-[3px] border-gold pl-3.5">
+                <blockquote className="text-sm font-medium italic leading-6 text-navy">
+                  “We don’t just book journeys — we take responsibility for them.”
+                </blockquote>
+                <figcaption className="mt-1 text-[11px] font-semibold text-slate-500">— Farman Ullah, Founder &amp; CEO</figcaption>
+              </figure>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link href="/inquiry/" className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-gold px-4 text-xs font-semibold text-navy transition hover:bg-gold-light">
+                  Plan your journey <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <a
+                  href={SITE.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-navy/15 bg-white px-4 text-xs font-semibold text-navy transition hover:border-gold/50 hover:bg-gold/5"
+                >
+                  Message on WhatsApp
+                </a>
               </div>
             </div>
           </motion.div>

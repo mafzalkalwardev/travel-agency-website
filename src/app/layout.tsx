@@ -16,20 +16,57 @@ export const metadata: Metadata = createPageMetadata({ title: SITE.name, descrip
 
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "TravelAgency",
-  name: SITE.name,
-  description: SITE.description,
-  url: SITE.url,
-  logo: `${SITE.url}/icon-512.png`,
-  image: `${SITE.url}/icon-512.png`,
-  telephone: SITE.whatsappNumber,
-  address: OFFICE_DISPLAY_ORDER.map((office) => ({
-    "@type": "PostalAddress",
-    streetAddress: office.address,
-    addressCountry: "PK",
-  })),
-  areaServed: SITE.regions,
-  sameAs: [SITE.url],
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE.url}/#organization`,
+      name: SITE.name,
+      url: SITE.url,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE.url}/google-site-logo.png`,
+        width: 512,
+        height: 512,
+      },
+      image: `${SITE.url}/google-site-logo.png`,
+      sameAs: [
+        SITE.url,
+        "https://www.facebook.com/Alqiblaairservices/",
+        "https://www.instagram.com/alqiblaairservices/",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE.url}/#website`,
+      url: SITE.url,
+      name: SITE.name,
+      description: SITE.description,
+      publisher: { "@id": `${SITE.url}/#organization` },
+      inLanguage: "en-PK",
+    },
+    {
+      "@type": "TravelAgency",
+      "@id": `${SITE.url}/#travelagency`,
+      name: SITE.name,
+      description: SITE.description,
+      url: SITE.url,
+      logo: `${SITE.url}/google-site-logo.png`,
+      image: `${SITE.url}/google-site-logo.png`,
+      telephone: SITE.whatsappNumber,
+      email: SITE.email,
+      parentOrganization: { "@id": `${SITE.url}/#organization` },
+      address: OFFICE_DISPLAY_ORDER.map((office) => ({
+        "@type": "PostalAddress",
+        streetAddress: office.address,
+        addressCountry: "PK",
+      })),
+      areaServed: SITE.regions,
+      sameAs: [
+        "https://www.facebook.com/Alqiblaairservices/",
+        "https://www.instagram.com/alqiblaairservices/",
+      ],
+    },
+  ],
 };
 
 export default function RootLayout({
