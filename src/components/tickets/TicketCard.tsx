@@ -185,11 +185,11 @@ export function TicketCard({ ticket, compact = false, sourcePage = "/available-t
                   </div>
                   <div className="mt-1 flex flex-wrap gap-3">
                     <span>
-                      {segment.fromCode} {formatSegmentTime(segment.departureAt)} · {formatSegmentDate(segment.departureAt)}
+                      {segment.departureCode} {formatSegmentTime(segment.departureDatetime)} · {formatSegmentDate(segment.departureDatetime)}
                     </span>
                     <span>→</span>
                     <span>
-                      {segment.toCode} {formatSegmentTime(segment.arrivalAt)} · {formatSegmentDate(segment.arrivalAt)}
+                      {segment.arrivalCode} {formatSegmentTime(segment.arrivalDatetime)} · {formatSegmentDate(segment.arrivalDatetime)}
                     </span>
                   </div>
                 </div>

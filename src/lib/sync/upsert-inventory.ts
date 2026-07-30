@@ -100,7 +100,7 @@ export async function upsertTickets(
         changes.push({
           provider,
           entityType: "ticket",
-          entityId: existing.id,
+          entityId: String(existing.id),
           externalId: t.externalId,
           changeType: "updated",
           fieldChanges,
@@ -138,8 +138,8 @@ export async function upsertTickets(
         changes.push({
           provider,
           entityType: "ticket",
-          entityId: row.id,
-          externalId: row.external_id,
+          entityId: String(row.id),
+          externalId: row.external_id ? String(row.external_id) : undefined,
           changeType: "deactivated",
           fieldChanges: {
             active: { old: row.active, new: false },
