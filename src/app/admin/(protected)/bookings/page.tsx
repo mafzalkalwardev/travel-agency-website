@@ -111,7 +111,7 @@ export default function AdminBookingsPage() {
 
     const rows = (data as Booking[]) || [];
     setBookings(rows);
-    setStatsSource((openForStats as Booking[]) || []);
+    setStatsSource((openForStats as unknown as Booking[]) || []);
 
     const userIds = [
       ...new Set(rows.map((b) => b.customer_user_id).filter((id): id is string => Boolean(id))),
