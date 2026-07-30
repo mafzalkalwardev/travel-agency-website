@@ -58,11 +58,11 @@ export default async function AdminFlightAnalyticsPage() {
 
   const integration = [
     {
-      label: "Travel Line inventory",
+      label: "Live inventory",
       status: isTravelLineSyncEnabled() ? "live" : "not configured",
       detail: isTravelLineConfigured()
         ? "Scraper sync + group flight holds"
-        : "Set TRAVELLINE_AGENT_* env vars",
+        : "Set supplier agent credentials",
     },
     {
       label: "Booking holds",
@@ -99,7 +99,7 @@ export default async function AdminFlightAnalyticsPage() {
         <div>
           <h1 className="font-heading text-2xl font-bold text-navy">Flight Analytics</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Live Travel Line group inventory, booking pipeline, and integration status.
+            Live group inventory, booking pipeline, and integration status.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

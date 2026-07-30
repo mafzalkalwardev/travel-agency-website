@@ -53,11 +53,11 @@ export function getFlightAutomationReadiness() {
 
   return [
     {
-      label: "Travel Line inventory",
+      label: "Live inventory",
       status: travelline ? "live" : "not configured",
       detail: travelline
         ? "Group flights synced every 5 min via GitHub Actions"
-        : "Set TRAVELLINE_AGENT_USERNAME and TRAVELLINE_AGENT_PASSWORD",
+        : "Set supplier agent credentials",
     },
     {
       label: "Supplier holds",

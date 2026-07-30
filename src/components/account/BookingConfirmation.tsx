@@ -254,7 +254,7 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
               )}
               {booking.travelline_status && (
                 <p>
-                  <strong className="text-slate-900">Travel Line:</strong> {booking.travelline_status}
+                  <strong className="text-slate-900">Status:</strong> {booking.travelline_status}
                 </p>
               )}
             </div>
@@ -293,8 +293,8 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
             <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground print:hidden">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
               {isConfirmed
-                ? "This voucher mirrors your Travel Line order. Bring a copy when traveling and keep the order ID handy."
-                : "Seats are held on Travel Line after you book. Once payment is confirmed, this page becomes your printable voucher."}
+                ? "This voucher is your booking confirmation. Bring a copy when traveling and keep the order ID handy."
+                : "Seats are held after you book. Once payment is confirmed, this page becomes your printable voucher."}
             </p>
           </div>
         </div>

@@ -183,7 +183,7 @@ export async function scrapeTravelLineUmrahItems(): Promise<TravelLineUmrahApiIt
   // Vercel serverless does not ship Playwright browser binaries. Falling back
   // there turns an otherwise healthy HTTP sync into a runtime module failure.
   if (process.env.VERCEL === "1") {
-    throw new Error("Travel Line package API returned no usable inventory");
+    throw new Error("supplier package API returned no usable inventory");
   }
 
   const { chromium } = await loadPlaywright();
@@ -230,7 +230,7 @@ export async function scrapeTravelLineUmrahItems(): Promise<TravelLineUmrahApiIt
     const apiItems = extractUmrahItemsFromJsonText(text);
     if (apiItems.length) return apiItems;
 
-    throw new Error("Travel Line scraper could not extract package inventory");
+    throw new Error("supplier scraper could not extract package inventory");
   } finally {
     await browser.close();
   }

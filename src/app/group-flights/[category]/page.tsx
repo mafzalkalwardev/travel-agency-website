@@ -63,7 +63,7 @@ export default async function GroupFlightsCategoryPage({ params }: PageProps) {
         title={category.label}
         subtitle={`Live group inventory · ${tickets.length} flights available`}
         backgroundImage="/assets/heroes/tickets.jpg"
-        badge="Agent Portal · Travel Line Sync"
+        badge="Agent Portal · Live Inventory"
         lite
       />
 

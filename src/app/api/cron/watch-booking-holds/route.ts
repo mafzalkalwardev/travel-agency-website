@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cleanupStaleBookings } from "@/lib/booking/cleanup-stale-bookings";
 import {
   HOLD_WARN_WITHIN_MINUTES,
   isHoldExpiringSoon,
@@ -56,6 +57,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ note: "Supabase not configured", warned: 0, synced: 0 });
   }
 
+  const cleanup = await cleanupStaleBookings();
+
   const supabase = createAdminClient();
   let warned = 0;
   let synced = 0;
@@ -72,7 +75,7 @@ export async function GET(request: Request) {
   const expiring = (activeHolds || []).filter((b) => isHoldExpiringSoon(b));
   expiredCount = expiring.filter((b) => (minutesUntilHoldExpiry(b) ?? 0) <= 0).length;
 
-  // Refresh Travel Line status for at-risk holds (detect CANCELLED after expiry).
+  // Refresh Seat status for at-risk holds (detect CANCELLED after expiry).
   for (const booking of expiring.slice(0, 10)) {
     if (!booking.travelline_booking_ref && !booking.travelline_order_id) continue;
     const result = await syncSupplierBookingStatus(booking.id);
@@ -101,8 +104,8 @@ export async function GET(request: Request) {
         to: getBookingAdminEmail(),
         subject:
           expiredCount > 0
-            ? `${expiredCount} Travel Line hold(s) expired / at risk — action needed`
-            : `${toWarn.length} Travel Line hold(s) expire within ${HOLD_WARN_WITHIN_MINUTES} min`,
+            ? `${expiredCount} Seat hold(s) expired / at risk — action needed`
+            : `${toWarn.length} Seat hold(s) expire within ${HOLD_WARN_WITHIN_MINUTES} min`,
         html: holdExpiryWarningAdminHtml(toWarn),
       });
 
@@ -114,6 +117,11 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
+    cleanup: {
+      cancelledStalePending: cleanup.cancelledStalePending,
+      clearedHoldFlagsOnClosed: cleanup.clearedHoldFlagsOnClosed,
+      notes: cleanup.notes.slice(0, 20),
+    },
     activeHolds: activeHolds?.length || 0,
     expiringSoon: expiring.length,
     expiredOrPast: expiredCount,

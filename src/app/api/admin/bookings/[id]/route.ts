@@ -24,7 +24,7 @@ export async function PATCH(
   const body = await request.json();
   const status = body.status as string;
   const adminNotes = body.admin_notes as string | undefined;
-  /** When true, mark our side paid even if Travel Line confirm fails (manual override). */
+  /** When true, mark our side paid even if supplier confirm fails (manual override). */
   const forceLocal = Boolean(body.force_local);
 
   if (!isSupabaseConfigured()) {
@@ -48,7 +48,7 @@ export async function PATCH(
   let supplierError: string | undefined;
 
   if (status === "payment_confirmed" || status === "confirmed") {
-    // Real ticket lives on Travel Line — confirm there before we call it confirmed.
+    // Real ticket lives on supplier — confirm there before we call it confirmed.
     const supplier = await confirmSupplierBooking(id);
     travellineStatus = supplier.status;
 
@@ -56,11 +56,11 @@ export async function PATCH(
       finalStatus = "confirmed";
     } else if (forceLocal) {
       finalStatus = "payment_confirmed";
-      supplierError = supplier.error || "Travel Line not confirmed — local override";
+      supplierError = supplier.error || "supplier not confirmed — local override";
     } else {
-      // Payment received on our side, but Travel Line still not confirmed.
+      // Payment received on our side, but supplier still not confirmed.
       finalStatus = "booking_in_progress";
-      supplierError = supplier.error || "Travel Line confirmation failed";
+      supplierError = supplier.error || "supplier confirmation failed";
 
       await supabase
         .from("bookings")
@@ -78,7 +78,7 @@ export async function PATCH(
           status: finalStatus,
           travellineStatus,
           error: supplierError,
-          hint: "Confirm or settle the order in Travel Line, then retry — or pass force_local to mark paid here only.",
+          hint: "Confirm or settle the order in supplier, then retry — or pass force_local to mark paid here only.",
         },
         { status: 502 }
       );

@@ -175,7 +175,7 @@ export function GroupFlightsPageClient({ tickets, categorySlug }: GroupFlightsPa
             <div className="rounded-xl border border-dashed border-border p-10 text-center sm:p-12">
               <p className="text-muted-foreground">
                 {tickets.length === 0
-                  ? "Travel Line currently has no live groups in this category. Check back shortly or try another destination."
+                  ? "No live groups in this category right now. Check back shortly or try another destination."
                   : "No flights match your filters right now. Try clearing filters or choose another category."}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">

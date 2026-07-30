@@ -69,7 +69,7 @@ export function isHoldExpired(booking: Parameters<typeof getHoldExpiresAt>[0], n
 export function formatHoldCountdown(booking: Booking): string | null {
   const mins = minutesUntilHoldExpiry(booking);
   if (mins === null) return null;
-  if (mins <= 0) return "Hold may be expired on Travel Line";
+  if (mins <= 0) return "Hold may be expired";
   if (mins < 60) return `Hold expires in ~${mins} min`;
   const hours = Math.floor(mins / 60);
   const rem = mins % 60;

@@ -4,8 +4,8 @@ import { MirrorPromoBar } from "@/components/travelline-mirror/MirrorPromoBar";
 import "./mirror.css";
 
 export const metadata: Metadata = {
-  title: "Travel Line Mirror",
-  description: "Local mirror of Travel Line inventory for side-by-side comparison",
+  title: "Inventory Mirror",
+  description: "Local mirror of supplier inventory for side-by-side comparison",
 };
 
 export default function TravelLineMirrorLayout({ children }: { children: React.ReactNode }) {
@@ -15,7 +15,7 @@ export default function TravelLineMirrorLayout({ children }: { children: React.R
       <MirrorPromoBar />
       <main>{children}</main>
       <footer className="border-t border-white/10 px-4 py-6 text-center text-xs text-white/50">
-        Travel Line localhost mirror · scraped inventory only · compare with travellinetour.com
+        Localhost inventory mirror · scraped data only
       </footer>
     </div>
   );

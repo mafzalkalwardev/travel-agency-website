@@ -173,7 +173,7 @@ export default function AdminTicketsPage() {
         <div>
           <h1 className="font-heading text-2xl font-bold text-navy">Ticket Inventory</h1>
           <p className="text-sm text-muted-foreground">
-            Live Travel Line sync · {outboundCount} outbound · {ticketCount} active tickets · {umrahCount} umrah packages
+            Live inventory sync · {outboundCount} outbound · {ticketCount} active tickets · {umrahCount} umrah packages
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -181,7 +181,7 @@ export default function AdminTicketsPage() {
             {cleaning ? "Cleaning…" : "Clean return legs"}
           </Button>
           <Button onClick={runSync} disabled={syncing} variant="navy">
-            {syncing ? "Syncing from Travel Line…" : "Sync Now"}
+            {syncing ? "Syncing inventory…" : "Sync Now"}
           </Button>
         </div>
       </div>

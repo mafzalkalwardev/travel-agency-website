@@ -23,7 +23,7 @@ const copy = {
     title: "Register your agency for group inventory.",
     formTitle: "Become an Al Qibla sub-agent",
     formText:
-      "Share your full company details — the same information Travel Line collects — so our team can verify and unlock booking access.",
+      "Share your full company details so our team can verify and unlock booking access.",
   },
   forgot: {
     eyebrow: "Account recovery",

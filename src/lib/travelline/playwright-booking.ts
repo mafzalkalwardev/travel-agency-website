@@ -19,7 +19,7 @@ export async function createBookingViaPlaywright(
 ): Promise<TravelLineBookingResult> {
   const { baseUrl, username, password } = getTravelLineConfig();
   if (!username || !password) {
-    return { success: false, error: "Travel Line credentials not configured" };
+    return { success: false, error: "supplier credentials not configured" };
   }
 
   const packageId = resolveTravelLinePackageId(input.externalProductId);
@@ -162,7 +162,7 @@ export async function createBookingViaPlaywright(
 
     return {
       success: false,
-      error: "Could not place booking via Travel Line portal — no booking API responded",
+      error: "Could not place booking via supplier portal — no booking API responded",
       raw: { captured },
     };
   } finally {

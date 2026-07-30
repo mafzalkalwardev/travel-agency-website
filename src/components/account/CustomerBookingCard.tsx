@@ -105,7 +105,7 @@ export function CustomerBookingCard({ booking }: { booking: Booking }) {
 
       {(booking.travelline_order_id || booking.travelline_booking_ref) && (
         <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-          <strong>Travel Line ref:</strong>{" "}
+          <strong>Booking ref:</strong>{" "}
           {booking.travelline_order_id || booking.travelline_booking_ref}
         </p>
       )}

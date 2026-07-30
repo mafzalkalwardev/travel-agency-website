@@ -127,11 +127,11 @@ export default function AdminSettingsPage() {
             />
             <StatusRow
               ok={status.travelline}
-              label="Travel Line booking"
+              label="Supplier booking"
               detail={
                 status.travellineSync
                   ? "Agent credentials configured · scraper sync enabled"
-                  : "Set TRAVELLINE_AGENT_USERNAME and TRAVELLINE_AGENT_PASSWORD"
+                  : "Set supplier agent credentials in environment"
               }
             />
             <StatusRow

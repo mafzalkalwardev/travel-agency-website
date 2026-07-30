@@ -198,7 +198,7 @@ export async function POST(request: Request) {
       supplierHeld,
       supplierRef: supplierRef || null,
       message:
-        "Booking submitted. Seats held at Travel Line when available — opening WhatsApp to complete payment.",
+        "Booking submitted. Seats held when available — opening WhatsApp to complete payment.",
       whatsapp: {
         productTitle: productLabel,
         customerName: data.customer_name,

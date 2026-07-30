@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/supabase/require-admin";
 
 export const maxDuration = 120;
 
-/** Refresh Travel Line RESERVED/CONFIRMED/CANCELLED onto our booking row. */
+/** Refresh supplier RESERVED/CONFIRMED/CANCELLED onto our booking row. */
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -20,7 +20,7 @@ export async function POST(
   const result = await syncSupplierBookingStatus(id);
   if (!result.ok) {
     return NextResponse.json(
-      { error: result.error || "Could not sync Travel Line status", travellineStatus: result.status },
+      { error: result.error || "Could not sync supplier status", travellineStatus: result.status },
       { status: 502 }
     );
   }

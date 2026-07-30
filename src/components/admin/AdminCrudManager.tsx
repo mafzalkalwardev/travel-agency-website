@@ -140,7 +140,7 @@ export function AdminCrudManager({ title, description, table }: AdminCrudManager
     const synced = config?.syncAware && row.source_provider && row.source_provider !== "manual";
     const ok = window.confirm(
       synced
-        ? `Delete "${label}"? This row looks TravelLine-synced and may reappear on the next sync.`
+        ? `Delete "${label}"? This row looks inventory-synced and may reappear on the next sync.`
         : `Delete "${label}"? This cannot be undone.`
     );
     if (!ok) return;
@@ -231,7 +231,7 @@ export function AdminCrudManager({ title, description, table }: AdminCrudManager
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       {config?.syncAware && (
         <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          TravelLine sync can create or update rows here. Manual edits on synced packages may be overwritten
+          Inventory sync can create or update rows here. Manual edits on synced packages may be overwritten
           on the next sync — prefer status/featured tweaks, or mark source as manual when adding your own.
         </p>
       )}

@@ -16,12 +16,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { formatHoldCountdown, isHoldExpiringSoon } from "@/lib/booking/hold-expiry";
+import { humanizeSupplierHoldError } from "@/lib/booking/hold-messages";
 import { SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus, CustomerProfile } from "@/types";
 import { toast } from "sonner";
 
 type AgentCompanyInfo = Pick<CustomerProfile, "id" | "company_name" | "city" | "full_name">;
+type BookingFilter = BookingStatus | "all" | "open";
+
+const OPEN_STATUSES: BookingStatus[] = [
+  "pending_payment",
+  "booking_in_progress",
+  "payment_confirmed",
+];
+
+const FILTERS: { id: BookingFilter; label: string }[] = [
+  { id: "open", label: "Open" },
+  { id: "all", label: "All" },
+  { id: "pending_payment", label: "pending payment" },
+  { id: "booking_in_progress", label: "booking in progress" },
+  { id: "payment_confirmed", label: "payment confirmed" },
+  { id: "confirmed", label: "confirmed" },
+  { id: "failed", label: "failed" },
+  { id: "cancelled", label: "cancelled" },
+];
 
 const statusColors: Record<BookingStatus, string> = {
   pending_payment: "bg-amber-100 text-amber-800",
@@ -62,8 +81,9 @@ function whatsappCustomerLink(phone: string, name: string, ref: string) {
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [statsSource, setStatsSource] = useState<Booking[]>([]);
   const [agentById, setAgentById] = useState<Record<string, AgentCompanyInfo>>({});
-  const [filter, setFilter] = useState<BookingStatus | "all">("all");
+  const [filter, setFilter] = useState<BookingFilter>("open");
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -74,10 +94,24 @@ export default function AdminBookingsPage() {
     setLoading(true);
     const supabase = createClient();
     let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
-    if (filter !== "all") query = query.eq("status", filter);
-    const { data } = await query;
+    if (filter === "open") query = query.in("status", OPEN_STATUSES);
+    else if (filter !== "all") query = query.eq("status", filter);
+
+    const [{ data }, { data: openForStats }] = await Promise.all([
+      query,
+      supabase
+        .from("bookings")
+        .select(
+          "id,status,supplier_hold_status,created_at,updated_at,hold_expires_at,travelline_response"
+        )
+        .eq("status", "pending_payment")
+        .order("created_at", { ascending: false })
+        .limit(100),
+    ]);
+
     const rows = (data as Booking[]) || [];
     setBookings(rows);
+    setStatsSource((openForStats as Booking[]) || []);
 
     const userIds = [
       ...new Set(rows.map((b) => b.customer_user_id).filter((id): id is string => Boolean(id))),
@@ -105,17 +139,21 @@ export default function AdminBookingsPage() {
 
   const stats = useMemo(
     () => ({
-      pending: bookings.filter((b) => b.status === "pending_payment").length,
-      held: bookings.filter((b) => b.supplier_hold_status === "held").length,
-      failedHold: bookings.filter((b) => b.supplier_hold_status === "failed").length,
-      expiringSoon: bookings.filter(
+      pending: statsSource.filter((b) => b.status === "pending_payment").length,
+      held: statsSource.filter(
+        (b) => b.status === "pending_payment" && b.supplier_hold_status === "held"
+      ).length,
+      failedHold: statsSource.filter(
+        (b) => b.status === "pending_payment" && b.supplier_hold_status === "failed"
+      ).length,
+      expiringSoon: statsSource.filter(
         (b) =>
           b.status === "pending_payment" &&
           b.supplier_hold_status === "held" &&
           isHoldExpiringSoon(b)
       ).length,
     }),
-    [bookings]
+    [statsSource]
   );
 
   async function updateStatus(id: string, status: BookingStatus, forceLocal = false) {
@@ -128,7 +166,7 @@ export default function AdminBookingsPage() {
     if (!res.ok) {
       toast.error(
         (json as { error?: string }).error ||
-          "Travel Line confirm failed — open Travel Line or retry"
+          "Supplier confirm failed — retry or settle manually"
       );
       load();
       return;
@@ -136,7 +174,7 @@ export default function AdminBookingsPage() {
     const tl = (json as { travellineStatus?: string }).travellineStatus;
     toast.success(
       (json as { status?: string }).status === "confirmed"
-        ? `Confirmed on Travel Line${tl ? ` (${tl})` : ""}`
+        ? `Ticket confirmed${tl ? ` (${tl})` : ""}`
         : "Booking updated"
     );
     load();
@@ -157,9 +195,9 @@ export default function AdminBookingsPage() {
     const res = await fetch(`/api/admin/bookings/${id}/sync-supplier/`, { method: "POST" });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
-      toast.error((json as { error?: string }).error || "Could not sync Travel Line status");
+      toast.error((json as { error?: string }).error || "Could not sync supplier status");
     } else {
-      toast.success(`Travel Line: ${(json as { travellineStatus?: string }).travellineStatus || "synced"}`);
+      toast.success(`Supplier: ${(json as { travellineStatus?: string }).travellineStatus || "synced"}`);
     }
     load();
   }
@@ -199,7 +237,8 @@ export default function AdminBookingsPage() {
         <div>
           <h1 className="font-heading text-2xl font-bold text-navy">Bookings</h1>
           <p className="text-sm text-muted-foreground">
-            Hold seats on Travel Line at book → WhatsApp payment → Confirm payment confirms the real ticket on Travel Line
+            Open requests only by default. Failed holds are not confirmed tickets — stale attempts
+            auto-cancel after a few days or once the flight date has passed.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={load} disabled={loading}>
@@ -248,18 +287,16 @@ export default function AdminBookingsPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {(["all", "pending_payment", "booking_in_progress", "payment_confirmed", "confirmed", "failed", "cancelled"] as const).map(
-          (s) => (
-            <Button
-              key={s}
-              size="sm"
-              variant={filter === s ? "navy" : "outline"}
-              onClick={() => setFilter(s)}
-            >
-              {s === "all" ? "All" : s.replace(/_/g, " ")}
-            </Button>
-          )
-        )}
+        {FILTERS.map((s) => (
+          <Button
+            key={s.id}
+            size="sm"
+            variant={filter === s.id ? "navy" : "outline"}
+            onClick={() => setFilter(s.id)}
+          >
+            {s.label}
+          </Button>
+        ))}
       </div>
 
       {loading ? (
@@ -370,7 +407,7 @@ export default function AdminBookingsPage() {
 
                   {(b.travelline_booking_ref || b.travelline_order_id) && (
                     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-                      <span className="font-medium text-emerald-900">Travel Line ref:</span>
+                      <span className="font-medium text-emerald-900">Supplier ref:</span>
                       <code className="text-emerald-800">
                         {b.travelline_order_id || b.travelline_booking_ref}
                       </code>
@@ -409,7 +446,9 @@ export default function AdminBookingsPage() {
 
                   {(b.error_message || b.supplier_hold_error) && (
                     <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-brand-red">
-                      {b.supplier_hold_error || b.error_message}
+                      {humanizeSupplierHoldError(b.supplier_hold_error || b.error_message) ||
+                        b.supplier_hold_error ||
+                        b.error_message}
                     </p>
                   )}
 
@@ -432,13 +471,13 @@ export default function AdminBookingsPage() {
                     </a>
                     {b.status === "pending_payment" && (
                       <Button size="sm" variant="navy" onClick={() => updateStatus(b.id, "payment_confirmed")}>
-                        Confirm payment on Travel Line
+                        Confirm payment
                       </Button>
                     )}
                     {b.status === "booking_in_progress" && (
                       <>
                         <Button size="sm" variant="navy" onClick={() => updateStatus(b.id, "payment_confirmed")}>
-                          Retry Travel Line confirm
+                          Retry supplier confirm
                         </Button>
                         <Button
                           size="sm"
@@ -460,7 +499,7 @@ export default function AdminBookingsPage() {
                     )}
                     {(b.travelline_booking_ref || b.travelline_order_id) && (
                       <Button size="sm" variant="outline" onClick={() => syncTravelLine(b.id)}>
-                        Sync Travel Line status
+                        Sync supplier status
                       </Button>
                     )}
                     {(b.status === "pending_payment" ||

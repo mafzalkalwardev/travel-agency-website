@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import {
+  STALE_FAILED_HOLD_DAYS,
+  cleanupStaleBookings,
+  extractFlightDateFromTitle,
+} from "@/lib/booking/cleanup-stale-bookings";
 import { attemptSupplierHold } from "@/lib/booking/supplier-hold";
 import {
   bookingRowToEmailData,
@@ -32,9 +37,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ note: "Supabase not configured", retried: 0, reminded: 0 });
   }
 
+  const cleanup = await cleanupStaleBookings();
+
   const supabase = createAdminClient();
   let retried = 0;
   let reminded = 0;
+  let skippedStale = 0;
+
+  const pakistanToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Karachi",
+  }).format(new Date());
+  const retryAfter = new Date(
+    Date.now() - STALE_FAILED_HOLD_DAYS * 86400000
+  ).toISOString();
 
   if (isTravelLineConfigured()) {
     const { data: failedHolds } = await supabase
@@ -43,11 +58,17 @@ export async function GET(request: Request) {
       .eq("status", "pending_payment")
       .eq("supplier_hold_status", "failed")
       .lt("supplier_hold_attempts", MAX_HOLD_ATTEMPTS)
+      .gt("created_at", retryAfter)
       .order("created_at", { ascending: true })
       .limit(10);
 
     for (const booking of failedHolds || []) {
       if (!booking.external_product_id) continue;
+      const flightDate = extractFlightDateFromTitle(booking.product_title);
+      if (flightDate && flightDate < pakistanToday) {
+        skippedStale += 1;
+        continue;
+      }
 
       const hold = await attemptSupplierHold(booking.id, {
         externalProductId: booking.external_product_id,
@@ -88,7 +109,12 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
+    cleanup: {
+      cancelledStalePending: cleanup.cancelledStalePending,
+      clearedHoldFlagsOnClosed: cleanup.clearedHoldFlagsOnClosed,
+    },
     retried,
+    skippedStale,
     reminded,
     at: new Date().toISOString(),
   });

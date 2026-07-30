@@ -63,12 +63,12 @@ export function buildBookingWhatsAppMessage(input: BookingWhatsAppInput): string
   );
 
   if (input.supplierRef) {
-    lines.push(`*Travel Line ref:* ${input.supplierRef}`);
+    lines.push(`*Booking ref:* ${input.supplierRef}`);
     if (input.supplierHeld !== false) {
-      lines.push(`*Supplier:* seats held on Travel Line`);
+      lines.push(`*Seats:* held pending payment`);
     }
   } else if (input.supplierHeld === false) {
-    lines.push(`*Supplier:* hold pending — please confirm seats`);
+    lines.push(`*Seats:* hold pending — please confirm seats`);
   }
 
   lines.push(

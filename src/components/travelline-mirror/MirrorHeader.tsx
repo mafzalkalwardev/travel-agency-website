@@ -6,7 +6,7 @@ export function MirrorHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/tl-mirror/" className="flex items-center gap-2">
           <span className="text-lg font-bold tracking-tight text-white">
-            ✈ Travel Line
+            ✈ Inventory Mirror
           </span>
           <span className="rounded bg-green-700/30 px-1.5 py-0.5 text-[10px] font-medium text-green-400">
             MIRROR

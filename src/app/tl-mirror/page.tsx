@@ -30,7 +30,7 @@ export default async function TravelLineMirrorHomePage() {
             Your Gateway to <span className="text-yellow-400">Group Travel</span>
           </h1>
           <p className="mt-4 text-white/70">
-            Exclusive B2B fares · Real-time availability · Localhost mirror of Travel Line data
+            Exclusive B2B fares · Real-time availability · Local inventory mirror
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm text-white/60">
             <span>{snapshot.counts.totalFlights} Group Flights</span>

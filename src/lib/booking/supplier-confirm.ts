@@ -62,7 +62,7 @@ export async function syncSupplierBookingStatus(bookingId: string): Promise<{
   error?: string;
 }> {
   if (!isTravelLineConfigured()) {
-    return { ok: false, status: null, error: "Travel Line not configured" };
+    return { ok: false, status: null, error: "supplier not configured" };
   }
 
   const supabase = createAdminClient();
@@ -70,12 +70,12 @@ export async function syncSupplierBookingStatus(bookingId: string): Promise<{
   if (!booking) return { ok: false, status: null, error: "Booking not found" };
 
   const ref = orderRefFromRow(booking);
-  if (!ref) return { ok: false, status: null, error: "No Travel Line reference on booking" };
+  if (!ref) return { ok: false, status: null, error: "No supplier reference on booking" };
 
   const found = await getTravelLineClient().findBooking(ref);
   if (!found) {
     await persistSupplierSnapshot(bookingId, { status: null });
-    return { ok: false, status: null, error: `Travel Line booking not found for ${ref}` };
+    return { ok: false, status: null, error: `supplier booking not found for ${ref}` };
   }
 
   const status = normalizeTlStatus(found.status);
@@ -97,7 +97,7 @@ export async function syncSupplierBookingStatus(bookingId: string): Promise<{
 }
 
 /**
- * Confirm the real ticket on Travel Line (RESERVED → CONFIRMED).
+ * Confirm the real ticket on supplier (RESERVED → CONFIRMED).
  * Call this when Al Qibla has received customer payment.
  */
 export async function confirmSupplierBooking(bookingId: string): Promise<{
@@ -106,7 +106,7 @@ export async function confirmSupplierBooking(bookingId: string): Promise<{
   error?: string;
 }> {
   if (!isTravelLineConfigured()) {
-    return { ok: false, status: null, error: "Travel Line not configured" };
+    return { ok: false, status: null, error: "supplier not configured" };
   }
 
   const supabase = createAdminClient();
@@ -118,7 +118,7 @@ export async function confirmSupplierBooking(bookingId: string): Promise<{
     return {
       ok: false,
       status: null,
-      error: "No Travel Line hold reference — retry supplier hold first",
+      error: "No supplier hold reference — retry supplier hold first",
     };
   }
 
@@ -128,7 +128,7 @@ export async function confirmSupplierBooking(bookingId: string): Promise<{
     return { ok: true, status: "CONFIRMED" };
   }
   if (synced.status === "CANCELLED") {
-    return { ok: false, status: "CANCELLED", error: "Travel Line booking is cancelled" };
+    return { ok: false, status: "CANCELLED", error: "supplier booking is cancelled" };
   }
 
   const result = await getTravelLineClient().updateBookingStatus(ref, "CONFIRMED");
@@ -138,7 +138,7 @@ export async function confirmSupplierBooking(bookingId: string): Promise<{
       orderId: ref,
       raw: result.raw ?? result.booking,
     });
-    return { ok: false, status: synced.status, error: result.error || "Travel Line confirm failed" };
+    return { ok: false, status: synced.status, error: result.error || "supplier confirm failed" };
   }
 
   const status = normalizeTlStatus(result.booking?.status) || "CONFIRMED";
@@ -155,7 +155,7 @@ export async function confirmSupplierBooking(bookingId: string): Promise<{
   return {
     ok: status === "CONFIRMED",
     status,
-    error: status === "CONFIRMED" ? undefined : `Travel Line status is ${status}`,
+    error: status === "CONFIRMED" ? undefined : `supplier status is ${status}`,
   };
 }
 
@@ -182,7 +182,7 @@ export async function cancelSupplierBooking(bookingId: string): Promise<{
     return {
       ok: false,
       status: "CONFIRMED",
-      error: "Travel Line ticket is already confirmed — cancel there manually if needed",
+      error: "supplier ticket is already confirmed — cancel there manually if needed",
     };
   }
 

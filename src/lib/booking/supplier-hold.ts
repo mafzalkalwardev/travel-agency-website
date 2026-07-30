@@ -1,3 +1,4 @@
+import { humanizeSupplierHoldError } from "@/lib/booking/hold-messages";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { extractHoldExpiresAtIso } from "@/lib/booking/hold-expiry";
 import { getTravelLineClient } from "@/lib/travelline/client";
@@ -96,7 +97,8 @@ export async function attemptSupplierHold(
     return { held: true, bookingRef: supplier.bookingRef };
   }
 
-  const error = supplier.error || "Supplier hold failed";
+  const error =
+    humanizeSupplierHoldError(supplier.error) || supplier.error || "Supplier hold failed";
   await supabase
     .from("bookings")
     .update({

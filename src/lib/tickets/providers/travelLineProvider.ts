@@ -72,8 +72,8 @@ export class TravelLineTicketProvider implements TicketProvider {
         ticketsDeactivated: deactivated + cleanup.deactivated,
         changes,
         message: tickets.length
-          ? `Synced ${tickets.length} real tickets from Travel Line scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped${cleanupNote}${categoryNote})`
-          : "No tickets returned from Travel Line scraper",
+          ? `Synced ${tickets.length} real tickets from inventory scraper (${created} new, ${updated} changed, ${deactivated} sold out, ${skipped || 0} incomplete skipped${cleanupNote}${categoryNote})`
+          : "No tickets returned from inventory scraper",
       };
     } catch (e) {
       const message = syncErrorMessage(e);

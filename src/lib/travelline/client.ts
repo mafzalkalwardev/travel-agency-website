@@ -65,20 +65,20 @@ function parsePassengerNameLines(details: Record<string, unknown>): string[] {
     .filter(Boolean);
 }
 
-/** Build one Travel Line passenger from a full name + shared document fields. */
+/** Build one supplier passenger from a full name + shared document fields. */
 function buildPassengerFromName(fullName: string, details: Record<string, unknown>) {
   const passportNo = resolvePassportNo(details);
   const dob = String(details.dob || "").trim();
   const nationality = String(details.nationality || "PK").trim() || "PK";
 
   if (!passportNo) {
-    throw new Error("Passport number is required for Travel Line seat hold");
+    throw new Error("Passport number is required for supplier seat hold");
   }
   if (!dob) {
-    throw new Error("Date of birth is required for Travel Line seat hold");
+    throw new Error("Date of birth is required for supplier seat hold");
   }
   if (!fullName.trim()) {
-    throw new Error("Passenger names are required for Travel Line seat hold");
+    throw new Error("Passenger names are required for supplier seat hold");
   }
 
   const parts = fullName.trim().split(/\s+/);
@@ -107,7 +107,7 @@ function buildPassengerFromName(fullName: string, details: Record<string, unknow
 function buildPassengersForHold(details: Record<string, unknown>, seatCount: number) {
   const names = parsePassengerNameLines(details);
   if (!names.length) {
-    throw new Error("Passenger names are required for Travel Line seat hold");
+    throw new Error("Passenger names are required for supplier seat hold");
   }
 
   const count = Math.max(1, seatCount);
@@ -322,7 +322,7 @@ export class TravelLineClient {
             error:
               passengerError instanceof Error
                 ? passengerError.message
-                : "Passenger details incomplete for Travel Line hold",
+                : "Passenger details incomplete for supplier hold",
           };
         }
 
@@ -371,7 +371,7 @@ export class TravelLineClient {
         error:
           typeof umrahErr === "string"
             ? `Umrah package hold failed: ${umrahErr}`
-            : "Could not resolve Travel Line group flight for booking",
+            : "Could not resolve supplier group flight for booking",
       };
     }
 
@@ -384,7 +384,7 @@ export class TravelLineClient {
         error:
           passengerError instanceof Error
             ? passengerError.message
-            : "Passenger details incomplete for Travel Line hold",
+            : "Passenger details incomplete for supplier hold",
       };
     }
 
@@ -424,7 +424,7 @@ export class TravelLineClient {
   }
 
   /**
-   * List agency bookings from Travel Line (admin or public booking APIs).
+   * List agency bookings from supplier (admin or public booking APIs).
    * Used to sync RESERVED/CONFIRMED/CANCELLED and to PUT status updates.
    */
   async listBookings(): Promise<Record<string, unknown>[]> {
@@ -475,7 +475,7 @@ export class TravelLineClient {
   }
 
   /**
-   * Confirm or cancel a Travel Line hold (PUT /api/bookings with status).
+   * Confirm or cancel a supplier hold (PUT /api/bookings with status).
    * Same mechanism used by scripts/cancel-test-holds.ts for CANCELLED.
    */
   async updateBookingStatus(
@@ -489,7 +489,7 @@ export class TravelLineClient {
 
     const existing = await this.findBooking(orderRef);
     if (!existing) {
-      return { ok: false, error: `Travel Line booking not found for ${orderRef}` };
+      return { ok: false, error: `Supplier booking not found for ${orderRef}` };
     }
 
     const current = String(existing.status || "").toUpperCase();
@@ -497,7 +497,7 @@ export class TravelLineClient {
       return { ok: true, booking: existing };
     }
     if (current === "CANCELLED" && status === "CONFIRMED") {
-      return { ok: false, error: "Travel Line booking is already cancelled", booking: existing };
+      return { ok: false, error: "Supplier booking is already cancelled", booking: existing };
     }
 
     const cookie = sessionToCookieHeader(session);
@@ -553,7 +553,7 @@ export class TravelLineClient {
           return { ok: true, booking: { ...existing, status }, raw: json };
         }
 
-        lastError = `Travel Line still reports ${next || "unknown"} after update`;
+        lastError = `Supplier still reports ${next || "unknown"} after update`;
       } catch (err) {
         lastError = err instanceof Error ? err.message : "Supplier request failed";
       }
