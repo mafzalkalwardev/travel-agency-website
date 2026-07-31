@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { SITE } from "@/lib/constants";
-import { accountVerificationCustomerHtml } from "@/lib/email/templates";
+import { notifyAdminActivity } from "@/lib/email/notify-admin";
+import { accountVerificationCustomerHtml, agentSignupAdminHtml } from "@/lib/email/templates";
 import { getAuthFromEmail, isEmailConfigured, sendEmail } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -134,6 +135,20 @@ export async function POST(request: Request) {
       { status: 502 }
     );
   }
+
+  // Non-blocking: admin must know about every new registration.
+  notifyAdminActivity({
+    subject: `New agent signup — ${companyName}`,
+    html: agentSignupAdminHtml({
+      companyName,
+      fullName,
+      email,
+      phone,
+      city,
+      address,
+    }),
+    replyTo: email,
+  }).catch(() => {});
 
   return NextResponse.json({
     ok: true,

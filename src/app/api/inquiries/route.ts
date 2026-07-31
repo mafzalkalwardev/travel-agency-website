@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { notifyAdminActivity } from "@/lib/email/notify-admin";
+import { inquiryReceivedAdminHtml } from "@/lib/email/templates";
 import { inquirySchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -45,6 +47,23 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    notifyAdminActivity({
+      subject: `New inquiry — ${data.name}`,
+      html: inquiryReceivedAdminHtml({
+        name: data.name,
+        phone: data.phone,
+        email: data.email || undefined,
+        service: data.service || undefined,
+        message: data.message,
+        fromCity: data.from_city || undefined,
+        toCity: data.to_city || undefined,
+        travelDate: data.travel_date || undefined,
+        passengers: data.passengers || undefined,
+        sourcePage: data.source_page || undefined,
+      }),
+      replyTo: data.email || undefined,
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

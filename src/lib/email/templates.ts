@@ -215,3 +215,78 @@ export function customerRejectedHtml(params: { fullName?: string; notes?: string
   );
 }
 
+export function agentSignupAdminHtml(params: {
+  companyName: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  city: string;
+  address: string;
+}) {
+  return layout(
+    "New agent registration",
+    `<h2 style="color:#c0392b">New agent registration — approval needed</h2>
+    <p>A new company signed up on ${SITE.name}. They received a verification email and will need admin approval before booking.</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Company</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.companyName}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Contact</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.fullName}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Email</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.email}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Phone</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.phone}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>City</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.city}</td></tr>
+      <tr><td style="padding:8px 0"><strong>Address</strong></td><td style="padding:8px 0">${params.address}</td></tr>
+    </table>
+    <p><a href="${SITE.url}/admin/customers/" style="display:inline-block;background:#1a2744;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px">Open Agent Approvals</a></p>`
+  );
+}
+
+export function inquiryReceivedAdminHtml(params: {
+  name: string;
+  phone: string;
+  email?: string;
+  service?: string;
+  message: string;
+  fromCity?: string;
+  toCity?: string;
+  travelDate?: string;
+  passengers?: number;
+  sourcePage?: string;
+}) {
+  return layout(
+    "New website inquiry",
+    `<h2 style="color:#c0392b">New inquiry from the website</h2>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Name</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.name}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Phone</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.phone}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Email</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.email || "—"}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Service</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.service || "—"}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Route</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${[params.fromCity, params.toCity].filter(Boolean).join(" → ") || "—"}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Travel date</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.travelDate || "—"}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Passengers</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.passengers ?? "—"}</td></tr>
+      <tr><td style="padding:8px 0"><strong>Page</strong></td><td style="padding:8px 0">${params.sourcePage || "—"}</td></tr>
+    </table>
+    <p style="white-space:pre-wrap;background:#f8f8f8;padding:12px;border-radius:8px">${params.message}</p>
+    <p><a href="${SITE.url}/admin/" style="display:inline-block;background:#1a2744;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px">Open Admin</a></p>`
+  );
+}
+
+export function reviewSubmittedAdminHtml(params: {
+  name: string;
+  city?: string;
+  service?: string;
+  rating: number;
+  comment: string;
+}) {
+  return layout(
+    "New review pending approval",
+    `<h2 style="color:#c0392b">New client review — needs approval</h2>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Name</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.name}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>City</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.city || "—"}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Service</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.service || "—"}</td></tr>
+      <tr><td style="padding:8px 0"><strong>Rating</strong></td><td style="padding:8px 0">${params.rating} / 5</td></tr>
+    </table>
+    <p style="white-space:pre-wrap;background:#f8f8f8;padding:12px;border-radius:8px">${params.comment}</p>
+    <p><a href="${SITE.url}/admin/" style="display:inline-block;background:#1a2744;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px">Review in Admin</a></p>`
+  );
+}
+

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { notifyAdminActivity } from "@/lib/email/notify-admin";
+import { reviewSubmittedAdminHtml } from "@/lib/email/templates";
 import { reviewSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -50,6 +52,17 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    notifyAdminActivity({
+      subject: `New review pending — ${parsed.data.name} (${parsed.data.rating}/5)`,
+      html: reviewSubmittedAdminHtml({
+        name: parsed.data.name,
+        city: parsed.data.city || undefined,
+        service: parsed.data.service || undefined,
+        rating: parsed.data.rating,
+        comment: parsed.data.comment,
+      }),
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,
