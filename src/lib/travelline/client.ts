@@ -58,15 +58,45 @@ function resolvePassportNo(details: Record<string, unknown>): string {
   return String(details.passportNo || details.passport || "").trim();
 }
 
-function parsePassengerNameLines(details: Record<string, unknown>): string[] {
+function travelersFromDetails(details: Record<string, unknown>): Array<{ firstName: string; lastName: string }> {
+  const raw = details.travelers;
+  if (Array.isArray(raw) && raw.length) {
+    const list = raw
+      .map((row) => {
+        const item = row && typeof row === "object" ? (row as Record<string, unknown>) : {};
+        return {
+          firstName: String(item.firstName || item.givenName || "").trim(),
+          lastName: String(item.lastName || item.surname || "").trim(),
+        };
+      })
+      .filter((t) => t.firstName && t.lastName);
+    if (list.length) return list;
+  }
+
+  const firstName = String(details.firstName || details.givenName || "").trim();
+  const lastName = String(details.lastName || details.surname || "").trim();
+  if (firstName && lastName) return [{ firstName, lastName }];
+
   return String(details.names || "")
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(/\s+/);
+      if (parts.length === 1) return { firstName: parts[0], lastName: parts[0] };
+      return {
+        firstName: parts.slice(0, -1).join(" "),
+        lastName: parts[parts.length - 1],
+      };
+    });
 }
 
-/** Build one supplier passenger from a full name + shared document fields. */
-function buildPassengerFromName(fullName: string, details: Record<string, unknown>) {
+/** Build one supplier passenger from first + last name + shared document fields. */
+function buildPassengerFromNameParts(
+  firstName: string,
+  lastName: string,
+  details: Record<string, unknown>
+) {
   const passportNo = resolvePassportNo(details);
   const dob = String(details.dob || "").trim();
   const nationality = String(details.nationality || "PK").trim() || "PK";
@@ -77,18 +107,14 @@ function buildPassengerFromName(fullName: string, details: Record<string, unknow
   if (!dob) {
     throw new Error("Date of birth is required for supplier seat hold");
   }
-  if (!fullName.trim()) {
-    throw new Error("Passenger names are required for supplier seat hold");
+  if (!firstName.trim() || !lastName.trim()) {
+    throw new Error("First name and last name are required for supplier seat hold");
   }
-
-  const parts = fullName.trim().split(/\s+/);
-  const givenName = parts.slice(0, -1).join(" ") || parts[0];
-  const surname = parts.length > 1 ? parts[parts.length - 1] : parts[0];
 
   return {
     id: randomUUID(),
-    givenName: givenName.toUpperCase(),
-    surname: surname.toUpperCase(),
+    givenName: firstName.trim().toUpperCase(),
+    surname: lastName.trim().toUpperCase(),
     dob,
     passportNo,
     nationality: nationality.toUpperCase().slice(0, 2),
@@ -101,19 +127,21 @@ function buildPassengerFromName(fullName: string, details: Record<string, unknow
 }
 
 /**
- * One passenger per non-empty name line. If fewer names than seat count,
- * the last name is reused only when a single name was provided for all seats.
+ * One passenger per traveler. If fewer travelers than seat count,
+ * the last traveler is reused only when a single traveler was provided.
  */
 function buildPassengersForHold(details: Record<string, unknown>, seatCount: number) {
-  const names = parsePassengerNameLines(details);
-  if (!names.length) {
-    throw new Error("Passenger names are required for supplier seat hold");
+  const travelers = travelersFromDetails(details);
+  if (!travelers.length) {
+    throw new Error("First name and last name are required for supplier seat hold");
   }
 
   const count = Math.max(1, seatCount);
   return Array.from({ length: count }, (_, index) => {
-    const name = names[index] || (names.length === 1 ? names[0] : names[names.length - 1]);
-    return buildPassengerFromName(name, details);
+    const traveler =
+      travelers[index] ||
+      (travelers.length === 1 ? travelers[0] : travelers[travelers.length - 1]);
+    return buildPassengerFromNameParts(traveler.firstName, traveler.lastName, details);
   });
 }
 

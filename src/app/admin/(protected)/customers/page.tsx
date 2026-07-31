@@ -21,6 +21,10 @@ export default function AdminCustomersPage() {
   const [filter, setFilter] = useState<CustomerProfile["approval_status"] | "all">("pending");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured()) {
@@ -78,6 +82,68 @@ export default function AdminCustomersPage() {
     load();
   }
 
+  function openPasswordPanel(id: string) {
+    setPasswordUserId(id);
+    setNewPassword("");
+    setConfirmPassword("");
+  }
+
+  async function setUserPassword(id: string) {
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setPasswordBusy(true);
+    try {
+      const res = await fetch(`/api/admin/customers/${id}/password/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error((json as { error?: string }).error || "Could not update password");
+        return;
+      }
+      toast.success("Password updated");
+      setPasswordUserId(null);
+      setNewPassword("");
+      setConfirmPassword("");
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
+
+  async function sendPasswordReset(id: string) {
+    setPasswordBusy(true);
+    try {
+      const res = await fetch(`/api/admin/customers/${id}/password/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ send_reset: true }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error((json as { error?: string }).error || "Could not send reset");
+        return;
+      }
+      if ((json as { mode?: string }).mode === "email_sent") {
+        toast.success("Password reset email sent");
+      } else if ((json as { resetLink?: string }).resetLink) {
+        await navigator.clipboard.writeText((json as { resetLink: string }).resetLink);
+        toast.success("Reset link copied to clipboard");
+      } else {
+        toast.success("Reset prepared");
+      }
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
+
   if (!isSupabaseConfigured()) {
     return (
       <Card>
@@ -93,8 +159,7 @@ export default function AdminCustomersPage() {
       <div>
         <h1 className="font-heading text-2xl font-bold text-navy">Agent Approvals</h1>
         <p className="text-sm text-muted-foreground">
-          New agencies can sign in after email verification, but bookings stay blocked until an admin
-          approves the company profile.
+          Approve agencies, and reset or set user passwords when they need account access help.
         </p>
       </div>
 
@@ -180,7 +245,64 @@ export default function AdminCustomersPage() {
                       Reset to Pending
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openPasswordPanel(profile.id)}
+                  >
+                    Set password
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={passwordBusy}
+                    onClick={() => sendPasswordReset(profile.id)}
+                  >
+                    Send reset link
+                  </Button>
                 </div>
+
+                {passwordUserId === profile.id && (
+                  <div className="mt-2 space-y-3 rounded-xl border border-border bg-secondary/40 p-4">
+                    <p className="text-sm font-semibold text-navy">
+                      Set a new password for {profile.email || profile.full_name || "this user"}
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="New password (min 8)"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                      <Input
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="navy"
+                        disabled={passwordBusy}
+                        onClick={() => setUserPassword(profile.id)}
+                      >
+                        {passwordBusy ? "Saving…" : "Update password"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={passwordBusy}
+                        onClick={() => setPasswordUserId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

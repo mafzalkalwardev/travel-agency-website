@@ -42,9 +42,20 @@ export const bookingSchema = z.object({
   currency: z.string().default("PKR"),
   passenger_details: z
     .object({
-      names: z.string().min(2, "Passenger names are required"),
+      /** Legacy: one full name per line — still accepted for older clients */
+      names: z.string().optional(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      travelers: z
+        .array(
+          z.object({
+            firstName: z.string().min(1, "First name is required"),
+            lastName: z.string().min(1, "Last name is required"),
+          })
+        )
+        .optional(),
       cnic: z.string().optional(),
-      /** Legacy alias — prefer passportNo for Travel Line */
+      /** Legacy alias — prefer passportNo */
       passport: z.string().optional(),
       passportNo: z.string().min(5, "Passport number is required"),
       dob: z.string().min(8, "Date of birth is required"),
@@ -53,7 +64,29 @@ export const bookingSchema = z.object({
       notes: z.string().optional(),
     })
     .passthrough()
-    .default({ names: "", passportNo: "", dob: "", nationality: "PK" }),
+    .superRefine((value, ctx) => {
+      const hasTravelers =
+        Array.isArray(value.travelers) &&
+        value.travelers.some((t) => t.firstName.trim() && t.lastName.trim());
+      const hasSplit =
+        Boolean(value.firstName?.trim()) && Boolean(value.lastName?.trim());
+      const hasLegacyNames = Boolean(value.names?.trim());
+      if (!hasTravelers && !hasSplit && !hasLegacyNames) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "First name and last name are required",
+          path: ["travelers"],
+        });
+      }
+    })
+    .default({
+      firstName: "",
+      lastName: "",
+      travelers: [],
+      passportNo: "",
+      dob: "",
+      nationality: "PK",
+    }),
   source_page: z.string().optional(),
   product_title: z.string().optional(),
 });

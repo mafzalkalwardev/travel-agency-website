@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { formatHoldCountdown, isHoldExpiringSoon } from "@/lib/booking/hold-expiry";
 import { humanizeSupplierHoldError } from "@/lib/booking/hold-messages";
+import { passengerNamesSummary } from "@/lib/booking/passenger-names";
 import { SITE } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus, CustomerProfile } from "@/types";
@@ -65,7 +66,7 @@ const tlStatusBadge: Record<string, string> = {
 
 function formatPassengerDetails(details: Record<string, unknown> | null | undefined) {
   if (!details) return null;
-  const names = details.names ? String(details.names) : null;
+  const names = passengerNamesSummary(details) || null;
   const notes = details.notes ? String(details.notes) : null;
   if (!names && !notes) return JSON.stringify(details);
   return [names, notes].filter(Boolean).join(" · ");

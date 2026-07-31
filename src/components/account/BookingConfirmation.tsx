@@ -15,6 +15,7 @@ import {
 import { AirlineLogo } from "@/components/shared/AirlineLogo";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { passengerNamesSummary } from "@/lib/booking/passenger-names";
 import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus, Ticket } from "@/types";
@@ -52,12 +53,9 @@ export function BookingConfirmation({ booking, ticket }: { booking: Booking; tic
   const isConfirmed = booking.status === "confirmed" || booking.travelline_status === "CONFIRMED";
   const canPay =
     booking.status === "pending_payment" || booking.status === "payment_confirmed";
-  const passengerNames =
-    booking.passenger_details &&
-    typeof booking.passenger_details === "object" &&
-    "names" in booking.passenger_details
-      ? String((booking.passenger_details as { names?: unknown }).names || "")
-      : "";
+  const passengerNames = passengerNamesSummary(
+    booking.passenger_details as Record<string, unknown> | undefined
+  );
 
   const waMessage = buildBookingWhatsAppMessage({
     bookingRef: booking.id,

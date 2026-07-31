@@ -163,6 +163,14 @@ export function BookingFlowClient({ flightId }: BookingFlowClientProps) {
           product_title: `${flight.airline} ${flight.flightNumber} - ${flight.from} to ${flight.to}`,
           source_page: "/flight-booking/book/",
           passenger_details: {
+            firstName: passenger.firstName.trim(),
+            lastName: passenger.lastName.trim(),
+            travelers: [
+              {
+                firstName: passenger.firstName.trim(),
+                lastName: passenger.lastName.trim(),
+              },
+            ],
             names: `${passenger.firstName} ${passenger.lastName}`.trim(),
             passportNo: passenger.documentNumber,
             passport: passenger.documentNumber,

@@ -7,6 +7,7 @@ import {
 import { getApprovalMessage } from "@/lib/customer-approval";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { passengerNamesSummary } from "@/lib/booking/passenger-names";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { isTravelLineConfigured } from "@/lib/travelline/env";
 import { bookingSchema } from "@/lib/validations";
@@ -205,7 +206,10 @@ export async function POST(request: Request) {
         customerPhone: data.customer_phone,
         customerEmail: data.customer_email || null,
         passengers: data.passengers,
-        passengerNames: data.passenger_details?.names || null,
+        passengerNames:
+          passengerNamesSummary(data.passenger_details as Record<string, unknown>) ||
+          data.passenger_details?.names ||
+          null,
         quotedPrice: data.quoted_price,
         currency: data.currency,
         supplierRef: supplierRef || null,

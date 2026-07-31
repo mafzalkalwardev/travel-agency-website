@@ -26,6 +26,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { getApprovalMessage } from "@/lib/customer-approval";
+import { buildPassengerDetailsPayload, type TravelerName } from "@/lib/booking/passenger-names";
 import { PAYMENT, SITE } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,10 @@ import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import type { BookingProductType, Ticket } from "@/types";
 
 const WHATSAPP_REDIRECT_SECONDS = 8;
+
+function emptyTravelers(count: number): TravelerName[] {
+  return Array.from({ length: Math.max(1, count) }, () => ({ firstName: "", lastName: "" }));
+}
 
 interface BookRequestSheetProps {
   open: boolean;
@@ -80,12 +85,34 @@ export function BookRequestSheet({
     phone: "",
     email: "",
     passengers: "1",
-    passengerNames: "",
+    travelers: emptyTravelers(1) as TravelerName[],
     passportNo: "",
     dob: "",
     nationality: "PK",
     notes: "",
   });
+
+  function setPassengerCount(value: string) {
+    const count = Math.max(1, Number(value) || 1);
+    setForm((current) => {
+      const travelers = [...current.travelers];
+      while (travelers.length < count) travelers.push({ firstName: "", lastName: "" });
+      return {
+        ...current,
+        passengers: String(count),
+        travelers: travelers.slice(0, count),
+      };
+    });
+  }
+
+  function updateTraveler(index: number, patch: Partial<TravelerName>) {
+    setForm((current) => ({
+      ...current,
+      travelers: current.travelers.map((traveler, i) =>
+        i === index ? { ...traveler, ...patch } : traveler
+      ),
+    }));
+  }
 
   const nextPath = sourcePage || "/account/";
 
@@ -167,6 +194,17 @@ export function BookRequestSheet({
     setLoading(true);
     setError("");
     try {
+      const passengerDetails = buildPassengerDetailsPayload({
+        travelers: form.travelers,
+        passportNo: form.passportNo,
+        dob: form.dob,
+        nationality: form.nationality || "PK",
+        notes: form.notes,
+      });
+      if (!passengerDetails.travelers.length) {
+        throw new Error("Enter first name and last name for each passenger (as on passport).");
+      }
+
       const res = await fetch("/api/bookings/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -184,13 +222,7 @@ export function BookRequestSheet({
           currency,
           product_title: productTitle,
           source_page: sourcePage,
-          passenger_details: {
-            names: form.passengerNames,
-            passportNo: form.passportNo,
-            dob: form.dob,
-            nationality: form.nationality || "PK",
-            notes: form.notes,
-          },
+          passenger_details: passengerDetails,
         }),
       });
       const json = await res.json();
@@ -215,6 +247,7 @@ export function BookRequestSheet({
           }
         | undefined;
 
+      const passengerNames = passengerDetails.names;
       const waMsg = buildBookingWhatsAppMessage({
         bookingRef: ref,
         productTitle: wa?.productTitle || productTitle,
@@ -222,7 +255,7 @@ export function BookRequestSheet({
         customerPhone: wa?.customerPhone || form.phone,
         customerEmail: form.email || undefined,
         passengers: wa?.passengers || Number(form.passengers) || 1,
-        passengerNames: form.passengerNames || undefined,
+        passengerNames: passengerNames || undefined,
         quotedPrice: wa?.quotedPrice ?? quotedPrice,
         currency: wa?.currency || currency,
         supplierRef: wa?.supplierRef || json.supplierRef || undefined,
@@ -326,7 +359,7 @@ export function BookRequestSheet({
         ) : (
           <form onSubmit={handleSubmit} className="mt-5 space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="br-name">Full name</Label>
+              <Label htmlFor="br-name">Contact name</Label>
               <Input id="br-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -347,19 +380,37 @@ export function BookRequestSheet({
                 min={1}
                 className="max-w-[8rem]"
                 value={form.passengers}
-                onChange={(e) => setForm({ ...form, passengers: e.target.value })}
+                onChange={(e) => setPassengerCount(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="br-names">Passenger names</Label>
-              <Textarea
-                id="br-names"
-                required
-                rows={3}
-                placeholder="One name per line (as on passport)"
-                value={form.passengerNames}
-                onChange={(e) => setForm({ ...form, passengerNames: e.target.value })}
-              />
+            <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-3">
+              <p className="text-sm font-semibold text-navy">Passenger names (as on passport)</p>
+              {form.travelers.map((traveler, index) => (
+                <div key={`traveler-${index}`} className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`br-first-${index}`}>
+                      First name{form.travelers.length > 1 ? ` · passenger ${index + 1}` : ""}
+                    </Label>
+                    <Input
+                      id={`br-first-${index}`}
+                      required
+                      autoComplete="given-name"
+                      value={traveler.firstName}
+                      onChange={(e) => updateTraveler(index, { firstName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`br-last-${index}`}>Last name</Label>
+                    <Input
+                      id={`br-last-${index}`}
+                      required
+                      autoComplete="family-name"
+                      value={traveler.lastName}
+                      onChange={(e) => updateTraveler(index, { lastName: e.target.value })}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1.5 sm:col-span-1">

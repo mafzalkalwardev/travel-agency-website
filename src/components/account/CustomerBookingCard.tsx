@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Download, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { passengerNamesSummary } from "@/lib/booking/passenger-names";
 import { buildBookingWhatsAppMessage, whatsappLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { Booking, BookingStatus } from "@/types";
@@ -25,7 +26,7 @@ const holdColors: Record<string, string> = {
 
 function formatPassengerDetails(details: Record<string, unknown> | null | undefined) {
   if (!details) return null;
-  const names = details.names ? String(details.names) : null;
+  const names = passengerNamesSummary(details) || null;
   const notes = details.notes ? String(details.notes) : null;
   if (!names && !notes) return null;
   return { names, notes };
