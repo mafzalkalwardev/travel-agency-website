@@ -1,20 +1,13 @@
-name: TravelLine Ticket Sync (backstop)
+name: Inventory Ticket Sync
 
-# SECONDARY backstop only. The primary 1-minute trigger is a Supabase
-# pg_cron + pg_net job (`sync-tickets-every-minute`, scheduled directly in
-# the database — see docs/REDESIGN.md §6.3) calling the same
-# /api/cron/sync-tickets endpoint.
+# Primary automatic ticket scraper trigger. Hits production cron with
+# CRON_SECRET. Overlap is guarded by sync_locks (safe to run while
+# admin Sync Now or Vercel daily cron also fire).
 #
-# Why this isn't primary: measured in production 2026-07-19, GitHub
-# Actions' `schedule` trigger on this repo ran roughly once per HOUR
-# despite being configured for every minute — this is a real, currently
-# undocumented-in-our-plan GitHub platform throttling behavior for
-# low-activity repos, not a config mistake. It cannot be tuned around, so
-# it was demoted to a sparse backstop rather than removed outright.
-#
-# Shares the same overlap lock (sync_locks table) as every other
-# trigger, so running alongside pg_cron is always safe — worst case is a
-# wasted "already in progress" 200 response.
+# IMPORTANT: always use the www host + trailing slash. The apex domain
+# returns HTTP 308 to www; curl does not follow redirects by default,
+# so using flywithalqibla.com made every scheduled run look "successful"
+# while the scraper never executed.
 
 on:
   schedule:
@@ -28,29 +21,63 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 5
     steps:
       - name: Trigger ticket sync
         run: |
-          # next.config.ts sets trailingSlash: true, so the bare path
-          # 308-redirects — hit the trailing-slash URL directly rather
-          # than relying on curl -L (which previously wasn't set here,
-          # so the sync silently never ran despite a "successful" 3xx).
           # --max-time 200 matches the route's maxDuration=180 with buffer.
           status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
             --max-time 200 \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://flywithalqibla.com/api/cron/sync-tickets/)
+            https://www.flywithalqibla.com/api/cron/sync-tickets/)
           echo "HTTP status: $status"
-          cat /tmp/response.json
-          # Treat "already in progress" as success (overlap lock working).
-          # Fail only on real HTTP errors / timeouts.
-          if [ "$status" -ge 400 ]; then
-            echo "Sync request failed"
+          cat /tmp/response.json || true
+          echo
+
+          # 3xx means we hit a redirect (wrong host / missing slash) —
+          # the scraper did NOT run.
+          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
+            echo "::error::Got redirect $status — scraper did not run. Use https://www.flywithalqibla.com/.../ with trailing slash."
             exit 1
           fi
-          # Surface skipped runs clearly in the Actions UI so a stuck lock
-          # is visible instead of looking like a healthy sync.
+
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Sync request failed with HTTP $status"
+            exit 1
+          fi
+
           if grep -q '"status":"skipped"' /tmp/response.json; then
             echo "::warning::Sync skipped — another run holds the lock. If this persists across consecutive schedules, the lock is likely stuck after a timeout."
+            exit 0
+          fi
+
+          # Cron returns HTTP 200 even when provider.sync() fails —
+          # fail the workflow so silent scraper breakage is visible.
+          if grep -q '"status":"failed"' /tmp/response.json; then
+            echo "::error::Ticket sync reported status=failed"
+            exit 1
+          fi
+
+      - name: Trigger package sync
+        run: |
+          status=$(curl -sS -o /tmp/packages.json -w "%{http_code}" \
+            --max-time 150 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://www.flywithalqibla.com/api/cron/sync-packages/)
+          echo "HTTP status: $status"
+          cat /tmp/packages.json || true
+          echo
+
+          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
+            echo "::error::Got redirect $status — package sync did not run."
+            exit 1
+          fi
+
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Package sync failed with HTTP $status"
+            exit 1
+          fi
+
+          if grep -q '"status":"failed"' /tmp/packages.json; then
+            echo "::warning::Package sync reported status=failed (tickets may still be OK)"
           fi

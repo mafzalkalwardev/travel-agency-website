@@ -33,8 +33,12 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json({
+  const body = {
     ...result,
     lastSyncedAt: new Date().toISOString(),
-  });
+  };
+  if (result.status === "failed") {
+    return NextResponse.json(body, { status: 502 });
+  }
+  return NextResponse.json(body);
 }

@@ -26,7 +26,14 @@ export async function GET(request: Request) {
     if (outcome.skipped) {
       return NextResponse.json({ status: "skipped", message: outcome.reason });
     }
-    return NextResponse.json({ ...outcome.result, lastSyncedAt: new Date().toISOString() });
+    const result = outcome.result;
+    const body = { ...result, lastSyncedAt: new Date().toISOString() };
+    // Return 502 when the scraper/provider failed so schedulers (GitHub
+    // Actions, Vercel cron) mark the run as failed instead of green-on-empty.
+    if (result.status === "failed") {
+      return NextResponse.json(body, { status: 502 });
+    }
+    return NextResponse.json(body);
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Sync failed" },

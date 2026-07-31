@@ -1,8 +1,8 @@
 name: Watch booking holds (expiry alerts)
 
-# Travel Line RESERVED seats expire in ~1 hour. Ping production every
-# 15 minutes so unpaid holds get an admin email before seats drop.
-# Primary inventory sync remains separate (travelline-sync.yml / pg_cron).
+# Unpaid seat holds expire in about an hour. Ping production so admin
+# gets an email before seats drop. Inventory sync is separate
+# (travelline-sync.yml).
 
 on:
   schedule:
@@ -23,10 +23,17 @@ jobs:
           status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
             --max-time 90 \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://flywithalqibla.com/api/cron/watch-booking-holds/)
+            https://www.flywithalqibla.com/api/cron/watch-booking-holds/)
           echo "HTTP status: $status"
-          cat /tmp/response.json
+          cat /tmp/response.json || true
+          echo
+
+          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
+            echo "::error::Got redirect $status — watch did not run. Use www host + trailing slash."
+            exit 1
+          fi
+
           if [ "$status" -ge 400 ]; then
-            echo "Hold watch failed"
+            echo "::error::Hold watch failed with HTTP $status"
             exit 1
           fi
