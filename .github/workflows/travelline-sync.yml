@@ -1,25 +1,32 @@
 name: Inventory Ticket Sync
 
 # Runs the inventory scraper on GitHub Actions runners (NOT Vercel).
-# Hitting /api/cron/sync-tickets on Vercel every few minutes burned Hobby
-# CPU and risked pausing the whole team — keep Vercel for page serving only.
+# A long job loops every 10 minutes so we get fresh inventory without
+# hitting Vercel serverless CPU (which was triggering Hobby pause).
 #
-# Cadence: every 2 hours (inventory does not need 5-minute scrapes for a
-# brochure site; admin Sync Now still works for urgent updates).
+# Job refreshes every 4 hours; overlap is prevented by sync_locks in Supabase.
 
 on:
   schedule:
-    - cron: "20 */2 * * *"
+    - cron: "2 */4 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "once = single sync; loop = every 10 min for ~6 hours"
+        type: choice
+        options:
+          - once
+          - loop
+        default: once
 
 concurrency:
-  group: travelline-ticket-sync
-  cancel-in-progress: false
+  group: travelline-ticket-sync-loop
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 360
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,7 +43,7 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
-      - name: Sync tickets + packages (writes Supabase directly)
+      - name: Sync every 10 minutes (on Actions, not Vercel)
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -45,4 +52,37 @@ jobs:
           TRAVELLINE_ADMIN_URL: ${{ secrets.TRAVELLINE_ADMIN_URL }}
           TRAVELLINE_AGENT_USERNAME: ${{ secrets.TRAVELLINE_AGENT_USERNAME }}
           TRAVELLINE_AGENT_PASSWORD: ${{ secrets.TRAVELLINE_AGENT_PASSWORD }}
-        run: npx tsx scripts/run-travelline-scraper-sync.ts
+          EVENT_NAME: ${{ github.event_name }}
+          MODE: ${{ github.event.inputs.mode || 'loop' }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$MODE" = "once" ]; then
+            ROUNDS=1
+          else
+            # 36 × 10 min ≈ 6 hours (job timeout 360 min).
+            ROUNDS=36
+          fi
+
+          echo "Running $ROUNDS sync round(s) every 10 minutes on Actions (0 Vercel CPU)"
+
+          failures=0
+          for i in $(seq 1 "$ROUNDS"); do
+            echo "=== Round $i / $ROUNDS @ $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+            if ! npx tsx scripts/run-travelline-scraper-sync.ts; then
+              echo "::warning::Sync round $i failed"
+              failures=$((failures + 1))
+            fi
+            if [ "$i" -lt "$ROUNDS" ]; then
+              echo "Sleeping 600s until next round…"
+              sleep 600
+            fi
+          done
+
+          if [ "$ROUNDS" -eq 1 ] && [ "$failures" -gt 0 ]; then
+            exit 1
+          fi
+          if [ "$ROUNDS" -gt 1 ] && [ "$failures" -ge "$ROUNDS" ]; then
+            echo "::error::Every round failed"
+            exit 1
+          fi
