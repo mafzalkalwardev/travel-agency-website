@@ -1,70 +1,39 @@
 name: Watch booking holds (expiry alerts)
 
-# Unpaid seat holds expire in about an hour. Ping production so admin
-# gets an email before seats drop.
-#
-# Same pattern as inventory sync: GitHub's */5 schedule is unreliable,
-# so we run a long loop that checks every 5 minutes for ~6 hours.
+# Light Vercel ping — only emails about expiring unpaid holds.
+# Kept rare so it does not burn Hobby CPU. Inventory sync is separate
+# and runs on GitHub Actions runners (no Vercel CPU).
 
 on:
   schedule:
-    - cron: "7 */4 * * *"
+    - cron: "35 */4 * * *"
   workflow_dispatch:
-    inputs:
-      mode:
-        description: "once = single check; loop = keep checking every 5 min"
-        type: choice
-        options:
-          - once
-          - loop
-        default: once
 
 concurrency:
-  group: watch-booking-holds-loop
-  cancel-in-progress: true
+  group: watch-booking-holds
+  cancel-in-progress: false
 
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 3
     steps:
-      - name: Watch holds (every 5 minutes while this job runs)
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          EVENT_NAME: ${{ github.event_name }}
-          MODE: ${{ github.event.inputs.mode || 'loop' }}
+      - name: Trigger hold expiry watch
         run: |
-          set -euo pipefail
+          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
+            --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://www.flywithalqibla.com/api/cron/watch-booking-holds/)
+          echo "HTTP status: $status"
+          cat /tmp/response.json || true
+          echo
 
-          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$MODE" = "once" ]; then
-            ROUNDS=1
-          else
-            ROUNDS=72
+          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
+            echo "::error::Got redirect $status — watch did not run. Use www host + trailing slash."
+            exit 1
           fi
 
-          echo "Running $ROUNDS hold-watch round(s)"
-
-          for i in $(seq 1 "$ROUNDS"); do
-            echo "=== Round $i / $ROUNDS @ $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
-
-            status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
-              --max-time 90 \
-              -H "Authorization: Bearer ${CRON_SECRET}" \
-              https://www.flywithalqibla.com/api/cron/watch-booking-holds/) || status="000"
-
-            echo "HTTP status: $status"
-            cat /tmp/response.json || true
-            echo
-
-            if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
-              echo "::error::Got redirect $status — watch did not run"
-              if [ "$ROUNDS" -eq 1 ]; then exit 1; fi
-            elif [ "$status" -ge 400 ] || [ "$status" = "000" ]; then
-              echo "::warning::Hold watch failed with HTTP $status"
-              if [ "$ROUNDS" -eq 1 ]; then exit 1; fi
-            fi
-
-            if [ "$i" -lt "$ROUNDS" ]; then
-              sleep 300
-            fi
-          done
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Hold watch failed with HTTP $status"
+            exit 1
+          fi
