@@ -1,83 +1,115 @@
 name: Inventory Ticket Sync
 
-# Primary automatic ticket scraper trigger. Hits production cron with
-# CRON_SECRET. Overlap is guarded by sync_locks (safe to run while
-# admin Sync Now or Vercel daily cron also fire).
+# Primary automatic inventory sync.
+#
+# GitHub's native `*/5` schedule is unreliable (often delayed hours).
+# Instead we start a long runner every 4 hours that curls production
+# every 5 minutes for up to ~6 hours (with overlap so there is no gap).
+# Overlap is safe: sync_locks skip concurrent scrapes.
 #
 # IMPORTANT: always use the www host + trailing slash. The apex domain
-# returns HTTP 308 to www; curl does not follow redirects by default,
-# so using flywithalqibla.com made every scheduled run look "successful"
-# while the scraper never executed.
+# returns HTTP 308 to www; curl does not follow redirects by default.
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # Refresh the 6-hour sync loop before the previous one times out.
+    - cron: "2 */4 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "once = single sync; loop = keep syncing every 5 min"
+        type: choice
+        options:
+          - once
+          - loop
+        default: once
 
 concurrency:
-  group: travelline-ticket-sync
-  cancel-in-progress: false
+  group: travelline-ticket-sync-loop
+  cancel-in-progress: true
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 360
     steps:
-      - name: Trigger ticket sync
+      - name: Sync inventory (every 5 minutes while this job runs)
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          EVENT_NAME: ${{ github.event_name }}
+          MODE: ${{ github.event.inputs.mode || 'loop' }}
         run: |
-          # --max-time 200 matches the route's maxDuration=180 with buffer.
-          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
-            --max-time 200 \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://www.flywithalqibla.com/api/cron/sync-tickets/)
-          echo "HTTP status: $status"
-          cat /tmp/response.json || true
-          echo
+          set -euo pipefail
 
-          # 3xx means we hit a redirect (wrong host / missing slash) —
-          # the scraper did NOT run.
-          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
-            echo "::error::Got redirect $status — scraper did not run. Use https://www.flywithalqibla.com/.../ with trailing slash."
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$MODE" = "once" ]; then
+            ROUNDS=1
+          else
+            # 72 × 5 min ≈ 6 hours (job timeout is 360 min).
+            ROUNDS=72
+          fi
+
+          echo "Running $ROUNDS sync round(s) (event=$EVENT_NAME mode=$MODE)"
+
+          sync_once() {
+            local label="$1"
+            local url="$2"
+            local out="/tmp/${label}.json"
+            local status
+
+            status=$(curl -sS -o "$out" -w "%{http_code}" \
+              --max-time 200 \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              "$url") || status="000"
+
+            echo "[$label] HTTP $status"
+            cat "$out" 2>/dev/null || true
+            echo
+
+            if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
+              echo "::error::$label got redirect $status — scraper did not run"
+              return 1
+            fi
+            if [ "$status" -ge 400 ] || [ "$status" = "000" ]; then
+              echo "::warning::$label request failed with HTTP $status"
+              return 1
+            fi
+            if grep -q '"status":"skipped"' "$out" 2>/dev/null; then
+              echo "::notice::$label skipped (lock held by another run)"
+              return 0
+            fi
+            if grep -q '"status":"failed"' "$out" 2>/dev/null; then
+              echo "::warning::$label reported status=failed"
+              return 1
+            fi
+            return 0
+          }
+
+          failures=0
+          for i in $(seq 1 "$ROUNDS"); do
+            echo "=== Round $i / $ROUNDS @ $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+
+            if ! sync_once tickets "https://www.flywithalqibla.com/api/cron/sync-tickets/"; then
+              failures=$((failures + 1))
+            fi
+            if ! sync_once packages "https://www.flywithalqibla.com/api/cron/sync-packages/"; then
+              failures=$((failures + 1))
+            fi
+
+            if [ "$i" -lt "$ROUNDS" ]; then
+              echo "Sleeping 300s until next round…"
+              sleep 300
+            fi
+          done
+
+          # For a single manual run, fail the job if that sync failed.
+          if [ "$ROUNDS" -eq 1 ] && [ "$failures" -gt 0 ]; then
+            echo "::error::Sync failed"
             exit 1
           fi
 
-          if [ "$status" -ge 400 ]; then
-            echo "::error::Sync request failed with HTTP $status"
+          # For long loops, finish green if most rounds worked (transient scraper errors happen).
+          echo "Done. Transient failures this run: $failures"
+          if [ "$ROUNDS" -gt 1 ] && [ "$failures" -ge "$ROUNDS" ]; then
+            echo "::error::Every round failed — check CRON_SECRET / production cron"
             exit 1
-          fi
-
-          if grep -q '"status":"skipped"' /tmp/response.json; then
-            echo "::warning::Sync skipped — another run holds the lock. If this persists across consecutive schedules, the lock is likely stuck after a timeout."
-            exit 0
-          fi
-
-          # Cron returns HTTP 200 even when provider.sync() fails —
-          # fail the workflow so silent scraper breakage is visible.
-          if grep -q '"status":"failed"' /tmp/response.json; then
-            echo "::error::Ticket sync reported status=failed"
-            exit 1
-          fi
-
-      - name: Trigger package sync
-        run: |
-          status=$(curl -sS -o /tmp/packages.json -w "%{http_code}" \
-            --max-time 150 \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://www.flywithalqibla.com/api/cron/sync-packages/)
-          echo "HTTP status: $status"
-          cat /tmp/packages.json || true
-          echo
-
-          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
-            echo "::error::Got redirect $status — package sync did not run."
-            exit 1
-          fi
-
-          if [ "$status" -ge 400 ]; then
-            echo "::error::Package sync failed with HTTP $status"
-            exit 1
-          fi
-
-          if grep -q '"status":"failed"' /tmp/packages.json; then
-            echo "::warning::Package sync reported status=failed (tickets may still be OK)"
           fi
