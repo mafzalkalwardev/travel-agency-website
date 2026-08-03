@@ -1,12 +1,13 @@
 name: Inventory Ticket Sync
 
-# Scrapes inventory on GitHub Actions and writes to Supabase (not Vercel).
-# IMPORTANT: do NOT use long-running sleep loops — those burn Actions minutes
-# and hit spending limits. One short job every 2 hours is enough.
+# Short scrape on GitHub Actions → Supabase (does not use Vercel CPU).
+# KEEP THE REPO PRIVATE to protect business logic. Free private allowance
+# is ~2000 min/month — one short job every 4 hours stays under that.
+# Never use long sleep-loops (they burned the spending limit).
 
 on:
   schedule:
-    - cron: "20 */2 * * *"
+    - cron: "25 */4 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -16,7 +17,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4

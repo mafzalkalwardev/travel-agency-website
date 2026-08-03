@@ -13,6 +13,10 @@
       "schedule": "15 6 * * *"
     },
     {
+      "path": "/api/cron/cleanup-maintenance",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/cron/retry-booking-holds",
       "schedule": "30 0 * * *"
     },
