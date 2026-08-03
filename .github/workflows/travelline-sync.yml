@@ -1,13 +1,12 @@
 name: Inventory Ticket Sync
 
-# Short scrape on GitHub Actions → Supabase (does not use Vercel CPU).
-# KEEP THE REPO PRIVATE to protect business logic. Free private allowance
-# is ~2000 min/month — one short job every 4 hours stays under that.
-# Never use long sleep-loops (they burned the spending limit).
+# Runs scraper on GitHub Actions → Supabase.
+# Public repo = free Actions minutes (does NOT burn Vercel Hobby CPU).
+# Do NOT point cron-job.org at /api/cron/sync-* every 15 min — that pauses Vercel.
 
 on:
   schedule:
-    - cron: "25 */4 * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 concurrency:
