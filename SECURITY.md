@@ -1,27 +1,18 @@
-# Security Policy
+# Security notes for maintainers
 
-## Supported Versions
+## Secrets
 
-Security fixes are handled for the latest code on the default branch. Older snapshots, forks, and archived copies may not receive updates.
+- Never commit `.env`, `.env.local`, or credential dumps.
+- Required production secrets live in **Vercel** and **GitHub Actions → Secrets**.
+- If this repository is public, assume all *code* is readable — only *secrets* stay private.
+- Rotate `CRON_SECRET`, database passwords, and provider passwords if exposure is suspected.
 
-## Reporting a Vulnerability
+## Admin
 
-If you find a vulnerability, please do not open a public issue with exploit details.
+- Use a unique strong admin password.
+- Prefer Supabase Auth users with `role=admin` over shared weak passwords.
 
-Report it privately by contacting Muhammad Afzal Kalwar:
+## Cron endpoints
 
-- GitHub: https://github.com/mafzalkalwardev
-- Email: kalwarmuhammadafzal3@gmail.com
-
-Please include:
-
-- Affected repository and file or feature.
-- Steps to reproduce.
-- Impact and severity, if known.
-- Any suggested fix or mitigation.
-
-I will review the report and respond as soon as possible.
-
-## Scope
-
-Security reports should focus on code, dependencies, authentication, data handling, secrets, deployment configuration, or automation workflows in this repository.
+- All `/api/cron/*` routes require `Authorization: Bearer $CRON_SECRET`.
+- Do not publish `CRON_SECRET` in README, issues, or screenshots.
