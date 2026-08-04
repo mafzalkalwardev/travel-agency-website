@@ -1,8 +1,8 @@
 name: Watch Inventory Sync Health
 
-# Light Vercel ping — only checks mirror age and emails if stale (>20m).
-# Cooldown: at most one alert email every 6 hours while still broken.
-# Inventory scrape stays on the separate Inventory Ticket Sync workflow.
+# Runs on GitHub (free public runners) — does NOT hit TravelLine scrape.
+# Checks inventory-cache mirror age; emails admin if older than 20 minutes.
+# Alert cooldown: every 6 hours while still stale.
 
 on:
   schedule:
@@ -16,24 +16,26 @@ concurrency:
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
-      - name: Trigger inventory health watch
-        run: |
-          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
-            --max-time 90 \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://www.flywithalqibla.com/api/cron/watch-inventory-sync/)
-          echo "HTTP status: $status"
-          cat /tmp/response.json || true
-          echo
+      - name: Checkout
+        uses: actions/checkout@v4
 
-          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
-            echo "::error::Got redirect $status — watch did not run. Use www host + trailing slash."
-            exit 1
-          fi
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
 
-          if [ "$status" -ge 400 ]; then
-            echo "::error::Inventory health watch failed with HTTP $status"
-            exit 1
-          fi
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check inventory mirror freshness
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BOOKING_FROM_EMAIL: ${{ secrets.BOOKING_FROM_EMAIL }}
+          BOOKING_ADMIN_EMAIL: ${{ secrets.BOOKING_ADMIN_EMAIL }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: npx tsx scripts/run-inventory-health-watch.ts
