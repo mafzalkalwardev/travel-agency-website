@@ -1,0 +1,39 @@
+name: Watch Inventory Sync Health
+
+# Light Vercel ping — only checks mirror age and emails if stale (>20m).
+# Cooldown: at most one alert email every 6 hours while still broken.
+# Inventory scrape stays on the separate Inventory Ticket Sync workflow.
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: watch-inventory-sync
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Trigger inventory health watch
+        run: |
+          status=$(curl -sS -o /tmp/response.json -w "%{http_code}" \
+            --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://www.flywithalqibla.com/api/cron/watch-inventory-sync/)
+          echo "HTTP status: $status"
+          cat /tmp/response.json || true
+          echo
+
+          if [ "$status" -ge 300 ] && [ "$status" -lt 400 ]; then
+            echo "::error::Got redirect $status — watch did not run. Use www host + trailing slash."
+            exit 1
+          fi
+
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Inventory health watch failed with HTTP $status"
+            exit 1
+          fi

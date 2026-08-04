@@ -290,3 +290,33 @@ export function reviewSubmittedAdminHtml(params: {
   );
 }
 
+export function inventoryStaleAdminHtml(params: {
+  ageMinutes: number | null;
+  thresholdMinutes: number;
+  updatedAt: string | null;
+  ticketCount: number;
+  reason: string;
+  actionsUrl: string;
+  mirrorUrl: string;
+}) {
+  const age =
+    params.ageMinutes === null ? "unknown" : `${params.ageMinutes} minutes`;
+  return layout(
+    "Inventory sync stale",
+    `<h2 style="color:#c0392b">Inventory sync watchdog alert</h2>
+    <p>${params.reason}</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Mirror age</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${age}</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Alert after</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.thresholdMinutes} minutes</td></tr>
+      <tr><td style="padding:8px 0;border-bottom:1px solid #eee"><strong>Last updated</strong></td><td style="padding:8px 0;border-bottom:1px solid #eee">${params.updatedAt || "—"}</td></tr>
+      <tr><td style="padding:8px 0"><strong>Tickets in mirror</strong></td><td style="padding:8px 0">${params.ticketCount}</td></tr>
+    </table>
+    <p>Check the latest GitHub Actions sync run, TravelLine credentials, and the inventory-cache branch.</p>
+    <p>
+      <a href="${params.actionsUrl}" style="display:inline-block;background:#1a2744;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px;margin-right:8px">Open Sync Workflow</a>
+      <a href="${params.mirrorUrl}" style="display:inline-block;background:#c9a227;color:#1a2744;padding:10px 20px;text-decoration:none;border-radius:6px">Open Mirror JSON</a>
+    </p>
+    <p style="font-size:12px;color:#888">Alerts repeat at most every 6 hours while still stale.</p>`
+  );
+}
+
