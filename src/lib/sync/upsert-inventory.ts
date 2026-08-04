@@ -384,7 +384,7 @@ async function fetchAllRows(
       .range(from, from + pageSize - 1);
     if (error) throw error;
     if (!data?.length) break;
-    all.push(...(data as Record<string, unknown>[]));
+    all.push(...((data as unknown as Record<string, unknown>[]) || []));
     if (data.length < pageSize) break;
   }
   return all;

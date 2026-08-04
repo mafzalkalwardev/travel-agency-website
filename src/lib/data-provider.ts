@@ -160,8 +160,8 @@ const UMRAH_LIST_COLUMNS =
 const TOUR_LIST_COLUMNS =
   "id,title,slug,package_code,destination,price,currency,duration,image_url,featured,status,highlights";
 
-const FLYER_LIST_COLUMNS = "id,title,image_url,link_url,active,display_order,category";
-const ANNOUNCEMENT_LIST_COLUMNS = "id,message,priority,active";
+const FLYER_LIST_COLUMNS = "id,title,image_url,link_url,link,active,display_order,category";
+const ANNOUNCEMENT_LIST_COLUMNS = "id,message,priority,active,starts_at,ends_at";
 
 class SupabaseDataProvider implements IDataProvider {
   private mock = new MockDataProvider();
