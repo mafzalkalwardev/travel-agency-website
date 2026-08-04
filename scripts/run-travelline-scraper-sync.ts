@@ -23,6 +23,24 @@ function loadEnv() {
 
 loadEnv();
 
+async function pingRevalidate() {
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.flywithalqibla.com").replace(
+    /\/$/,
+    ""
+  );
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    console.warn("CRON_SECRET missing — skip inventory revalidate ping");
+    return;
+  }
+  const res = await fetch(`${site}/api/cron/revalidate-inventory/`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  const body = await res.text();
+  console.log("revalidate", res.status, body.slice(0, 200));
+}
+
 async function main() {
   const [ticketOutcome, packages] = await Promise.all([
     runTicketSync(),
@@ -43,7 +61,11 @@ async function main() {
 
   if (!ticketOutcome.skipped && ticketOutcome.result.status === "failed") {
     process.exitCode = 1;
+    return;
   }
+
+  // Refresh public Next.js cache so visitors see new seats without hitting Supabase.
+  await pingRevalidate().catch((e) => console.warn("revalidate failed", e));
 }
 
 main().catch((error) => {

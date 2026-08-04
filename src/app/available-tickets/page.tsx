@@ -5,11 +5,11 @@ import { TicketsPageClient } from "@/components/tickets/TicketsPageClient";
 import { TicketsSearchBar } from "@/components/tickets/TicketsSearchBar";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
-import { dataProvider } from "@/lib/data-provider";
 import { toTicketListItems } from "@/lib/ticket-list";
+import { getCachedTickets } from "@/lib/inventory-public-cache";
 
-// ISR keeps inventory fresh without blocking every request on a cold Supabase fetch.
-export const revalidate = 300;
+// ISR + tagged cache; sync calls /api/cron/revalidate-inventory after scrape.
+export const revalidate = 600;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.availableTickets.title,
@@ -19,7 +19,7 @@ export const metadata = createPageMetadata({
 });
 
 export default async function AvailableTicketsPage() {
-  const tickets = toTicketListItems(await dataProvider.getTickets());
+  const tickets = toTicketListItems(await getCachedTickets());
 
   return (
     <>

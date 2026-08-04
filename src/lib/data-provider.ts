@@ -187,6 +187,23 @@ class SupabaseDataProvider implements IDataProvider {
 
   async getFlyers() {
     try {
+      const { getInventoryMirror } = await import("@/lib/inventory-mirror");
+      const mirror = await getInventoryMirror();
+      if (mirror?.flyers?.length) {
+        return mirror.flyers.map((f) => ({
+          id: String(f.id),
+          title: String(f.title || ""),
+          image: String(f.image_url || ""),
+          link: (f.link || f.link_url || undefined) as string | undefined,
+          order: Number(f.display_order || 0),
+          active: Boolean(f.active),
+          category: f.category as string | undefined,
+        }));
+      }
+    } catch {
+      /* fall through */
+    }
+    try {
       const supabase = createAdminClient();
       const { data } = await supabase.from("flyers").select(FLYER_LIST_COLUMNS).eq("active", true).order("display_order");
       if (!data?.length) return this.mock.getFlyers();
@@ -206,6 +223,15 @@ class SupabaseDataProvider implements IDataProvider {
 
   async getUmrahPackages() {
     try {
+      const { getInventoryMirror } = await import("@/lib/inventory-mirror");
+      const mirror = await getInventoryMirror();
+      if (mirror?.umrahPackages?.length) {
+        return mirror.umrahPackages.map(mapUmrahPackage);
+      }
+    } catch {
+      /* fall through */
+    }
+    try {
       const supabase = createAdminClient();
       const { data } = await supabase.from("umrah_packages").select(UMRAH_LIST_COLUMNS).eq("status", "active");
       if (!data?.length) return isTravelLineSyncEnabled() ? [] : this.mock.getUmrahPackages();
@@ -216,6 +242,15 @@ class SupabaseDataProvider implements IDataProvider {
   }
 
   async getTourPackages() {
+    try {
+      const { getInventoryMirror } = await import("@/lib/inventory-mirror");
+      const mirror = await getInventoryMirror();
+      if (mirror?.tourPackages?.length) {
+        return mirror.tourPackages.map(mapTourPackage);
+      }
+    } catch {
+      /* fall through */
+    }
     try {
       const supabase = createAdminClient();
       const { data } = await supabase.from("tour_packages").select(TOUR_LIST_COLUMNS).eq("status", "active");
@@ -251,6 +286,19 @@ class SupabaseDataProvider implements IDataProvider {
   }
 
   private async loadTickets(): Promise<Ticket[]> {
+    // Prefer GitHub CDN inventory mirror (near-zero Supabase egress for public traffic).
+    try {
+      const { getInventoryMirror } = await import("@/lib/inventory-mirror");
+      const mirror = await getInventoryMirror();
+      if (mirror?.tickets?.length) {
+        return filterDisplayableTickets(
+          mirror.tickets.filter(isDisplayableTicket).map(mapTicket)
+        );
+      }
+    } catch {
+      /* fall through to Supabase */
+    }
+
     try {
       const supabase = createAdminClient();
       const { data, error } = await supabase
@@ -298,7 +346,7 @@ class SupabaseDataProvider implements IDataProvider {
         segments: t.segments,
         lastUpdated: new Date().toISOString(),
       }));
-      return mapped;
+      return filterDisplayableTickets(mapped);
     }
 
     if (isTravelLineSyncEnabled()) {

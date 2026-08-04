@@ -1,17 +1,20 @@
 name: Inventory Ticket Sync
 
-# Runs scraper on GitHub Actions → Supabase.
-# Public repo = free Actions minutes (does NOT burn Vercel Hobby CPU).
-# Do NOT point cron-job.org at /api/cron/sync-* every 15 min — that pauses Vercel.
+# Every 5 minutes on GitHub Actions (public repo = free runners).
+# Writes Supabase for admin, publishes GitHub inventory-cache mirror for
+# public site reads (cuts Supabase egress), then revalidates Next.js cache.
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 concurrency:
   group: travelline-ticket-sync
   cancel-in-progress: false
+
+permissions:
+  contents: write
 
 jobs:
   sync:
@@ -33,7 +36,7 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install chromium --with-deps
 
-      - name: Sync tickets + packages
+      - name: Sync tickets + packages → Supabase
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -42,4 +45,14 @@ jobs:
           TRAVELLINE_ADMIN_URL: ${{ secrets.TRAVELLINE_ADMIN_URL }}
           TRAVELLINE_AGENT_USERNAME: ${{ secrets.TRAVELLINE_AGENT_USERNAME }}
           TRAVELLINE_AGENT_PASSWORD: ${{ secrets.TRAVELLINE_AGENT_PASSWORD }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          NEXT_PUBLIC_SITE_URL: https://www.flywithalqibla.com
         run: npx tsx scripts/run-travelline-scraper-sync.ts
+
+      - name: Publish public inventory mirror (GitHub CDN)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: npx tsx scripts/publish-inventory-mirror.ts

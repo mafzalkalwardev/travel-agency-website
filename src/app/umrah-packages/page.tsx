@@ -6,10 +6,9 @@ import { InquiryForm } from "@/components/forms/InquiryForm";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
-import { dataProvider } from "@/lib/data-provider";
+import { getCachedUmrahPackages } from "@/lib/inventory-public-cache";
 
-// Live Travel Line inventory — must not be frozen at build time.
-export const revalidate = 300;
+export const revalidate = 600;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.umrahPackages.title,
@@ -19,7 +18,7 @@ export const metadata = createPageMetadata({
 });
 
 export default async function UmrahPackagesPage() {
-  const packages = await dataProvider.getUmrahPackages();
+  const packages = await getCachedUmrahPackages();
   const active = packages.filter((p) => p.status === "active");
 
   return (

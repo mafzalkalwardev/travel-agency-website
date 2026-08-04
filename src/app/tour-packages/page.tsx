@@ -6,9 +6,9 @@ import { MotionSection } from "@/components/motion/MotionSection";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
-import { dataProvider } from "@/lib/data-provider";
+import { getCachedTourPackages } from "@/lib/inventory-public-cache";
 
-export const revalidate = 300;
+export const revalidate = 600;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.tourPackages.title,
@@ -18,7 +18,7 @@ export const metadata = createPageMetadata({
 });
 
 export default async function TourPackagesPage() {
-  const packages = await dataProvider.getTourPackages();
+  const packages = await getCachedTourPackages();
 
   return (
     <>

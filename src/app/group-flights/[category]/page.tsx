@@ -6,11 +6,11 @@ import { GroupFlightsPageClient } from "@/components/tickets/GroupFlightsPageCli
 import { TicketsSearchBar } from "@/components/tickets/TicketsSearchBar";
 import { PageHero } from "@/components/shared/PageHero";
 import { SITE } from "@/lib/constants";
-import { dataProvider } from "@/lib/data-provider";
+import { getCachedTickets } from "@/lib/inventory-public-cache";
 import { getExploreCategory } from "@/lib/travelline/categories";
 import { toTicketListItems } from "@/lib/ticket-list";
 
-export const revalidate = 300;
+export const revalidate = 600;
 
 interface PageProps {
   params: Promise<{ category: string }>;
@@ -53,8 +53,9 @@ export default async function GroupFlightsCategoryPage({ params }: PageProps) {
     notFound();
   }
 
+  const all = await getCachedTickets();
   const tickets = toTicketListItems(
-    await dataProvider.getTickets({ groupCategory: category.apiCategory })
+    all.filter((t) => t.groupCategory === category.apiCategory)
   );
 
   return (
