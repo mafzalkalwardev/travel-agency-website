@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
   try {
     const [history, staleBookings] = await Promise.all([
-      cleanupSyncHistory(14),
+      cleanupSyncHistory(7),
       cleanupStaleBookings(),
     ]);
 

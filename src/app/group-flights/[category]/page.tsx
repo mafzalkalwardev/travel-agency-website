@@ -10,7 +10,7 @@ import { dataProvider } from "@/lib/data-provider";
 import { getExploreCategory } from "@/lib/travelline/categories";
 import { toTicketListItems } from "@/lib/ticket-list";
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 interface PageProps {
   params: Promise<{ category: string }>;

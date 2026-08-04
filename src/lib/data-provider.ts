@@ -153,6 +153,16 @@ class MockDataProvider implements IDataProvider {
 const TICKET_LIST_COLUMNS =
   "id,airline,airline_code,flight_number,from_code,from_city,to_code,to_city,sector,destination,departure_date,departure_time,arrival_time,duration,price,currency,seats_left,status,baggage,meal,trip_type,is_direct,active,last_updated,group_category,aircraft,external_id";
 
+/** Public package cards — omit raw_payload jsonb (large supplier blob). */
+const UMRAH_LIST_COLUMNS =
+  "id,title,slug,package_code,external_id,category,price,currency,duration,departure_city,airline,hotel_makkah,hotel_madinah,distance_from_haram,transport,visa,ziyarat,seats_left,image_url,featured,status,highlights";
+
+const TOUR_LIST_COLUMNS =
+  "id,title,slug,package_code,destination,price,currency,duration,image_url,featured,status,highlights";
+
+const FLYER_LIST_COLUMNS = "id,title,image_url,link_url,active,display_order,category";
+const ANNOUNCEMENT_LIST_COLUMNS = "id,message,priority,active";
+
 class SupabaseDataProvider implements IDataProvider {
   private mock = new MockDataProvider();
   private ticketsInflight: Promise<Ticket[]> | null = null;
@@ -160,7 +170,7 @@ class SupabaseDataProvider implements IDataProvider {
   async getAnnouncements() {
     try {
       const supabase = createAdminClient();
-      const { data } = await supabase.from("announcements").select("*").eq("active", true).order("priority");
+      const { data } = await supabase.from("announcements").select(ANNOUNCEMENT_LIST_COLUMNS).eq("active", true).order("priority");
       if (!data?.length) return this.mock.getAnnouncements();
       return data.map((a) => ({
         id: a.id,
@@ -178,7 +188,7 @@ class SupabaseDataProvider implements IDataProvider {
   async getFlyers() {
     try {
       const supabase = createAdminClient();
-      const { data } = await supabase.from("flyers").select("*").eq("active", true).order("display_order");
+      const { data } = await supabase.from("flyers").select(FLYER_LIST_COLUMNS).eq("active", true).order("display_order");
       if (!data?.length) return this.mock.getFlyers();
       return data.map((f) => ({
         id: f.id,
@@ -197,7 +207,7 @@ class SupabaseDataProvider implements IDataProvider {
   async getUmrahPackages() {
     try {
       const supabase = createAdminClient();
-      const { data } = await supabase.from("umrah_packages").select("*").eq("status", "active");
+      const { data } = await supabase.from("umrah_packages").select(UMRAH_LIST_COLUMNS).eq("status", "active");
       if (!data?.length) return isTravelLineSyncEnabled() ? [] : this.mock.getUmrahPackages();
       return data.map(mapUmrahPackage);
     } catch {
@@ -208,7 +218,7 @@ class SupabaseDataProvider implements IDataProvider {
   async getTourPackages() {
     try {
       const supabase = createAdminClient();
-      const { data } = await supabase.from("tour_packages").select("*").eq("status", "active");
+      const { data } = await supabase.from("tour_packages").select(TOUR_LIST_COLUMNS).eq("status", "active");
       if (!data?.length) return this.mock.getTourPackages();
       return data.map(mapTourPackage);
     } catch {
@@ -386,6 +396,8 @@ class SupabaseDataProvider implements IDataProvider {
 }
 
 function mapUmrahPackage(row: Record<string, unknown>): TravelPackage {
+  // Prefer normalized columns. raw_payload is intentionally not selected on list pages
+  // to cut Supabase egress; detail fields fall back to column values only.
   const raw = row.raw_payload as Record<string, unknown> | undefined;
   const hotel = raw?.hotel as Record<string, unknown> | undefined;
   const meters = hotel?.makkahDistanceMeters as number | undefined;

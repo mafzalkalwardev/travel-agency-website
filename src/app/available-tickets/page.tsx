@@ -9,7 +9,7 @@ import { dataProvider } from "@/lib/data-provider";
 import { toTicketListItems } from "@/lib/ticket-list";
 
 // ISR keeps inventory fresh without blocking every request on a cold Supabase fetch.
-export const revalidate = 60;
+export const revalidate = 300;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.availableTickets.title,

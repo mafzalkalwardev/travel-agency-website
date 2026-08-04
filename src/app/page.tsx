@@ -12,7 +12,7 @@ import { toTicketListItems } from "@/lib/ticket-list";
 
 // Home embeds live ticket inventory — cache the page and refresh every 60s
 // (ISR) so it stays fast while sync updates still surface within a minute.
-export const revalidate = 60;
+export const revalidate = 300;
 
 export default async function HomePage() {
   // One ticket fetch shared by destinations + preview (avoids double inventory round-trip).

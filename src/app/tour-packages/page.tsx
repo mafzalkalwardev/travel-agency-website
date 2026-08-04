@@ -8,7 +8,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.tourPackages.title,

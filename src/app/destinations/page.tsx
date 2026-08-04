@@ -9,7 +9,7 @@ import { PAGE_HEROES } from "@/lib/page-heroes";
 import { formatPrice } from "@/lib/ticket-filters";
 import { dataProvider } from "@/lib/data-provider";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.destinations.title,

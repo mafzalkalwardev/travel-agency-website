@@ -9,7 +9,7 @@ import { PAGE_HEROES } from "@/lib/page-heroes";
 import { dataProvider } from "@/lib/data-provider";
 
 // Live Travel Line inventory — must not be frozen at build time.
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.umrahPackages.title,

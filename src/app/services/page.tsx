@@ -9,7 +9,7 @@ import { TRUST_TEXT } from "@/lib/constants";
 import { CheckCircle } from "lucide-react";
 import { Plane, Sparkles, FileText, Hotel, Shield, Car, Building2, Palmtree, Users, Globe, type LucideIcon } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 600;
 
 export const metadata = createPageMetadata({
   title: PAGE_SEO.services.title,

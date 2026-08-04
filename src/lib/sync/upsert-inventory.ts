@@ -373,11 +373,13 @@ async function fetchAllRows(
   provider: string
 ): Promise<Record<string, unknown>[]> {
   const pageSize = 1000;
+  // Omit raw_payload — largest column and unused for diffing (major egress cut).
+  const columns = table === "tickets" ? TICKET_SYNC_SELECT : PACKAGE_SYNC_SELECT;
   const all: Record<string, unknown>[] = [];
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
       .from(table)
-      .select("*")
+      .select(columns)
       .eq("source_provider", provider)
       .range(from, from + pageSize - 1);
     if (error) throw error;
@@ -494,6 +496,10 @@ const packageDiffFields = [
   "featured",
   "status",
 ];
+
+/** Columns needed to diff/upsert — never pull raw_payload (major egress saver). */
+const TICKET_SYNC_SELECT = ["id", "external_id", ...ticketDiffFields].join(",");
+const PACKAGE_SYNC_SELECT = ["id", "external_id", ...packageDiffFields].join(",");
 
 function normalizeComparable(value: unknown) {
   if (value === undefined) return null;
