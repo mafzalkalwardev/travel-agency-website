@@ -16,8 +16,8 @@ const TICKET_COLS =
 const UMRAH_COLS =
   "id,title,slug,package_code,external_id,category,price,currency,duration,departure_city,airline,hotel_makkah,hotel_madinah,distance_from_haram,transport,visa,ziyarat,seats_left,image_url,featured,status,highlights";
 const TOUR_COLS =
-  "id,title,slug,destination,price,currency,duration,image_url,featured,status,highlights";
-const FLYER_COLS = "id,title,image_url,link_url,link,active,display_order,category";
+  "id,title,slug,destination,price,currency,duration,image_url,featured,status,highlights,external_id";
+const FLYER_COLS = "id,title,image_url,link,active,display_order,category";
 
 async function fetchAll(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +38,27 @@ async function fetchAll(
     if (data.length < pageSize) break;
   }
   return all;
+}
+
+/** Prefer narrow cols; on unknown-column errors, fall back so publish still ships. */
+async function fetchTable(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  table: string,
+  columnSets: string[],
+  filter?: { column: string; value: string | boolean }
+) {
+  let lastError: unknown;
+  for (const cols of columnSets) {
+    try {
+      return await fetchAll(supabase, table, cols, filter);
+    } catch (e) {
+      lastError = e;
+      console.warn(`fetch ${table} failed with narrow cols, trying next:`, e instanceof Error ? e.message : e);
+    }
+  }
+  console.warn(`fetch ${table} giving up:`, lastError instanceof Error ? lastError.message : lastError);
+  return [];
 }
 
 function git(cwd: string, args: string[]) {
@@ -61,10 +82,32 @@ async function main() {
   });
 
   const [tickets, umrah, tours, flyers] = await Promise.all([
-    fetchAll(supabase, "tickets", TICKET_COLS, { column: "active", value: true }),
-    fetchAll(supabase, "umrah_packages", UMRAH_COLS, { column: "status", value: "active" }),
-    fetchAll(supabase, "tour_packages", TOUR_COLS, { column: "status", value: "active" }),
-    fetchAll(supabase, "flyers", FLYER_COLS, { column: "active", value: true }),
+    fetchTable(supabase, "tickets", [TICKET_COLS], { column: "active", value: true }),
+    fetchTable(
+      supabase,
+      "umrah_packages",
+      [
+        UMRAH_COLS,
+        "id,title,slug,package_code,category,price,currency,duration,departure_city,airline,hotel_makkah,hotel_madinah,distance_from_haram,transport,visa,ziyarat,seats_left,image_url,featured,status,highlights",
+      ],
+      { column: "status", value: "active" }
+    ),
+    fetchTable(
+      supabase,
+      "tour_packages",
+      [
+        TOUR_COLS,
+        "id,title,slug,destination,price,currency,duration,image_url,featured,status,highlights",
+        "id,title,slug,price,currency,duration,image_url,featured,status",
+      ],
+      { column: "status", value: "active" }
+    ),
+    fetchTable(
+      supabase,
+      "flyers",
+      [FLYER_COLS, "id,title,image_url,link,active,display_order", "id,title,image_url,active,display_order"],
+      { column: "active", value: true }
+    ),
   ]);
 
   const activeTickets = tickets;

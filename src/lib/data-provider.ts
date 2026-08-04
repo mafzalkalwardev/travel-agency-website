@@ -158,9 +158,9 @@ const UMRAH_LIST_COLUMNS =
   "id,title,slug,package_code,external_id,category,price,currency,duration,departure_city,airline,hotel_makkah,hotel_madinah,distance_from_haram,transport,visa,ziyarat,seats_left,image_url,featured,status,highlights";
 
 const TOUR_LIST_COLUMNS =
-  "id,title,slug,package_code,destination,price,currency,duration,image_url,featured,status,highlights";
+  "id,title,slug,destination,price,currency,duration,image_url,featured,status,highlights";
 
-const FLYER_LIST_COLUMNS = "id,title,image_url,link_url,link,active,display_order,category";
+const FLYER_LIST_COLUMNS = "id,title,image_url,link,active,display_order,category";
 const ANNOUNCEMENT_LIST_COLUMNS = "id,message,priority,active,starts_at,ends_at";
 
 class SupabaseDataProvider implements IDataProvider {
