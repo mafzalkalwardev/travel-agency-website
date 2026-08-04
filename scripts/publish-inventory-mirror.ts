@@ -16,7 +16,7 @@ const TICKET_COLS =
 const UMRAH_COLS =
   "id,title,slug,package_code,external_id,category,price,currency,duration,departure_city,airline,hotel_makkah,hotel_madinah,distance_from_haram,transport,visa,ziyarat,seats_left,image_url,featured,status,highlights";
 const TOUR_COLS =
-  "id,title,slug,package_code,destination,price,currency,duration,image_url,featured,status,highlights";
+  "id,title,slug,destination,price,currency,duration,image_url,featured,status,highlights";
 const FLYER_COLS = "id,title,image_url,link_url,link,active,display_order,category";
 
 async function fetchAll(
