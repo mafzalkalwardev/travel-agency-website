@@ -7,6 +7,7 @@ import { ArrowRight, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AuthCodeExchanger } from "@/components/account/AuthCodeExchanger";
 import { createClient } from "@/lib/supabase/client";
 
 interface LoginFormProps {
@@ -30,7 +31,16 @@ export function LoginForm({ nextPath }: LoginFormProps) {
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
-      setError(authError.message);
+      const msg = authError.message || "Sign in failed";
+      if (/email not confirmed/i.test(msg)) {
+        setError(
+          "Email not confirmed yet. Open the verification link we sent, then try again. Check spam if you do not see it."
+        );
+      } else if (/invalid login credentials/i.test(msg)) {
+        setError("Invalid email or password. Use Forgot password if you need a reset.");
+      } else {
+        setError(msg);
+      }
       setLoading(false);
       return;
     }
@@ -41,6 +51,14 @@ export function LoginForm({ nextPath }: LoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      <AuthCodeExchanger
+        onDone={(ok) => {
+          if (ok) {
+            router.replace(nextPath || "/account/");
+            router.refresh();
+          }
+        }}
+      />
       <div className="space-y-2.5">
         <Label htmlFor="login-email" className="font-semibold text-navy">Email address</Label>
         <div className="relative">

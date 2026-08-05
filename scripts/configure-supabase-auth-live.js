@@ -59,7 +59,7 @@ async function main() {
   const token = env.SUPABASE_ACCESS_TOKEN || readCliAccessToken();
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL || "";
   const resendKey = env.RESEND_API_KEY;
-  const siteUrl = (env.NEXT_PUBLIC_SITE_URL || "https://flywithalqibla.com").replace(/\/$/, "");
+  const siteUrl = (env.NEXT_PUBLIC_SITE_URL || "https://www.flywithalqibla.com").replace(/\/$/, "");
   const fromEmail = env.AUTH_FROM_EMAIL || env.BOOKING_FROM_EMAIL || "noreply@flywithalqibla.com";
 
   const refMatch = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/);
@@ -84,12 +84,26 @@ async function main() {
     process.exit(1);
   }
 
+  // Prefer www; also allow apex so old email links still succeed before redirect.
+  const hosts = Array.from(
+    new Set([
+      siteUrl,
+      siteUrl.replace("://www.", "://"),
+      "https://www.flywithalqibla.com",
+      "https://flywithalqibla.com",
+    ])
+  );
+
   const uriAllowList = [
-    siteUrl,
-    `${siteUrl}/**`,
-    `${siteUrl}/account/login`,
-    `${siteUrl}/account/login/`,
-    `${siteUrl}/account/**`,
+    ...hosts.flatMap((h) => [
+      h,
+      `${h}/**`,
+      `${h}/account/login`,
+      `${h}/account/login/`,
+      `${h}/account/reset-password`,
+      `${h}/account/reset-password/`,
+      `${h}/account/**`,
+    ]),
     "http://localhost:3000",
     "http://localhost:3000/**",
     "http://localhost:3000/account/login",
@@ -98,7 +112,7 @@ async function main() {
   ].join(",");
 
   const payload = {
-    site_url: siteUrl,
+    site_url: siteUrl.includes("www.") ? siteUrl : "https://www.flywithalqibla.com",
     uri_allow_list: uriAllowList,
     external_email_enabled: true,
     mailer_secure_email_change_enabled: true,

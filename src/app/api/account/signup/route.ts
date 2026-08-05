@@ -21,7 +21,15 @@ const signupSchema = z.object({
 });
 
 function siteOrigin() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || SITE.url).replace(/\/$/, "");
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL || SITE.url || "https://www.flywithalqibla.com").replace(
+    /\/$/,
+    ""
+  );
+  // Always prefer www so auth redirect cookies/query survive (apex 308s to www).
+  if (raw === "https://flywithalqibla.com" || raw === "http://flywithalqibla.com") {
+    return "https://www.flywithalqibla.com";
+  }
+  return raw;
 }
 
 function safeNextPath(nextPath?: string) {

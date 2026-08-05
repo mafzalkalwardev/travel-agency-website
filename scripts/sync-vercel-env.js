@@ -24,7 +24,7 @@ function loadEnv() {
 }
 
 const env = loadEnv();
-const productionUrl = "https://al-qibla-air-services.vercel.app";
+const productionUrl = "https://www.flywithalqibla.com";
 
 const optionalVars = {
   CRON_SECRET: env.CRON_SECRET,

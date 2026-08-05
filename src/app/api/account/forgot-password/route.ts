@@ -13,7 +13,14 @@ const schema = z.object({
 });
 
 function siteOrigin() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || SITE.url).replace(/\/$/, "");
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL || SITE.url || "https://www.flywithalqibla.com").replace(
+    /\/$/,
+    ""
+  );
+  if (raw === "https://flywithalqibla.com" || raw === "http://flywithalqibla.com") {
+    return "https://www.flywithalqibla.com";
+  }
+  return raw;
 }
 
 /** Always return a generic success to avoid account enumeration. */

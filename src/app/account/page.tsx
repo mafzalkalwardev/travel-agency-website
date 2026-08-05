@@ -71,7 +71,7 @@ export default async function AccountPage() {
   let profile = existingProfile;
 
   if (!profile) {
-    const { data: createdProfile } = await supabase
+    const { data: createdProfile, error: createError } = await supabase
       .from("customer_profiles")
       .insert({
         id: user.id,
@@ -87,10 +87,32 @@ export default async function AccountPage() {
       .select("*")
       .single();
     profile = createdProfile;
+
+    if (!profile) {
+      return (
+        <section className="section-padding bg-slate-50">
+          <div className="container-wide">
+            <Card>
+              <CardContent className="space-y-4 p-8 text-center">
+                <p className="font-heading text-xl text-navy">Could not load your profile</p>
+                <p className="text-sm text-muted-foreground">
+                  You are signed in as {user.email}, but we could not create your agent profile.
+                  {createError?.message ? ` (${createError.message})` : ""} Try refreshing, or
+                  contact support on WhatsApp.
+                </p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Link href="/account/" className={cn(buttonVariants({ variant: "primaryGold" }))}>
+                    Retry
+                  </Link>
+                  <SignOutButton />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      );
+    }
   }
-
-  if (!profile) redirect("/account/login/?next=/account/");
-
   const { data: bookings } = await supabase
     .from("bookings")
     .select("*")
