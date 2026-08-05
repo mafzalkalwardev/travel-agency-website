@@ -5,10 +5,10 @@
   "installCommand": "npm install",
   "git": {
     "deploymentEnabled": {
-      "inventory-cache": false
+      "main": true,
+      "*": false
     }
   },
-  "ignoreCommand": "node -e \"process.exit(process.env.VERCEL_GIT_COMMIT_REF==='inventory-cache'?0:1)\"",
   "crons": [
     {
       "path": "/api/cron/cleanup-maintenance",

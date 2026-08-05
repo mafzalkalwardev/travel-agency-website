@@ -53,6 +53,8 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          # PAT needed: default GITHUB_TOKEN cannot push to the separate mirror repo.
+          GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          INVENTORY_MIRROR_REPO: mafzalkalwardev/travel-agency-inventory-cache
         run: npx tsx scripts/publish-inventory-mirror.ts

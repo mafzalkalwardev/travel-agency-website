@@ -11,7 +11,7 @@ export type InventoryMirror = {
 function mirrorUrl() {
   return (
     process.env.INVENTORY_MIRROR_URL ||
-    "https://raw.githubusercontent.com/mafzalkalwardev/travel-agency-website/inventory-cache/public-inventory.json"
+    "https://raw.githubusercontent.com/mafzalkalwardev/travel-agency-inventory-cache/main/public-inventory.json"
   );
 }
 
