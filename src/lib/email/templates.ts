@@ -316,7 +316,7 @@ export function inventoryStaleAdminHtml(params: {
       <a href="${params.actionsUrl}" style="display:inline-block;background:#1a2744;color:#fff;padding:10px 20px;text-decoration:none;border-radius:6px;margin-right:8px">Open Sync Workflow</a>
       <a href="${params.mirrorUrl}" style="display:inline-block;background:#c9a227;color:#1a2744;padding:10px 20px;text-decoration:none;border-radius:6px">Open Mirror JSON</a>
     </p>
-    <p style="font-size:12px;color:#888">Alerts repeat at most every 6 hours while still stale.</p>`
+    <p style="font-size:12px;color:#888">Alerts repeat at most every 12 hours while still stale.</p>`
   );
 }
 

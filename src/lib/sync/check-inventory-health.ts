@@ -5,8 +5,9 @@ import { inventoryStaleAdminHtml } from "@/lib/email/templates";
 import { SITE } from "@/lib/constants";
 
 const WATCH_PROVIDER = "inventory-watch";
-const DEFAULT_STALE_MINUTES = 20;
-const DEFAULT_COOLDOWN_HOURS = 6;
+/** GitHub cron schedules are often delayed 1–3h; only email when truly stuck. */
+const DEFAULT_STALE_MINUTES = 180;
+const DEFAULT_COOLDOWN_HOURS = 12;
 
 function mirrorUrl() {
   return (

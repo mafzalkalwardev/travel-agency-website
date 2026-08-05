@@ -1,12 +1,13 @@
 name: Watch Inventory Sync Health
 
 # Runs on GitHub (free public runners) — does NOT hit TravelLine scrape.
-# Checks inventory-cache mirror age; emails admin if older than 20 minutes.
-# Alert cooldown: every 6 hours while still stale.
+# Checks inventory-cache mirror age; emails admin if older than 3 hours.
+# Alert cooldown: every 12 hours while still stale.
+# (GitHub schedule delays often create 1–3h gaps; 20m was too tight.)
 
 on:
   schedule:
-    - cron: "*/20 * * * *"
+    - cron: "15 */2 * * *"
   workflow_dispatch:
 
 concurrency:
