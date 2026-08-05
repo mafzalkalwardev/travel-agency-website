@@ -128,7 +128,8 @@ async function main() {
       join(dir, "vercel.json"),
       JSON.stringify(
         {
-          // Exit 0 = skip/cancel this deployment (Vercel Ignored Build Step).
+          // Never deploy this JSON-only mirror branch (stops failure emails).
+          git: { deploymentEnabled: false },
           ignoreCommand: "exit 0",
         },
         null,
