@@ -122,11 +122,29 @@ async function main() {
   const dir = mkdtempSync(join(tmpdir(), "inv-mirror-"));
   try {
     writeFileSync(join(dir, "public-inventory.json"), JSON.stringify(payload));
+    // Inventory-cache is JSON-only. Without this, every push triggers a
+    // Vercel Preview deploy that fails (no package.json) and emails failures.
+    writeFileSync(
+      join(dir, "vercel.json"),
+      JSON.stringify(
+        {
+          // Exit 0 = skip/cancel this deployment (Vercel Ignored Build Step).
+          ignoreCommand: "exit 0",
+        },
+        null,
+        2
+      )
+    );
+    // README keeps accidental cloneers from thinking this is the app.
+    writeFileSync(
+      join(dir, "README.md"),
+      "# inventory-cache\n\nCDN JSON mirror only. Do not deploy. Managed by Inventory Ticket Sync.\n"
+    );
     git(dir, ["init"]);
     git(dir, ["checkout", "-b", "inventory-cache"]);
     git(dir, ["config", "user.email", "github-actions[bot]@users.noreply.github.com"]);
     git(dir, ["config", "user.name", "github-actions[bot]"]);
-    git(dir, ["add", "public-inventory.json"]);
+    git(dir, ["add", "public-inventory.json", "vercel.json", "README.md"]);
     git(dir, ["commit", "-m", `inventory mirror ${payload.updatedAt}`]);
     const remote = `https://x-access-token:${token}@github.com/${repo}.git`;
     git(dir, ["remote", "add", "origin", remote]);
