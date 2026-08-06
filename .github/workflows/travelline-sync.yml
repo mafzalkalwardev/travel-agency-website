@@ -1,17 +1,20 @@
 name: Inventory Ticket Sync
 
-# Prefer external cron-job.org → workflow_dispatch every 5 minutes
-# (GitHub's own schedule is often delayed 1–3 hours under load).
-# Keep a slow schedule as a backup safety net.
+# Permanent setup:
+# - cron-job.org dispatches every 15 minutes (not 5 — avoids queue pileups)
+# - cancel-in-progress: true so only one sync runs; old waits never fail as "failure"
+# - Playwright browser cached to keep runtime ~1–2 minutes
+# Publishes inventory JSON to travel-agency-inventory-cache (not linked to Vercel).
 
 on:
   schedule:
-    - cron: "7 */2 * * *"
+    # Backup only — primary trigger is cron-job.org workflow_dispatch.
+    - cron: "10 */3 * * *"
   workflow_dispatch:
 
 concurrency:
   group: travelline-ticket-sync
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -19,7 +22,7 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,8 +36,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browser
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium --with-deps
+
+      - name: Install Playwright system deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Sync tickets + packages → Supabase
         env:
@@ -53,7 +68,6 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # PAT needed: default GITHUB_TOKEN cannot push to the separate mirror repo.
           GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
           INVENTORY_MIRROR_REPO: mafzalkalwardev/travel-agency-inventory-cache

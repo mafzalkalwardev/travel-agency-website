@@ -1,8 +1,9 @@
 /**
  * Manage cron-job.org jobs for Al Qibla.
  *
- * Real ~5-minute inventory sync:
- *   cron-job.org → GitHub workflow_dispatch (Inventory Ticket Sync)
+ * Real inventory sync:
+ *   cron-job.org → GitHub workflow_dispatch every 15 minutes
+ *   (5-minute cadence piled up Actions queues and falsely "failed")
  *   Never scrape TravelLine on Vercel (Hobby CPU).
  *
  * Requires in .env / .env.local:
@@ -151,11 +152,11 @@ async function main() {
     await verifyGithubDispatch(dispatchToken);
     console.log("Dispatch OK.");
 
-    const everyFive = {
+    const everyFifteen = {
       timezone: "UTC",
       expiresAt: 0,
       hours: [-1],
-      minutes: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
+      minutes: [0, 15, 30, 45],
       mdays: [-1],
       months: [-1],
       wdays: [-1],
@@ -164,7 +165,7 @@ async function main() {
     const dispatchJob = {
       enabled: true,
       url: DISPATCH_URL,
-      title: "Inventory sync dispatch (GitHub every 5 min)",
+      title: "Inventory sync dispatch (GitHub every 15 min)",
       requestMethod: 1, // POST
       saveResponses: true,
       headers: {
@@ -183,7 +184,7 @@ async function main() {
         },
         body: JSON.stringify({ ref: "main" }),
       },
-      schedule: everyFive,
+      schedule: everyFifteen,
     };
 
     const existingDispatch = jobs.find(
@@ -196,12 +197,12 @@ async function main() {
       console.log(`Updating GitHub dispatch job ${existingDispatch.jobId}`);
       await api("PATCH", `/jobs/${existingDispatch.jobId}`, { job: dispatchJob });
     } else {
-      console.log("Creating GitHub dispatch job (every 5 minutes)");
+      console.log("Creating GitHub dispatch job (every 15 minutes)");
       await api("PUT", "/jobs", { job: dispatchJob });
     }
   } else {
     console.warn(
-      "\nGH_DISPATCH_TOKEN missing — skipped 5-min GitHub dispatch job.\n" +
+      "\nGH_DISPATCH_TOKEN missing — skipped 15-min GitHub dispatch job.\n" +
         "Create a classic PAT (scope: workflow) or fine-grained (Actions: Write),\n" +
         "add GH_DISPATCH_TOKEN=... to .env.local, then re-run this script.\n"
     );
