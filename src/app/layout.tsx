@@ -5,7 +5,7 @@ import { ConditionalSiteChrome } from "@/components/layout/ConditionalSiteChrome
 import { DeferredSiteExtras } from "@/components/layout/DeferredSiteExtras";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { OFFICE_DISPLAY_ORDER, SITE, SOCIAL } from "@/lib/constants";
+import { OFFICES, OFFICE_DISPLAY_ORDER, SITE, SOCIAL } from "@/lib/constants";
 import { createPageMetadata } from "@/lib/metadata";
 import { PAGE_SEO, SEO_KEYWORDS } from "@/lib/seo";
 import "./globals.css";
@@ -26,7 +26,7 @@ const jsonLd = {
       "@type": "Organization",
       "@id": `${SITE.url}/#organization`,
       name: SITE.name,
-      alternateName: ["Al Qibla", "Al-Qibla Air Services", "Fly with Al Qibla"],
+      alternateName: ["Al Qibla", "AL QIBLA AIR SERVICES", "Al-Qibla Air Services", "Fly with Al Qibla"],
       url: SITE.url,
       logo: {
         "@type": "ImageObject",
@@ -74,20 +74,30 @@ const jsonLd = {
       url: SITE.url,
       logo: `${SITE.url}/google-site-logo.png`,
       image: `${SITE.url}/google-site-logo.png`,
-      telephone: SITE.whatsappNumber,
+      telephone: OFFICES.headOffice.phoneTel,
       email: SITE.email,
       priceRange: "$$",
       currenciesAccepted: "PKR",
       paymentAccepted: "Bank Transfer, JazzCash, Easypaisa, Cash",
       openingHours: "Mo-Sa 09:00-20:00, Su 10:00-18:00",
       parentOrganization: { "@id": `${SITE.url}/#organization` },
-      address: OFFICE_DISPLAY_ORDER.map((office) => ({
+      address: {
         "@type": "PostalAddress",
-        streetAddress: office.address,
+        streetAddress: "Office #4, Block-B, Cantonment Plaza, Saddar Road, Peshawar Cantonment",
+        addressLocality: "Peshawar",
+        addressRegion: "Khyber Pakhtunkhwa",
+        postalCode: "25000",
         addressCountry: "PK",
-      })),
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: SITE.geo.latitude,
+        longitude: SITE.geo.longitude,
+      },
+      hasMap: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("AL QIBLA AIR SERVICES Cantonment Plaza Saddar Road Peshawar")}`,
       areaServed: SITE.regions.map((name) => ({ "@type": "Place", name })),
       knowsAbout: [
+        "Travel agency in Peshawar",
         "Ticket booking",
         "Air ticket booking",
         "Umrah ticket booking",
@@ -98,6 +108,16 @@ const jsonLd = {
         "Visit visas",
         "Corporate travel",
       ],
+      department: OFFICE_DISPLAY_ORDER.filter((o) => o.label !== OFFICES.headOffice.label).map((office) => ({
+        "@type": "TravelAgency",
+        name: `${SITE.name} — ${office.label}`,
+        telephone: office.phoneTel,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: office.address,
+          addressCountry: "PK",
+        },
+      })),
       hasOfferCatalog: {
         "@type": "OfferCatalog",
         name: "Al Qibla Travel Services",
@@ -151,6 +171,7 @@ const jsonLd = {
         { "@type": "ListItem", position: 3, name: "Group travels & group flights", url: `${SITE.url}/destinations/` },
         { "@type": "ListItem", position: 4, name: "Become a ticket booking agent", url: `${SITE.url}/portal/` },
         { "@type": "ListItem", position: 5, name: "Tour packages", url: `${SITE.url}/tours/` },
+        { "@type": "ListItem", position: 6, name: "Travel agency in Peshawar", url: `${SITE.url}/travel-agency-peshawar/` },
       ],
     },
   ],

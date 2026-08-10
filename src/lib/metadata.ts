@@ -96,8 +96,10 @@ export function createPageMetadata({
       images: [`${SITE.url}/google-site-logo.png`],
     },
     other: {
-      "geo.region": "PK",
-      "geo.placename": "Peshawar, Islamabad, Bannu",
+      "geo.region": "PK-KP",
+      "geo.placename": "Peshawar",
+      "geo.position": `${SITE.geo.latitude};${SITE.geo.longitude}`,
+      ICBM: `${SITE.geo.latitude}, ${SITE.geo.longitude}`,
       "business:contact_data:country_name": "Pakistan",
     },
   };

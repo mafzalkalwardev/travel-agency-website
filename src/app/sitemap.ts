@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticPages: Array<{ path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }> = [
     { path: "/", priority: 1, changeFrequency: "daily" },
+    { path: "/travel-agency-peshawar/", priority: 1, changeFrequency: "weekly" },
     { path: "/available-tickets/", priority: 1, changeFrequency: "hourly" },
     { path: "/umrah-packages/", priority: 0.95, changeFrequency: "daily" },
     { path: "/destinations/", priority: 0.9, changeFrequency: "daily" },

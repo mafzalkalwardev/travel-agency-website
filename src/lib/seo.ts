@@ -56,11 +56,17 @@ export const SEO_KEYWORDS = [
   "wholesale group tickets",
   // Brand + geo
   "Al Qibla Air Services",
+  "AL QIBLA AIR SERVICES",
   "Al Qibla tickets",
+  "travel agency in Peshawar",
   "travel agency Peshawar",
+  "best travel agency Peshawar",
+  "air ticket booking Peshawar",
+  "ticket booking Peshawar",
   "travel agency Islamabad",
   "travel agency Bannu",
   "IATA travel agent Pakistan",
+  "flywithalqibla",
   // Adjacent services
   "visit visa",
   "Saudi visit visa",
@@ -74,7 +80,7 @@ export const SEO_HOME_TITLE =
   "Ticket Booking, Umrah Packages & Group Flights Pakistan";
 
 export const SEO_HOME_DESCRIPTION =
-  "Book air tickets, Umrah tickets, group flights and tour packages online with Al Qibla Air Services. Domestic & international ticket booking, Umrah packages from Pakistan, group travels to UAE, Oman, KSA & Bahrain. Become a ticket booking agent — offices in Peshawar, Islamabad & Bannu.";
+  "Travel agency in Peshawar — book air tickets, Umrah packages, group flights and tour packages online with AL QIBLA AIR SERVICES. Head office at Cantonment Plaza, Saddar Road, plus Islamabad & Bannu. Become a ticket booking agent on flywithalqibla.com.";
 
 export const SEO_DEFAULT_DESCRIPTION = SEO_HOME_DESCRIPTION;
 
@@ -211,11 +217,16 @@ export const PAGE_SEO = {
     ],
   },
   contact: {
-    title: "Contact for Ticket Booking | WhatsApp & Offices",
+    title: "Contact Travel Agency in Peshawar | WhatsApp & Offices",
     description:
-      "Contact Al Qibla for ticket booking, Umrah packages and group travels. WhatsApp support plus offices in Peshawar, Islamabad and Bannu.",
+      "Contact AL QIBLA AIR SERVICES — travel agency in Peshawar at Cantonment Plaza, Saddar Road. WhatsApp support plus Islamabad & Bannu offices for ticket booking and Umrah.",
     path: "/contact/",
-    keywords: ["contact travel agency", "ticket booking WhatsApp", "travel agency Peshawar contact"],
+    keywords: [
+      "travel agency in Peshawar contact",
+      "ticket booking WhatsApp",
+      "Cantonment Plaza travel agency",
+      "AL QIBLA AIR SERVICES phone",
+    ],
   },
   inquiry: {
     title: "Book Tickets / Travel Inquiry | Instant WhatsApp Booking",
@@ -244,5 +255,22 @@ export const PAGE_SEO = {
       "Photo gallery from Al Qibla Air Services — Umrah journeys, group travels and destinations.",
     path: "/gallery/",
     keywords: ["umrah gallery", "travel gallery Pakistan"],
+  },
+  travelAgencyPeshawar: {
+    title: "Travel Agency in Peshawar",
+    description:
+      "Looking for a travel agency in Peshawar? AL QIBLA AIR SERVICES at Cantonment Plaza, Saddar Road offers air ticketing, Umrah packages, group flights, visas and hotels. Book on flywithalqibla.com or WhatsApp.",
+    path: "/travel-agency-peshawar/",
+    keywords: [
+      "travel agency in Peshawar",
+      "best travel agency Peshawar",
+      "air ticket booking Peshawar",
+      "Umrah packages Peshawar",
+      "AL QIBLA AIR SERVICES",
+      "travel agent Saddar Peshawar",
+      "group flights Peshawar",
+      "visa consultant Peshawar",
+      "flywithalqibla",
+    ],
   },
 } as const;

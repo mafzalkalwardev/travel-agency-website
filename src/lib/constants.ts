@@ -5,13 +5,17 @@ export const SITE = {
   heroSubheading:
     "Your trusted partner for ticket booking, Umrah packages, group flights, visit visas, hotels, tours and corporate travel.",
   description:
-    "Book air tickets, Umrah tickets, group flights and tour packages online with Al Qibla Air Services. Domestic & international ticket booking, Umrah packages from Pakistan, group travels to UAE, Oman, KSA & Bahrain. Become a ticket booking agent — offices in Peshawar, Islamabad & Bannu.",
+    "AL QIBLA AIR SERVICES is a trusted travel agency in Peshawar for air ticket booking, Umrah packages, group flights, visit visas, hotels and corporate travel. Book online at flywithalqibla.com — head office Cantonment Plaza, Saddar Road, Peshawar Cantt, plus Islamabad & Bannu.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.flywithalqibla.com",
   whatsapp: "https://wa.me/923315576169",
   whatsappNumber: "+923315576169",
   email: "info@alqiblaairservices.com",
   businessHours: "Mon – Sat: 9:00 AM – 8:00 PM | Sun: 10:00 AM – 6:00 PM",
-  regions: ["Pakistan", "UAE", "Afghanistan", "Saudi Arabia", "Worldwide"],
+  regions: ["Peshawar", "Islamabad", "Bannu", "Khyber Pakhtunkhwa", "Pakistan", "UAE", "Afghanistan", "Saudi Arabia", "Worldwide"],
+  geo: {
+    latitude: 33.99982117082442,
+    longitude: 71.51575875607608,
+  },
 } as const;
 
 export const PAYMENT = {
@@ -82,6 +86,7 @@ export const TRUST_TEXT = [
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about/", label: "About Us" },
+  { href: "/travel-agency-peshawar/", label: "Peshawar Office" },
   { href: "/umrah-packages/", label: "Umrah Packages" },
   { href: "/tour-packages/", label: "Tour Packages" },
   { href: "/available-tickets/", label: "Available Tickets" },

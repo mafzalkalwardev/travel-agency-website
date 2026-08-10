@@ -8,6 +8,7 @@ import {
   Clock,
   Globe,
   Mail,
+  MapPin,
   Phone,
   ShieldCheck,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const exploreLinks = [
 ] as const;
 
 const companyLinks = [
+  ["Travel Agency in Peshawar", "/travel-agency-peshawar/"],
   ["About Al Qibla", "/about/"],
   ["Our Services", "/services/"],
   ["Contact Us", "/contact/"],
@@ -102,8 +104,12 @@ export function Footer() {
             </Link>
 
             <p className="mt-5 max-w-sm text-sm leading-6 text-white/55">
-              Professional travel services for pilgrims, families, groups, agents and organizations —
-              across {regions}.
+              Travel agency in Peshawar for pilgrims, families, groups, agents and organizations —
+              air tickets, Umrah, visas and corporate travel across {regions}.
+            </p>
+            <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-white/45">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+              {OFFICES.headOffice.address}
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2">
