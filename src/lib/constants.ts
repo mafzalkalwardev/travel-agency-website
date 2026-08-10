@@ -86,7 +86,6 @@ export const TRUST_TEXT = [
 export const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about/", label: "About Us" },
-  { href: "/travel-agency-peshawar/", label: "Peshawar Office" },
   { href: "/umrah-packages/", label: "Umrah Packages" },
   { href: "/tour-packages/", label: "Tour Packages" },
   { href: "/available-tickets/", label: "Available Tickets" },

@@ -17,7 +17,6 @@ const MAIN_NAV = [
   { href: "/umrah-packages/", label: "Umrah" },
   { href: "/destinations/", label: "Group Travels" },
   { href: "/tours/", label: "Tours" },
-  { href: "/travel-agency-peshawar/", label: "Peshawar" },
   { href: "/about/", label: "About" },
   { href: "/contact/", label: "Contact" },
 ] as const;
