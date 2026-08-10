@@ -2,7 +2,6 @@ import { AnnouncementTicker } from "@/components/home/AnnouncementTicker";
 import { DeferredFlightPathStory } from "@/components/home/DeferredFlightPathStory";
 import { DestinationGrid } from "@/components/home/DestinationGrid";
 import { HeroSection } from "@/components/home/HeroSection";
-import { PeshawarLocalStrip } from "@/components/home/PeshawarLocalStrip";
 import { SubAgentCTA } from "@/components/home/SubAgentCTA";
 import { TicketsPreview } from "@/components/home/TicketsPreview";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
@@ -36,7 +35,6 @@ export default async function HomePage() {
     <>
       <HeroSection posters={heroPosters} />
       <AnnouncementTicker announcements={announcements} />
-      <PeshawarLocalStrip />
       <DestinationGrid destinations={destinations} />
       <TicketsPreview tickets={previewTickets} />
       <WhyChooseUs />
