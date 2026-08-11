@@ -6,11 +6,12 @@ export type TravelerName = {
   passportNo?: string;
   dob?: string;
   nationality?: string;
+  notes?: string;
 };
 
 export type TravelerDetails = Required<
   Pick<TravelerName, "firstName" | "lastName" | "passportNo" | "dob" | "nationality">
->;
+> & { notes: string };
 
 export function emptyTraveler(): TravelerDetails {
   return {
@@ -19,6 +20,7 @@ export function emptyTraveler(): TravelerDetails {
     passportNo: "",
     dob: "",
     nationality: "PK",
+    notes: "",
   };
 }
 
@@ -45,6 +47,7 @@ export function travelersFromPassengerDetails(
             .trim()
             .toUpperCase()
             .slice(0, 2),
+          notes: String(item.notes || "").trim() || undefined,
         };
       })
       .filter((t) => t.firstName || t.lastName);
@@ -104,7 +107,6 @@ export function passengerNamesSummary(
 
 export function buildPassengerDetailsPayload(input: {
   travelers: TravelerName[];
-  notes?: string;
 }) {
   const travelers = input.travelers
     .map((t) => ({
@@ -112,7 +114,8 @@ export function buildPassengerDetailsPayload(input: {
       lastName: t.lastName.trim(),
       passportNo: String(t.passportNo || "").trim(),
       dob: String(t.dob || "").trim(),
-      nationality: (String(t.nationality || "PK").trim().toUpperCase().slice(0, 2) || "PK"),
+      nationality: String(t.nationality || "PK").trim().toUpperCase().slice(0, 2) || "PK",
+      notes: String(t.notes || "").trim() || undefined,
     }))
     .filter((t) => t.firstName && t.lastName);
 
@@ -127,6 +130,17 @@ export function buildPassengerDetailsPayload(input: {
 
   const names = travelers.map(formatTravelerFullName).join("\n");
   const primary = travelers[0] || emptyTraveler();
+  const combinedNotes = travelers
+    .map((t, i) => {
+      if (!t.notes) return null;
+      const label =
+        travelers.length > 1
+          ? `Passenger ${i + 1} (${formatTravelerFullName(t)})`
+          : formatTravelerFullName(t) || "Passenger";
+      return `${label}: ${t.notes}`;
+    })
+    .filter(Boolean)
+    .join("\n");
 
   return {
     travelers,
@@ -137,6 +151,6 @@ export function buildPassengerDetailsPayload(input: {
     passportNo: primary.passportNo,
     dob: primary.dob,
     nationality: primary.nationality,
-    notes: input.notes?.trim() || undefined,
+    notes: combinedNotes || undefined,
   };
 }

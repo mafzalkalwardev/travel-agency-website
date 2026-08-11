@@ -90,7 +90,6 @@ export function BookRequestSheet({
     email: "",
     passengers: "1",
     travelers: emptyTravelers(1),
-    notes: "",
   });
 
   function setPassengerCount(value: string) {
@@ -197,7 +196,6 @@ export function BookRequestSheet({
     try {
       const passengerDetails = buildPassengerDetailsPayload({
         travelers: form.travelers,
-        notes: form.notes,
       });
       if (!passengerDetails.travelers.length) {
         throw new Error("Enter first name and last name for each passenger (as on passport).");
@@ -262,7 +260,7 @@ export function BookRequestSheet({
         departureDate: ticket?.date,
         flightNumber: ticket?.flightNumber,
         airline: ticket?.airline,
-        notes: form.notes || undefined,
+        notes: passengerDetails.notes || undefined,
       });
 
       const whatsappUrl = whatsappLink(waMsg);
@@ -381,80 +379,122 @@ export function BookRequestSheet({
                 onChange={(e) => setPassengerCount(e.target.value)}
               />
             </div>
-            <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-3">
-              <p className="text-sm font-semibold text-navy">Passenger details (as on passport)</p>
-              {form.travelers.map((traveler, index) => (
-                <div
-                  key={`traveler-${index}`}
-                  className="space-y-3 rounded-lg border border-border/80 bg-white p-3"
-                >
-                  {form.travelers.length > 1 ? (
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                      Passenger {index + 1}
-                    </p>
-                  ) : null}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`br-first-${index}`}>First name</Label>
-                      <Input
-                        id={`br-first-${index}`}
-                        required
-                        autoComplete="given-name"
-                        value={traveler.firstName}
-                        onChange={(e) => updateTraveler(index, { firstName: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`br-last-${index}`}>Last name</Label>
-                      <Input
-                        id={`br-last-${index}`}
-                        required
-                        autoComplete="family-name"
-                        value={traveler.lastName}
-                        onChange={(e) => updateTraveler(index, { lastName: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`br-passport-${index}`}>Passport number</Label>
-                      <Input
-                        id={`br-passport-${index}`}
-                        required
-                        value={traveler.passportNo}
-                        onChange={(e) => updateTraveler(index, { passportNo: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`br-dob-${index}`}>Date of birth</Label>
-                      <Input
-                        id={`br-dob-${index}`}
-                        type="date"
-                        required
-                        value={traveler.dob}
-                        onChange={(e) => updateTraveler(index, { dob: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`br-nationality-${index}`}>Nationality</Label>
-                      <Input
-                        id={`br-nationality-${index}`}
-                        required
-                        maxLength={2}
-                        placeholder="PK"
-                        value={traveler.nationality}
-                        onChange={(e) =>
-                          updateTraveler(index, { nationality: e.target.value.toUpperCase() })
-                        }
-                      />
-                    </div>
-                  </div>
+            <div className="space-y-4">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-navy">Passenger details</p>
+                  <p className="text-xs text-muted-foreground">
+                    Enter each traveler separately, exactly as on their passport.
+                  </p>
                 </div>
-              ))}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="br-notes">Notes (optional)</Label>
-              <Textarea id="br-notes" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+                {form.travelers.length > 1 ? (
+                  <p className="shrink-0 rounded-full bg-navy/5 px-3 py-1 text-xs font-semibold text-navy">
+                    {form.travelers.length} travelers
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-5">
+                {form.travelers.map((traveler, index) => (
+                  <section
+                    key={`traveler-${index}`}
+                    className="overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-[0_1px_0_rgba(26,39,68,0.04)]"
+                  >
+                    <div className="flex items-center gap-3 border-b border-navy/10 bg-gradient-to-r from-navy to-navy-light px-4 py-3 text-white">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-sm font-bold text-navy">
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-none">
+                          Passenger {index + 1}
+                          {form.travelers.length === 1 ? "" : ` of ${form.travelers.length}`}
+                        </p>
+                        <p className="mt-1 truncate text-xs text-white/65">
+                          {[traveler.firstName, traveler.lastName].filter(Boolean).join(" ") ||
+                            "Name as on passport"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 border-l-4 border-l-gold/80 p-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`br-first-${index}`}>First name</Label>
+                          <Input
+                            id={`br-first-${index}`}
+                            required
+                            autoComplete="given-name"
+                            placeholder="Given name"
+                            value={traveler.firstName}
+                            onChange={(e) => updateTraveler(index, { firstName: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`br-last-${index}`}>Last name</Label>
+                          <Input
+                            id={`br-last-${index}`}
+                            required
+                            autoComplete="family-name"
+                            placeholder="Surname"
+                            value={traveler.lastName}
+                            onChange={(e) => updateTraveler(index, { lastName: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <div className="space-y-1.5 sm:col-span-1">
+                          <Label htmlFor={`br-passport-${index}`}>Passport number</Label>
+                          <Input
+                            id={`br-passport-${index}`}
+                            required
+                            placeholder="Passport no."
+                            value={traveler.passportNo}
+                            onChange={(e) => updateTraveler(index, { passportNo: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`br-dob-${index}`}>Date of birth</Label>
+                          <Input
+                            id={`br-dob-${index}`}
+                            type="date"
+                            required
+                            value={traveler.dob}
+                            onChange={(e) => updateTraveler(index, { dob: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor={`br-nationality-${index}`}>Nationality</Label>
+                          <Input
+                            id={`br-nationality-${index}`}
+                            required
+                            maxLength={2}
+                            placeholder="PK"
+                            value={traveler.nationality}
+                            onChange={(e) =>
+                              updateTraveler(index, { nationality: e.target.value.toUpperCase() })
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`br-notes-${index}`}>
+                          Notes for passenger {index + 1}{" "}
+                          <span className="font-normal text-muted-foreground">(optional)</span>
+                        </Label>
+                        <Textarea
+                          id={`br-notes-${index}`}
+                          rows={2}
+                          placeholder="Special request, meal preference, assistant needed…"
+                          value={traveler.notes}
+                          onChange={(e) => updateTraveler(index, { notes: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </section>
+                ))}
+              </div>
             </div>
             {error && (
               <p className="rounded-md border border-red-accent/30 bg-red-accent/10 px-3 py-2 text-sm text-red-accent">

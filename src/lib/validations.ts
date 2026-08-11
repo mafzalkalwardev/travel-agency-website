@@ -54,6 +54,7 @@ export const bookingSchema = z.object({
             passportNo: z.string().min(5, "Passport number is required").optional(),
             dob: z.string().min(8, "Date of birth is required").optional(),
             nationality: z.string().min(2).optional(),
+            notes: z.string().optional(),
           })
         )
         .optional(),
