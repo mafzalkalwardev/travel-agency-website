@@ -51,23 +51,26 @@ export const bookingSchema = z.object({
           z.object({
             firstName: z.string().min(1, "First name is required"),
             lastName: z.string().min(1, "Last name is required"),
+            passportNo: z.string().min(5, "Passport number is required").optional(),
+            dob: z.string().min(8, "Date of birth is required").optional(),
+            nationality: z.string().min(2).optional(),
           })
         )
         .optional(),
       cnic: z.string().optional(),
       /** Legacy alias — prefer passportNo */
       passport: z.string().optional(),
-      passportNo: z.string().min(5, "Passport number is required"),
-      dob: z.string().min(8, "Date of birth is required"),
-      nationality: z.string().min(2, "Nationality is required").default("PK"),
+      /** Primary / legacy single-traveler fields (still accepted) */
+      passportNo: z.string().optional(),
+      dob: z.string().optional(),
+      nationality: z.string().min(2).optional().default("PK"),
       passportDOE: z.string().optional(),
       notes: z.string().optional(),
     })
     .passthrough()
     .superRefine((value, ctx) => {
-      const hasTravelers =
-        Array.isArray(value.travelers) &&
-        value.travelers.some((t) => t.firstName.trim() && t.lastName.trim());
+      const travelers = Array.isArray(value.travelers) ? value.travelers : [];
+      const hasTravelers = travelers.some((t) => t.firstName.trim() && t.lastName.trim());
       const hasSplit =
         Boolean(value.firstName?.trim()) && Boolean(value.lastName?.trim());
       const hasLegacyNames = Boolean(value.names?.trim());
@@ -77,6 +80,45 @@ export const bookingSchema = z.object({
           message: "First name and last name are required",
           path: ["travelers"],
         });
+      }
+
+      if (travelers.length) {
+        travelers.forEach((t, index) => {
+          if (!t.firstName.trim() || !t.lastName.trim()) return;
+          const passport = String(t.passportNo || value.passportNo || value.passport || "").trim();
+          const dob = String(t.dob || value.dob || "").trim();
+          if (passport.length < 5) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Passport number is required",
+              path: ["travelers", index, "passportNo"],
+            });
+          }
+          if (dob.length < 8) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Date of birth is required",
+              path: ["travelers", index, "dob"],
+            });
+          }
+        });
+      } else {
+        const passport = String(value.passportNo || value.passport || "").trim();
+        const dob = String(value.dob || "").trim();
+        if (passport.length < 5) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Passport number is required",
+            path: ["passportNo"],
+          });
+        }
+        if (dob.length < 8) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Date of birth is required",
+            path: ["dob"],
+          });
+        }
       }
     })
     .default({

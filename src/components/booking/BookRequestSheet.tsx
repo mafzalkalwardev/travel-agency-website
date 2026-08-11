@@ -26,7 +26,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { getApprovalMessage } from "@/lib/customer-approval";
-import { buildPassengerDetailsPayload, type TravelerName } from "@/lib/booking/passenger-names";
+import {
+  buildPassengerDetailsPayload,
+  emptyTraveler,
+  type TravelerDetails,
+} from "@/lib/booking/passenger-names";
 import { PAYMENT, SITE } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -35,8 +39,8 @@ import type { BookingProductType, Ticket } from "@/types";
 
 const WHATSAPP_REDIRECT_SECONDS = 8;
 
-function emptyTravelers(count: number): TravelerName[] {
-  return Array.from({ length: Math.max(1, count) }, () => ({ firstName: "", lastName: "" }));
+function emptyTravelers(count: number): TravelerDetails[] {
+  return Array.from({ length: Math.max(1, count) }, () => emptyTraveler());
 }
 
 interface BookRequestSheetProps {
@@ -85,10 +89,7 @@ export function BookRequestSheet({
     phone: "",
     email: "",
     passengers: "1",
-    travelers: emptyTravelers(1) as TravelerName[],
-    passportNo: "",
-    dob: "",
-    nationality: "PK",
+    travelers: emptyTravelers(1),
     notes: "",
   });
 
@@ -96,7 +97,7 @@ export function BookRequestSheet({
     const count = Math.max(1, Number(value) || 1);
     setForm((current) => {
       const travelers = [...current.travelers];
-      while (travelers.length < count) travelers.push({ firstName: "", lastName: "" });
+      while (travelers.length < count) travelers.push(emptyTraveler());
       return {
         ...current,
         passengers: String(count),
@@ -105,7 +106,7 @@ export function BookRequestSheet({
     });
   }
 
-  function updateTraveler(index: number, patch: Partial<TravelerName>) {
+  function updateTraveler(index: number, patch: Partial<TravelerDetails>) {
     setForm((current) => ({
       ...current,
       travelers: current.travelers.map((traveler, i) =>
@@ -196,9 +197,6 @@ export function BookRequestSheet({
     try {
       const passengerDetails = buildPassengerDetailsPayload({
         travelers: form.travelers,
-        passportNo: form.passportNo,
-        dob: form.dob,
-        nationality: form.nationality || "PK",
         notes: form.notes,
       });
       if (!passengerDetails.travelers.length) {
@@ -384,65 +382,75 @@ export function BookRequestSheet({
               />
             </div>
             <div className="space-y-3 rounded-xl border border-border bg-secondary/30 p-3">
-              <p className="text-sm font-semibold text-navy">Passenger names (as on passport)</p>
+              <p className="text-sm font-semibold text-navy">Passenger details (as on passport)</p>
               {form.travelers.map((traveler, index) => (
-                <div key={`traveler-${index}`} className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor={`br-first-${index}`}>
-                      First name{form.travelers.length > 1 ? ` · passenger ${index + 1}` : ""}
-                    </Label>
-                    <Input
-                      id={`br-first-${index}`}
-                      required
-                      autoComplete="given-name"
-                      value={traveler.firstName}
-                      onChange={(e) => updateTraveler(index, { firstName: e.target.value })}
-                    />
+                <div
+                  key={`traveler-${index}`}
+                  className="space-y-3 rounded-lg border border-border/80 bg-white p-3"
+                >
+                  {form.travelers.length > 1 ? (
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Passenger {index + 1}
+                    </p>
+                  ) : null}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`br-first-${index}`}>First name</Label>
+                      <Input
+                        id={`br-first-${index}`}
+                        required
+                        autoComplete="given-name"
+                        value={traveler.firstName}
+                        onChange={(e) => updateTraveler(index, { firstName: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`br-last-${index}`}>Last name</Label>
+                      <Input
+                        id={`br-last-${index}`}
+                        required
+                        autoComplete="family-name"
+                        value={traveler.lastName}
+                        onChange={(e) => updateTraveler(index, { lastName: e.target.value })}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor={`br-last-${index}`}>Last name</Label>
-                    <Input
-                      id={`br-last-${index}`}
-                      required
-                      autoComplete="family-name"
-                      value={traveler.lastName}
-                      onChange={(e) => updateTraveler(index, { lastName: e.target.value })}
-                    />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`br-passport-${index}`}>Passport number</Label>
+                      <Input
+                        id={`br-passport-${index}`}
+                        required
+                        value={traveler.passportNo}
+                        onChange={(e) => updateTraveler(index, { passportNo: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`br-dob-${index}`}>Date of birth</Label>
+                      <Input
+                        id={`br-dob-${index}`}
+                        type="date"
+                        required
+                        value={traveler.dob}
+                        onChange={(e) => updateTraveler(index, { dob: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`br-nationality-${index}`}>Nationality</Label>
+                      <Input
+                        id={`br-nationality-${index}`}
+                        required
+                        maxLength={2}
+                        placeholder="PK"
+                        value={traveler.nationality}
+                        onChange={(e) =>
+                          updateTraveler(index, { nationality: e.target.value.toUpperCase() })
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5 sm:col-span-1">
-                <Label htmlFor="br-passport">Passport number</Label>
-                <Input
-                  id="br-passport"
-                  required
-                  value={form.passportNo}
-                  onChange={(e) => setForm({ ...form, passportNo: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="br-dob">Date of birth</Label>
-                <Input
-                  id="br-dob"
-                  type="date"
-                  required
-                  value={form.dob}
-                  onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="br-nationality">Nationality</Label>
-                <Input
-                  id="br-nationality"
-                  required
-                  maxLength={2}
-                  placeholder="PK"
-                  value={form.nationality}
-                  onChange={(e) => setForm({ ...form, nationality: e.target.value.toUpperCase() })}
-                />
-              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="br-notes">Notes (optional)</Label>

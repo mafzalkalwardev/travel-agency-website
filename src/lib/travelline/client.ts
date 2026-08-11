@@ -58,7 +58,13 @@ function resolvePassportNo(details: Record<string, unknown>): string {
   return String(details.passportNo || details.passport || "").trim();
 }
 
-function travelersFromDetails(details: Record<string, unknown>): Array<{ firstName: string; lastName: string }> {
+function travelersFromDetails(
+  details: Record<string, unknown>
+): Array<{ firstName: string; lastName: string; passportNo?: string; dob?: string; nationality?: string }> {
+  const topPassport = resolvePassportNo(details);
+  const topDob = String(details.dob || "").trim();
+  const topNationality = String(details.nationality || "PK").trim() || "PK";
+
   const raw = details.travelers;
   if (Array.isArray(raw) && raw.length) {
     const list = raw
@@ -67,6 +73,9 @@ function travelersFromDetails(details: Record<string, unknown>): Array<{ firstNa
         return {
           firstName: String(item.firstName || item.givenName || "").trim(),
           lastName: String(item.lastName || item.surname || "").trim(),
+          passportNo: String(item.passportNo || item.passport || topPassport || "").trim(),
+          dob: String(item.dob || topDob || "").trim(),
+          nationality: String(item.nationality || topNationality || "PK").trim(),
         };
       })
       .filter((t) => t.firstName && t.lastName);
@@ -75,7 +84,17 @@ function travelersFromDetails(details: Record<string, unknown>): Array<{ firstNa
 
   const firstName = String(details.firstName || details.givenName || "").trim();
   const lastName = String(details.lastName || details.surname || "").trim();
-  if (firstName && lastName) return [{ firstName, lastName }];
+  if (firstName && lastName) {
+    return [
+      {
+        firstName,
+        lastName,
+        passportNo: topPassport,
+        dob: topDob,
+        nationality: topNationality,
+      },
+    ];
+  }
 
   return String(details.names || "")
     .split(/\r?\n/)
@@ -83,23 +102,35 @@ function travelersFromDetails(details: Record<string, unknown>): Array<{ firstNa
     .filter(Boolean)
     .map((line) => {
       const parts = line.split(/\s+/);
-      if (parts.length === 1) return { firstName: parts[0], lastName: parts[0] };
+      if (parts.length === 1) {
+        return {
+          firstName: parts[0],
+          lastName: parts[0],
+          passportNo: topPassport,
+          dob: topDob,
+          nationality: topNationality,
+        };
+      }
       return {
         firstName: parts.slice(0, -1).join(" "),
         lastName: parts[parts.length - 1],
+        passportNo: topPassport,
+        dob: topDob,
+        nationality: topNationality,
       };
     });
 }
 
-/** Build one supplier passenger from first + last name + shared document fields. */
+/** Build one supplier passenger from name + document fields (per traveler or shared fallback). */
 function buildPassengerFromNameParts(
   firstName: string,
   lastName: string,
-  details: Record<string, unknown>
+  details: Record<string, unknown>,
+  traveler?: { passportNo?: string; dob?: string; nationality?: string }
 ) {
-  const passportNo = resolvePassportNo(details);
-  const dob = String(details.dob || "").trim();
-  const nationality = String(details.nationality || "PK").trim() || "PK";
+  const passportNo = String(traveler?.passportNo || resolvePassportNo(details) || "").trim();
+  const dob = String(traveler?.dob || details.dob || "").trim();
+  const nationality = String(traveler?.nationality || details.nationality || "PK").trim() || "PK";
 
   if (!passportNo) {
     throw new Error("Passport number is required for supplier seat hold");
@@ -141,7 +172,7 @@ function buildPassengersForHold(details: Record<string, unknown>, seatCount: num
     const traveler =
       travelers[index] ||
       (travelers.length === 1 ? travelers[0] : travelers[travelers.length - 1]);
-    return buildPassengerFromNameParts(traveler.firstName, traveler.lastName, details);
+    return buildPassengerFromNameParts(traveler.firstName, traveler.lastName, details, traveler);
   });
 }
 
