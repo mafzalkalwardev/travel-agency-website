@@ -310,7 +310,8 @@ async function upsertPackageRows(
     const withId = { ...row, id: existing?.id ?? randomUUID() };
 
     if (existing) {
-      const fieldChanges = diffFields(existing, withId, packageDiffFields);
+      const fields = table === "umrah_packages" ? umrahDiffFields : tourDiffFields;
+      const fieldChanges = diffFields(existing, withId, fields);
       if (Object.keys(fieldChanges).length) {
         updated++;
         rowsToUpsert.push(withId);
@@ -374,7 +375,13 @@ async function fetchAllRows(
 ): Promise<Record<string, unknown>[]> {
   const pageSize = 1000;
   // Omit raw_payload — largest column and unused for diffing (major egress cut).
-  const columns = table === "tickets" ? TICKET_SYNC_SELECT : PACKAGE_SYNC_SELECT;
+  // umrah_packages has no destination column (tour_packages does).
+  const columns =
+    table === "tickets"
+      ? TICKET_SYNC_SELECT
+      : table === "umrah_packages"
+        ? UMRAH_SYNC_SELECT
+        : TOUR_SYNC_SELECT;
   const all: Record<string, unknown>[] = [];
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await supabase
@@ -474,12 +481,11 @@ const ticketDiffFields = [
   // sync, flooded sync_changes, and made Admin "Sync Now" hang/timeout.
 ];
 
-const packageDiffFields = [
+const umrahDiffFields = [
   "title",
   "slug",
   "package_code",
   "category",
-  "destination",
   "price",
   "currency",
   "duration",
@@ -497,9 +503,22 @@ const packageDiffFields = [
   "status",
 ];
 
+const tourDiffFields = [
+  "title",
+  "slug",
+  "destination",
+  "price",
+  "currency",
+  "duration",
+  "image_url",
+  "featured",
+  "status",
+];
+
 /** Columns needed to diff/upsert — never pull raw_payload (major egress saver). */
 const TICKET_SYNC_SELECT = ["id", "external_id", ...ticketDiffFields].join(",");
-const PACKAGE_SYNC_SELECT = ["id", "external_id", ...packageDiffFields].join(",");
+const UMRAH_SYNC_SELECT = ["id", "external_id", ...umrahDiffFields].join(",");
+const TOUR_SYNC_SELECT = ["id", "external_id", ...tourDiffFields].join(",");
 
 function normalizeComparable(value: unknown) {
   if (value === undefined) return null;

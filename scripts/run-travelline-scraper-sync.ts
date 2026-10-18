@@ -59,7 +59,10 @@ async function main() {
     )
   );
 
-  if (!ticketOutcome.skipped && ticketOutcome.result.status === "failed") {
+  const ticketsFailed =
+    !ticketOutcome.skipped && ticketOutcome.result.status === "failed";
+  const packagesFailed = packages.status === "failed";
+  if (ticketsFailed || packagesFailed) {
     process.exitCode = 1;
     return;
   }
