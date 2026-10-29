@@ -64,7 +64,10 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://www.flywithalqibla.com
         run: npx tsx scripts/run-travelline-scraper-sync.ts
 
+      # Always refresh the public CDN mirror when ticket sync wrote data, even if
+      # package sync was partial/empty (TravelLine sometimes returns []).
       - name: Publish public inventory mirror (GitHub CDN)
+        if: success() || failure()
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

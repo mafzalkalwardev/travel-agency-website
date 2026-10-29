@@ -54,11 +54,35 @@ export async function syncTravelLinePackages(): Promise<PackageSyncResult> {
     try {
       const { TravelLineClient } = await import("@/lib/travelline/client");
       items = await new TravelLineClient().fetchUmrahApiItems();
-    } catch {
-      items = await scrapeTravelLineUmrahItems();
+    } catch (e) {
+      console.warn(
+        "umrah API path failed, falling back to scraper:",
+        e instanceof Error ? e.message : e
+      );
     }
     if (!items.length) {
-      items = await scrapeTravelLineUmrahItems();
+      try {
+        items = await scrapeTravelLineUmrahItems();
+      } catch (e) {
+        console.warn(
+          "umrah scraper failed:",
+          e instanceof Error ? e.message : e
+        );
+      }
+    }
+    if (!items.length) {
+      // Keep existing Supabase packages — do not treat seasonal empty feed as
+      // a hard failure (that previously blocked ticket mirror publishes).
+      return {
+        provider: "travelline",
+        status: "partial",
+        umrahProcessed: 0,
+        toursProcessed: 0,
+        promosProcessed: 0,
+        changes: [],
+        message:
+          "Supplier returned no umrah packages; kept existing package inventory",
+      };
     }
     const umrah = items.map((item) => mapTravelLineUmrahApiItem(item, markupPercent));
     const tours: Record<string, unknown>[] = [];

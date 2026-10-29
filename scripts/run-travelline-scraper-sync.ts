@@ -61,14 +61,27 @@ async function main() {
 
   const ticketsFailed =
     !ticketOutcome.skipped && ticketOutcome.result.status === "failed";
+  const ticketsOk =
+    !ticketOutcome.skipped && ticketOutcome.result.status !== "failed";
   const packagesFailed = packages.status === "failed";
-  if (ticketsFailed || packagesFailed) {
+
+  // Ticket sync is the critical path for the public mirror. Package-only
+  // failures (or empty seasonal feeds) must not block publish/revalidate.
+  if (ticketsOk) {
+    await pingRevalidate().catch((e) => console.warn("revalidate failed", e));
+  }
+
+  if (ticketsFailed) {
     process.exitCode = 1;
     return;
   }
-
-  // Refresh public Next.js cache so visitors see new seats without hitting Supabase.
-  await pingRevalidate().catch((e) => console.warn("revalidate failed", e));
+  if (packagesFailed && !ticketsOk) {
+    process.exitCode = 1;
+    return;
+  }
+  if (packagesFailed) {
+    console.warn("packages sync failed; ticket sync succeeded — continuing for mirror publish");
+  }
 }
 
 main().catch((error) => {

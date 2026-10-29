@@ -9,7 +9,7 @@ import { TRAVELLINE_GROUP_CATEGORIES } from "./categories";
 import type { NormalizedTicket } from "@/lib/tickets/providers/types";
 import type { Page, Response } from "playwright";
 
-const SCRAPER_PATHS = ["/", "/explore", "/login"] as const;
+const SCRAPER_PATHS = ["/", "/umrah-packages", "/explore", "/login"] as const;
 
 async function loadPlaywright() {
   try {
@@ -230,7 +230,10 @@ export async function scrapeTravelLineUmrahItems(): Promise<TravelLineUmrahApiIt
     const apiItems = extractUmrahItemsFromJsonText(text);
     if (apiItems.length) return apiItems;
 
-    throw new Error("supplier scraper could not extract package inventory");
+    // Empty feed is a valid supplier state (seasonal / cleared inventory).
+    // Callers must not deactivate existing packages on an empty scrape.
+    console.warn("supplier scraper found no package inventory (API/HTML empty)");
+    return [];
   } finally {
     await browser.close();
   }

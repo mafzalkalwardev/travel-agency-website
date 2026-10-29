@@ -192,9 +192,12 @@ export class TravelLineClient {
     const data = await res.json();
     const { extractUmrahItemsFromJsonText } = await import("./extractors");
     const items = Array.isArray(data)
-      ? (data as TravelLineUmrahApiItem[])
+      ? (data as TravelLineUmrahApiItem[]).filter(
+          (item) => item && typeof item === "object" && typeof item.id === "string" && typeof item.title === "string"
+        )
       : extractUmrahItemsFromJsonText(JSON.stringify(data));
-    if (!items.length) throw new Error("Supplier package API returned no usable inventory");
+    // Empty array is a valid supplier response — do not throw (throws used to
+    // abort the whole inventory job and freeze the public mirror).
     this.umrahCache = items;
     return items;
   }
